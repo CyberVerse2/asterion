@@ -9,14 +9,6 @@ import { MiniKitContextProvider } from '@/providers/MiniKitProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: 'Asterion - Free Reading & Author Tipping Platform',
-  description:
-    'Discover amazing stories and directly support authors with transparent tipping. 91% goes directly to authors.',
-  keywords: 'reading, novels, authors, tipping, web3, farcaster',
-  generator: 'v0.dev'
-};
-
 export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL;
   return {
