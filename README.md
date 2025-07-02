@@ -1,30 +1,89 @@
-# Asterion Next.js application
+# Asterion: Read & Tip Novels on Farcaster
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Asterion is a Farcaster mini app that lets users read web novels for free and tip authors directly—on-chain, transparently, and with creator-first economics. Built for the Zora Coinathon, Asterion reimagines the web novel experience by leveraging Zora v4 coins, wallet-based tipping, and deep Farcaster integration.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/cyberverse2s-projects/v0-asterion-next-js-application)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/3kikcEOwD0f)
+## Motivation
 
-## Overview
+Current web novel platforms are expensive for readers, restrictive for authors, and lack transparency:
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+- Reading a full novel can cost $300+
+- App stores and platforms take large revenue cuts (up to 80%+)
+- Authors are locked into daily publishing contracts, often at the expense of quality
 
-## Deployment
+Asterion solves these problems by making every novel a Zora v4 coin, enabling direct, transparent tipping, and giving authors more freedom and a larger share of earnings.
 
-Your project is live at:
+## Key Features
 
-**[https://vercel.com/cyberverse2s-projects/v0-asterion-next-js-application](https://vercel.com/cyberverse2s-projects/v0-asterion-next-js-application)**
+- **Read Novels for Free:** Browse and read novels directly in the app.
+- **Zora v4 Coin for Each Novel:** Every novel is a Zora v4 coin, enabling on-chain tipping and ownership.
+- **Wallet-Based Tipping:** Users tip authors by sending a "love" reaction to chapters, using their in-app wallet.
+- **Supporters Tab:** Each novel displays its top 100 supporters, with perks for major supporters.
+- **Clip Sharing:** Capture and share clips from chapters directly to the Farcaster feed.
+- **Notifications:** Get notified when new chapters are released for your favorite novels.
+- **In-App Reading Tools:** Enhanced reading experience with built-in tools.
+- **Farcaster-Native Comments:** Novels are posts, and comments are Farcaster-native.
+- **Profile & Tipping History:** Users can view their tipping history and bookmarks in their profile.
 
-## Build your app
+## User Flow
 
-Continue building your app on:
+1. **Add Asterion to Farcaster:** User opens the app and adds it to their Farcaster account.
+2. **Configure Spend Permissions:** User sets up wallet permissions for tipping.
+3. **Browse Popular Novels:** Home page displays trending and popular novels.
+4. **Read & Tip:** Open a novel, read chapters, and double-click to send a love/tip.
+5. **Track Support:** View your tipping history and bookmarks in your profile.
+6. **Engage:** Share clips, comment, and interact with the community.
 
-**[https://v0.dev/chat/projects/3kikcEOwD0f](https://v0.dev/chat/projects/3kikcEOwD0f)**
+## Data Model
 
-## How It Works
+- **User**
+  - Farcaster username
+  - Novels (array)
+  - Tips (array of objects)
+    - Novel ID
+    - Amount tipped
+  - Bookmarks
+- **Novel**
+  - Title and details
+  - Tips:
+    - Username
+    - Tip amount
+    - Date
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Tech Stack
+
+- **Frontend:** Next.js, React, Tailwind CSS, Radix UI
+- **Blockchain:** Zora v4 coin SDK, Minikit
+- **Backend/Data:** MongoDB, Prisma (planned)
+- **Other:** Farcaster integration, custom hooks, reusable UI components
+
+## Getting Started
+
+1. **Install dependencies:**
+   ```sh
+   pnpm install
+   # or
+   npm install
+   # or
+   yarn install
+   ```
+2. **Run the development server:**
+   ```sh
+   pnpm dev
+   # or
+   npm run dev
+   # or
+   yarn dev
+   ```
+3. **Open in browser:**
+   Visit [http://localhost:3000](http://localhost:3000)
+
+## Extending the Project
+
+- Integrate real blockchain and Farcaster APIs
+- Add more reading tools and personalization features
+- Expand notifications and supporter perks
+- Enable real-time comments and social features
+
+---
+
+_Built for the Zora Coinathon. Asterion is a transparent, on-chain upgrade for web novel fans and authors alike._
