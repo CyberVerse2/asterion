@@ -83,7 +83,3 @@ Asterion solves these problems by making every novel a Zora v4 coin, enabling di
 - Add more reading tools and personalization features
 - Expand notifications and supporter perks
 - Enable real-time comments and social features
-
----
-
-_Built for the Zora Coinathon. Asterion is a transparent, on-chain upgrade for web novel fans and authors alike._

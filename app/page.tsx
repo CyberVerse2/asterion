@@ -1,14 +1,26 @@
-import { Suspense } from "react"
-import { mockNovels } from "@/lib/mock-data"
-import LoadingSkeleton from "@/components/loading-skeleton"
-import NovelGrid from "@/components/novel-grid"
+'use client';
+
+import { useEffect } from 'react';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { Suspense } from 'react';
+import { mockNovels } from '@/lib/mock-data';
+import LoadingSkeleton from '@/components/loading-skeleton';
+import NovelGrid from '@/components/novel-grid';
 
 function getPopularNovels() {
-  return mockNovels.sort((a, b) => b.totalTips - a.totalTips)
+  return mockNovels.sort((a, b) => b.totalTips - a.totalTips);
 }
 
 export default function HomePage() {
-  const novels = getPopularNovels()
+  const { setFrameReady, isFrameReady } = useMiniKit();
+
+  useEffect(() => {
+    if (!isFrameReady) {
+      setFrameReady();
+    }
+  }, [setFrameReady, isFrameReady]);
+
+  const novels = getPopularNovels();
 
   return (
     <div className="min-h-screen">
@@ -18,5 +30,5 @@ export default function HomePage() {
         </Suspense>
       </section>
     </div>
-  )
+  );
 }
