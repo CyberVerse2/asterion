@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DollarSign, BookOpen, Heart, Settings } from 'lucide-react';
+import { DollarSign, BookOpen, Heart, Settings, Info } from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useChainId, useConnect, useConnectors, useSignTypedData } from 'wagmi';
 import { Address, Hex, parseUnits } from 'viem';
 import {
@@ -14,6 +14,7 @@ import {
   spendPermissionManagerAddress,
   USDC_ADDRESS
 } from '@/lib/abi/SpendPermissionManager';
+import { Tooltip } from '@/components/ui/tooltip';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -36,6 +37,39 @@ export default function ProfilePage() {
   const [showSpendPermission, setShowSpendPermission] = useState(false);
   const [dailyLimit, setDailyLimit] = useState(50);
   const [monthlyLimit, setMonthlyLimit] = useState(200);
+  const [saving, setSaving] = useState(false);
+
+  // Initialize limits from user profile
+  useEffect(() => {
+    if (profile) {
+      if (typeof profile.dailyLimit === 'number') setDailyLimit(profile.dailyLimit);
+      if (typeof profile.monthlyLimit === 'number') setMonthlyLimit(profile.monthlyLimit);
+    }
+  }, [profile]);
+
+  // Save limit to DB
+  async function saveLimit(type: 'daily' | 'monthly', value: number) {
+    if (!profile?.id) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: profile.id,
+          ...(type === 'daily' ? { dailyLimit: value } : { monthlyLimit: value })
+        })
+      });
+      if (!res.ok) throw new Error('Failed to save limit');
+      const updated = await res.json();
+      if (type === 'daily') setDailyLimit(updated.dailyLimit);
+      if (type === 'monthly') setMonthlyLimit(updated.monthlyLimit);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -176,7 +210,12 @@ export default function ProfilePage() {
         {/* Spend Limits Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Spend Limits</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Spend Limits
+              <Tooltip content="These limits control the maximum USDC the app can spend on your behalf per day or month. You can adjust them anytime.">
+                <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
+              </Tooltip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -185,32 +224,55 @@ export default function ProfilePage() {
                   <div className="font-medium">Daily Limit</div>
                   <div className="text-sm text-muted-foreground">Maximum tips per day</div>
                 </div>
-                <input
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={dailyLimit}
-                  onChange={(e) => setDailyLimit(Number(e.target.value))}
-                  className="border rounded px-2 py-1 w-24 text-right"
-                  aria-label="Daily Limit in USDC"
-                />
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground text-sm">$</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10000}
+                      value={dailyLimit}
+                      onChange={(e) => saveLimit('daily', Number(e.target.value))}
+                      className="border rounded px-2 py-1 w-20 text-right"
+                      aria-label="Daily Limit in USDC"
+                      disabled={saving}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">USDC per day</span>
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">Monthly Limit</div>
                   <div className="text-sm text-muted-foreground">Maximum tips per month</div>
                 </div>
-                <input
-                  type="number"
-                  min={1}
-                  max={100000}
-                  value={monthlyLimit}
-                  onChange={(e) => setMonthlyLimit(Number(e.target.value))}
-                  className="border rounded px-2 py-1 w-24 text-right"
-                  aria-label="Monthly Limit in USDC"
-                />
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground text-sm">$</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100000}
+                      value={monthlyLimit}
+                      onChange={(e) => saveLimit('monthly', Number(e.target.value))}
+                      className="border rounded px-2 py-1 w-20 text-right"
+                      aria-label="Monthly Limit in USDC"
+                      disabled={saving}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">USDC per month</span>
+                </div>
               </div>
-              <Button onClick={() => setShowSpendPermission((v) => !v)}>Adjust Limits</Button>
+              {saving && (
+                <div className="text-xs text-blue-500 animate-pulse">Saving limits...</div>
+              )}
+              {!saving &&
+                (dailyLimit !== profile?.dailyLimit || monthlyLimit !== profile?.monthlyLimit) && (
+                  <div className="text-xs text-green-600">Limits updated!</div>
+                )}
+              <Button onClick={() => setShowSpendPermission((v) => !v)} disabled={saving}>
+                Adjust Limits
+              </Button>
               {showSpendPermission && (
                 <div className="mt-4">
                   <SpendPermission dailyLimit={dailyLimit} monthlyLimit={monthlyLimit} />
