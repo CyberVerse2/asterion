@@ -61,18 +61,14 @@ export default function ProfilePage() {
               }
             />
             <AvatarFallback className="text-2xl">
-              {typeof profile?.farcasterUsername === 'string' &&
-              profile.farcasterUsername.length > 0
-                ? profile.farcasterUsername.charAt(0).toUpperCase()
+              {typeof profile?.username === 'string' && profile.username.length > 0
+                ? profile.username.charAt(0).toUpperCase()
                 : '?'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-2">
-              @
-              {typeof profile?.farcasterUsername === 'string'
-                ? profile.farcasterUsername
-                : 'unknown'}
+              @{typeof profile?.username === 'string' ? profile.username : 'unknown'}
             </h1>
             <p className="text-muted-foreground">Asterion Reader & Supporter</p>
           </div>

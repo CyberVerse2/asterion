@@ -1,6 +1,6 @@
 export interface User {
   id: string;
-  farcasterUsername: string;
+  username: string;
   novels: string[];
   bookmarks: string[];
   tips: Tip[];
