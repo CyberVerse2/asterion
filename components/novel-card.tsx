@@ -1,26 +1,27 @@
-import Image from "next/image"
-import Link from "next/link"
-import { Heart, Users, Star } from "lucide-react"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import Image from 'next/image';
+import Link from 'next/link';
+import { Heart, Users, Star } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface NovelCardProps {
   novel: {
-    id: string
-    title: string
-    author: string
-    description: string
-    coverImage?: string
-    totalTips: number
-    tipCount: number
-    loves: number
-    chapters: { id: string; title: string }[]
-  }
+    id: string;
+    title: string;
+    author: string;
+    description: string;
+    coverImage?: string;
+    totalTips: number;
+    tipCount: number;
+    loves: number;
+    chapters: { id: string; title: string }[];
+    totalChapters?: string;
+    views?: string;
+  };
 }
 
 export default function NovelCard({ novel }: NovelCardProps) {
-  const rating = (4.0 + Math.random() * 1.0).toFixed(1)
-  const views = (Math.random() * 50 + 10).toFixed(1) + "M"
+  const rating = (4.0 + Math.random() * 1.0).toFixed(1);
 
   return (
     <Link href={`/novels/${novel.id}`}>
@@ -28,7 +29,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
         <CardHeader className="p-0">
           <div className="relative aspect-[3/4] w-full">
             <Image
-              src={novel.coverImage || "/placeholder.svg?height=400&width=300"}
+              src={novel.coverImage || '/placeholder.svg?height=400&width=300'}
               alt={novel.title}
               fill
               className="object-cover rounded-t-lg"
@@ -37,7 +38,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
               <Badge className="bg-green-600 text-white border-0">COMPLETED</Badge>
             </div>
             <div className="absolute top-2 left-2">
-              <Badge variant="secondary" className="bg-red-600 text-white border-0">
+              <Badge className="bg-red-600 text-white border-0">
                 RANK {Math.floor(Math.random() * 100) + 1}
               </Badge>
             </div>
@@ -62,11 +63,19 @@ export default function NovelCard({ novel }: NovelCardProps) {
           <div className="stats-card rounded-lg p-3">
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
-                <div className="text-lg font-bold text-white">{(novel.chapters.length / 1000).toFixed(2)}K</div>
+                <div className="text-lg font-bold text-white">
+                  {(() => {
+                    const chaptersNum = Number(novel.totalChapters);
+                    if (!isNaN(chaptersNum) && chaptersNum > 0) {
+                      return (chaptersNum / 1000).toFixed(2) + 'K';
+                    }
+                    return '0K';
+                  })()}
+                </div>
                 <div className="text-xs text-gray-400">CHAPTERS</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-white">{views}</div>
+                <div className="text-lg font-bold text-white">{novel.views || '0'}</div>
                 <div className="text-xs text-gray-400">VIEWS</div>
               </div>
             </div>
@@ -74,8 +83,11 @@ export default function NovelCard({ novel }: NovelCardProps) {
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2">
-            {["Action", "Adventure", "Fantasy"].map((category) => (
-              <span key={category} className="category-tag px-3 py-1 rounded-full text-xs text-gray-300">
+            {['Action', 'Adventure', 'Fantasy'].map((category) => (
+              <span
+                key={category}
+                className="category-tag px-3 py-1 rounded-full text-xs text-gray-300"
+              >
                 {category}
               </span>
             ))}
@@ -96,11 +108,13 @@ export default function NovelCard({ novel }: NovelCardProps) {
                   <span>{novel.tipCount}</span>
                 </div>
               </div>
-              <div className="text-purple-400 font-medium">${novel.totalTips.toFixed(2)} tipped</div>
+              <div className="text-purple-400 font-medium">
+                ${novel.totalTips.toFixed(2)} tipped
+              </div>
             </div>
           </div>
         </CardFooter>
       </Card>
     </Link>
-  )
+  );
 }

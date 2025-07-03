@@ -33,11 +33,13 @@ interface Novel {
     amount: number;
     date: string;
   }>;
+  totalChapters?: string;
 }
 
 export default function NovelPage() {
   const params = useParams();
   const [novel, setNovel] = useState<Novel | null>(null);
+  const [chapters, setChapters] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isReading, setIsReading] = useState(false);
@@ -45,22 +47,30 @@ export default function NovelPage() {
   const { user } = useUser();
 
   useEffect(() => {
-    const fetchNovel = async () => {
+    const fetchNovelAndChapters = async () => {
       try {
         const response = await fetch(`/api/novels/${params.id}`);
         if (response.ok) {
           const data = await response.json();
           setNovel(data);
+          // Fetch chapters for this novel
+          const chaptersRes = await fetch(`/api/chapters?novelId=${data.id}`);
+          if (chaptersRes.ok) {
+            const chaptersData = await chaptersRes.json();
+            setChapters(chaptersData);
+          } else {
+            setChapters([]);
+          }
         }
       } catch (error) {
-        console.error('Error fetching novel:', error);
+        console.error('Error fetching novel or chapters:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (params.id) {
-      fetchNovel();
+      fetchNovelAndChapters();
     }
   }, [params.id]);
 
@@ -115,7 +125,7 @@ export default function NovelPage() {
           </Button>
         </div>
         <ChapterReader
-          chapters={novel.chapters}
+          chapters={chapters}
           currentChapterIndex={currentChapterIndex}
           onChapterChange={setCurrentChapterIndex}
         />
@@ -176,7 +186,7 @@ export default function NovelPage() {
           <div className="grid grid-cols-4 gap-4 text-center">
             <div>
               <div className="text-lg font-bold text-white">
-                {(novel.chapters.length / 1000).toFixed(2)}K
+                {((Number(novel.totalChapters) || chapters.length) / 1000).toFixed(2)}K
               </div>
               <div className="text-xs text-gray-400">CHAPTERS</div>
             </div>
