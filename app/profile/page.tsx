@@ -467,9 +467,13 @@ export default function ProfilePage() {
                       <div className="font-medium">
                         {tip.novel?.title || `Novel ID: ${tip.novelId}`}
                       </div>
-                      {tip.chapter && (
+                      {tip.chapter ? (
                         <div className="text-sm font-medium text-purple-400">
                           Chapter: {tip.chapter.title}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          Chapter information not available
                         </div>
                       )}
                       <div className="text-sm text-muted-foreground">

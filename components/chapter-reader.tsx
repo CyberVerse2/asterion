@@ -113,6 +113,8 @@ export default function ChapterReader({
 
       // Auto-tip when loving a chapter (only if not already loved)
       if (!hasLoved) {
+        // Set hasLoved immediately for instant UI feedback
+        setHasLoved(true);
         setTradePending(true);
         setTradeError(null);
         setTradeSuccess(false);
@@ -130,7 +132,6 @@ export default function ChapterReader({
           const data = await response.json();
           if (response.ok && data.status === 'success') {
             setTipCount(data.tipCount);
-            setHasLoved(true);
             setTradeSuccess(true);
 
             // Refresh user data to update tipping history
@@ -143,13 +144,19 @@ export default function ChapterReader({
               onChapterTipped(currentChapter.id, data.tipCount);
             }
           } else if (data.error === 'User has not granted spend permission') {
+            // Revert hasLoved state on error
+            setHasLoved(false);
             setTradeError(
               'Please approve spend permission in your profile before loving chapters.'
             );
           } else {
+            // Revert hasLoved state on error
+            setHasLoved(false);
             setTradeError('Auto-tip failed. Please try again.');
           }
         } catch (err: any) {
+          // Revert hasLoved state on error
+          setHasLoved(false);
           setTradeError(err.message || 'Auto-tip failed');
         }
 
