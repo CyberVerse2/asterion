@@ -37,6 +37,9 @@ export default function ProfilePage() {
   const [showSpendPermission, setShowSpendPermission] = useState(false);
   const [spendLimit, setSpendLimit] = useState(100);
   const [saving, setSaving] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [approved, setApproved] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
 
   // Initialize spendLimit from user profile
   useEffect(() => {
@@ -239,16 +242,17 @@ export default function ProfilePage() {
               {!saving && spendLimit !== profile?.spendLimit && (
                 <div className="text-xs text-green-600">Limit updated!</div>
               )}
-              <Button onClick={() => setShowSpendPermission(true)} disabled={saving}>
-                Approve Spend
+              <Button onClick={handleApproveSpend} disabled={saving || approving}>
+                {approving ? 'Approving...' : approved ? 'Permission Granted' : 'Approve Spend'}
               </Button>
-              {showSpendPermission && (
-                <div className="mt-4">
-                  <SpendPermission
-                    spendLimit={spendLimit}
-                    saveSpendLimit={saveSpendLimit}
-                    profileSpendLimit={profile?.spendLimit}
-                  />
+              {approved && (
+                <div className="text-green-600 dark:text-green-400 font-medium mt-2">
+                  Spend Permission Signed!
+                </div>
+              )}
+              {approveError && (
+                <div className="text-red-600 dark:text-red-400 font-medium mt-2">
+                  {approveError}
                 </div>
               )}
             </div>
@@ -259,120 +263,58 @@ export default function ProfilePage() {
   );
 }
 
-function SpendPermission({
-  spendLimit,
-  saveSpendLimit,
-  profileSpendLimit
-}: {
-  spendLimit: number;
-  saveSpendLimit: (value: number) => Promise<void>;
-  profileSpendLimit?: number;
-}) {
-  const [isDisabled, setIsDisabled] = useState(false);
-  const [signature, setSignature] = useState<Hex>();
-  const [spendPermission, setSpendPermission] = useState<any>();
-  const [error, setError] = useState<string | null>(null);
-
-  const { signTypedDataAsync } = useSignTypedData();
-  const account = useAccount();
-  const chainId = useChainId();
-  const { connectAsync } = useConnect();
-  const connectors = useConnectors();
-
-  async function handleSubmit() {
-    setIsDisabled(true);
-    setError(null);
-    let accountAddress = account?.address;
-    console.log('[SpendPermission] account.address:', account?.address);
-    console.log(
-      '[SpendPermission] NEXT_PUBLIC_SPENDER_ADDRESS:',
-      process.env.NEXT_PUBLIC_SPENDER_ADDRESS
-    );
-    console.log('[SpendPermission] spendPermissionManagerAddress:', spendPermissionManagerAddress);
+// Approve Spend logic (single-step)
+async function handleApproveSpend() {
+  setApproving(true);
+  setApproveError(null);
+  let accountAddress = account?.address;
+  try {
     if (!accountAddress) {
-      try {
-        const requestAccounts = await connectAsync({ connector: connectors[0] });
-        accountAddress = requestAccounts.accounts[0];
-        console.log('[SpendPermission] Connected account:', accountAddress);
-      } catch (e) {
-        setError('Wallet connection failed');
-        setIsDisabled(false);
-        return;
-      }
+      const requestAccounts = await connectAsync({ connector: connectors[0] });
+      accountAddress = requestAccounts.accounts[0];
     }
-
-    // Use spendLimit for allowance
-    const allowance = spendLimit;
-    const period = 2592000; // 30 days in seconds (or any default period)
-
-    // Define the spend permission object for USDC only
+    // Save spendLimit to DB if changed
+    if (spendLimit !== profile?.spendLimit) {
+      await saveSpendLimit(spendLimit);
+    }
+    // Prepare spend permission
     const spendPermission = {
       account: accountAddress,
       spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
       token: USDC_ADDRESS,
-      allowance: parseUnits(allowance.toString(), 6), // USDC (6 decimals)
-      period,
+      allowance: parseUnits(spendLimit.toString(), 6),
+      period: 2592000,
       start: 0,
       end: 281474976710655,
       salt: BigInt(0),
       extraData: '0x' as Hex
     };
-
-    try {
-      const signature = await signTypedDataAsync({
-        domain: {
-          name: 'Spend Permission Manager',
-          version: '1',
-          chainId: chainId,
-          verifyingContract: spendPermissionManagerAddress
-        },
-        types: {
-          SpendPermission: [
-            { name: 'account', type: 'address' },
-            { name: 'spender', type: 'address' },
-            { name: 'token', type: 'address' },
-            { name: 'allowance', type: 'uint160' },
-            { name: 'period', type: 'uint48' },
-            { name: 'start', type: 'uint48' },
-            { name: 'end', type: 'uint48' },
-            { name: 'salt', type: 'uint256' },
-            { name: 'extraData', type: 'bytes' }
-          ]
-        },
-        primaryType: 'SpendPermission',
-        message: spendPermission
-      });
-      setSpendPermission(spendPermission);
-      setSignature(signature);
-
-      // Save spendLimit to DB if changed
-      if (spendLimit !== profileSpendLimit) {
-        await saveSpendLimit(spendLimit);
-      }
-    } catch (e: any) {
-      setError(e.message || 'Signature failed');
-    }
-    setIsDisabled(false);
+    await signTypedDataAsync({
+      domain: {
+        name: 'Spend Permission Manager',
+        version: '1',
+        chainId: chainId,
+        verifyingContract: spendPermissionManagerAddress
+      },
+      types: {
+        SpendPermission: [
+          { name: 'account', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'token', type: 'address' },
+          { name: 'allowance', type: 'uint160' },
+          { name: 'period', type: 'uint48' },
+          { name: 'start', type: 'uint48' },
+          { name: 'end', type: 'uint48' },
+          { name: 'salt', type: 'uint256' },
+          { name: 'extraData', type: 'bytes' }
+        ]
+      },
+      primaryType: 'SpendPermission',
+      message: spendPermission
+    });
+    setApproved(true);
+  } catch (e: any) {
+    setApproveError(e.message || 'Signature failed');
   }
-
-  return (
-    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-      <h3 className="font-semibold mb-2">Manage Spend Permission</h3>
-      <div className="mb-2 text-sm text-muted-foreground">
-        Granting permission for: <b>Spend Limit (${spendLimit})</b>
-      </div>
-      <Button onClick={handleSubmit} disabled={isDisabled || !!signature}>
-        {signature ? 'Permission Granted' : 'Approve Spend'}
-      </Button>
-      {signature && (
-        <div className="text-green-600 dark:text-green-400 font-medium mt-2">
-          Spend Permission Signed!
-        </div>
-      )}
-      {error && <div className="text-red-600 dark:text-red-400 font-medium mt-2">{error}</div>}
-      <div className="text-xs text-muted-foreground mt-2">
-        This allows the app to spend up to your limit automatically.
-      </div>
-    </div>
-  );
+  setApproving(false);
 }
