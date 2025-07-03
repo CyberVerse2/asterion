@@ -47,10 +47,10 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   console.log('[PATCH /api/users] Incoming request');
   try {
-    const { userId, novelId } = await req.json();
-    console.log('[PATCH /api/users] Payload:', { userId, novelId });
-    if (!userId || !novelId) {
-      return NextResponse.json({ error: 'userId and novelId are required' }, { status: 400 });
+    const { userId, novelId, dailyLimit, monthlyLimit } = await req.json();
+    console.log('[PATCH /api/users] Payload:', { userId, novelId, dailyLimit, monthlyLimit });
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
     // Find the user
@@ -60,15 +60,29 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Add novelId to bookmarks if not already present
-    const bookmarks = Array.isArray(user.bookmarks) ? user.bookmarks : [];
-    if (!bookmarks.includes(novelId)) {
-      bookmarks.push(novelId);
+    // If novelId is present, update bookmarks as before
+    let updateData: any = {};
+    if (novelId) {
+      const bookmarks = Array.isArray(user.bookmarks) ? user.bookmarks : [];
+      if (!bookmarks.includes(novelId)) {
+        bookmarks.push(novelId);
+      }
+      updateData.bookmarks = bookmarks;
+    }
+    // If dailyLimit or monthlyLimit is present, update those fields
+    if (typeof dailyLimit === 'number') {
+      updateData.dailyLimit = dailyLimit;
+    }
+    if (typeof monthlyLimit === 'number') {
+      updateData.monthlyLimit = monthlyLimit;
+    }
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { bookmarks }
+      data: updateData
     });
     console.log('[PATCH /api/users] Updated user:', updatedUser);
 
