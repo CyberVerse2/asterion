@@ -97,8 +97,8 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - [ ] Test with new and existing users
 - [x] Add USDC token address constant
 - [x] Update SpendPermission component for USDC only
-- [ ] Make spend limits adjustable in the UI
-- [ ] Update SpendPermission logic to use user inputs
+- [x] Make spend limits adjustable in the UI
+- [x] Update SpendPermission logic to use user inputs
 - [ ] Persist user spend limits
 - [ ] UI/UX improvements for clarity
 - [ ] Test all flows (USDC, custom limits, persistence)
@@ -114,6 +114,8 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - Please verify in the UI and confirm if everything works as expected.
 - USDC token address constant (0xd9aAC23E6A83242c5d306341aCfD7A71A9C6e7B0) has been added to lib/abi/SpendPermissionManager.ts as USDC_ADDRESS.
 - SpendPermission component in app/profile/page.tsx now uses only USDC (with correct decimals) for spend permissions. ETH is no longer referenced.
+- Daily and monthly spend limits are now adjustable input fields in the UI and passed as props to SpendPermission.
+- User can now select whether to grant a daily or monthly spend permission; the correct limit and period are used in the spend permission logic.
 
 # Lessons
 

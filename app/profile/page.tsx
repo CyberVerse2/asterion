@@ -34,6 +34,8 @@ export default function ProfilePage() {
     userError
   } = useUser() as { user: User | null; userLoading: boolean; userError: string | null };
   const [showSpendPermission, setShowSpendPermission] = useState(false);
+  const [dailyLimit, setDailyLimit] = useState(50);
+  const [monthlyLimit, setMonthlyLimit] = useState(200);
 
   if (isLoading) {
     return (
@@ -121,7 +123,9 @@ export default function ProfilePage() {
               <div className="text-2xl font-bold">
                 {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
               </div>
-              <p className="text-xs text-muted-foreground">Stories you've saved to your library</p>
+              <p className="text-xs text-muted-foreground">
+                Stories you&apos;ve saved to your library
+              </p>
             </CardContent>
           </Card>
 
@@ -181,19 +185,35 @@ export default function ProfilePage() {
                   <div className="font-medium">Daily Limit</div>
                   <div className="text-sm text-muted-foreground">Maximum tips per day</div>
                 </div>
-                <Badge>$50.00</Badge>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={dailyLimit}
+                  onChange={(e) => setDailyLimit(Number(e.target.value))}
+                  className="border rounded px-2 py-1 w-24 text-right"
+                  aria-label="Daily Limit in USDC"
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">Monthly Limit</div>
                   <div className="text-sm text-muted-foreground">Maximum tips per month</div>
                 </div>
-                <Badge>$200.00</Badge>
+                <input
+                  type="number"
+                  min={1}
+                  max={100000}
+                  value={monthlyLimit}
+                  onChange={(e) => setMonthlyLimit(Number(e.target.value))}
+                  className="border rounded px-2 py-1 w-24 text-right"
+                  aria-label="Monthly Limit in USDC"
+                />
               </div>
               <Button onClick={() => setShowSpendPermission((v) => !v)}>Adjust Limits</Button>
               {showSpendPermission && (
                 <div className="mt-4">
-                  <SpendPermission />
+                  <SpendPermission dailyLimit={dailyLimit} monthlyLimit={monthlyLimit} />
                 </div>
               )}
             </div>
@@ -204,11 +224,18 @@ export default function ProfilePage() {
   );
 }
 
-function SpendPermission() {
+function SpendPermission({
+  dailyLimit,
+  monthlyLimit
+}: {
+  dailyLimit: number;
+  monthlyLimit: number;
+}) {
   const [isDisabled, setIsDisabled] = useState(false);
   const [signature, setSignature] = useState<Hex>();
   const [spendPermission, setSpendPermission] = useState<any>();
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'daily' | 'monthly'>('daily');
 
   const { signTypedDataAsync } = useSignTypedData();
   const account = useAccount();
@@ -240,13 +267,17 @@ function SpendPermission() {
       }
     }
 
+    // Determine which limit to use
+    const allowance = mode === 'daily' ? dailyLimit : monthlyLimit;
+    const period = mode === 'daily' ? 86400 : 2592000; // 1 day or 30 days in seconds
+
     // Define the spend permission object for USDC only
     const spendPermission = {
       account: accountAddress,
       spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
       token: USDC_ADDRESS,
-      allowance: parseUnits('10', 6), // 10 USDC (USDC has 6 decimals)
-      period: 86400, // 1 day
+      allowance: parseUnits(allowance.toString(), 6), // USDC (6 decimals)
+      period,
       start: 0,
       end: 281474976710655,
       salt: BigInt(0),
@@ -288,6 +319,34 @@ function SpendPermission() {
   return (
     <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
       <h3 className="font-semibold mb-2">Manage Spend Permission</h3>
+      <div className="mb-2 flex gap-4">
+        <label className="flex items-center gap-1">
+          <input
+            type="radio"
+            name="spend-permission-mode"
+            value="daily"
+            checked={mode === 'daily'}
+            onChange={() => setMode('daily')}
+          />
+          Daily Limit
+        </label>
+        <label className="flex items-center gap-1">
+          <input
+            type="radio"
+            name="spend-permission-mode"
+            value="monthly"
+            checked={mode === 'monthly'}
+            onChange={() => setMode('monthly')}
+          />
+          Monthly Limit
+        </label>
+      </div>
+      <div className="mb-2 text-sm text-muted-foreground">
+        Granting permission for:{' '}
+        <b>
+          {mode === 'daily' ? `Daily Limit ($${dailyLimit})` : `Monthly Limit ($${monthlyLimit})`}
+        </b>
+      </div>
       <Button onClick={handleSubmit} disabled={isDisabled || !!signature}>
         {signature ? 'Permission Granted' : 'Grant Spend Permission'}
       </Button>

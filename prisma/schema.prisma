@@ -18,6 +18,8 @@ model User {
   supporters Supporter[]
   createdAt  DateTime? @map("createdAt")
   updatedAt  DateTime? @map("updatedAt")
+  dailyLimit Float    @default(50)
+  monthlyLimit Float   @default(200)
 }
 
 model Tip {
