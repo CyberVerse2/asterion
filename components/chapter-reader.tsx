@@ -61,6 +61,11 @@ export default function ChapterReader({
   const [tradePending, setTradePending] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
   const [tradeSuccess, setTradeSuccess] = useState(false);
+
+  // Get user's chapter tip amount with fallback
+  const chapterTipAmount = user?.chapterTipAmount || 0.01;
+  const tipAmountDisplay = chapterTipAmount.toFixed(2);
+
   // Hybrid context: prefer Farcaster miniapp context if present, else Wagmi
   let farcasterAddress: string | undefined = undefined;
   let farcasterSigner: any = undefined;
@@ -137,7 +142,7 @@ export default function ChapterReader({
         try {
           if (!user || !user.id) throw new Error('User not logged in');
 
-          // Call backend to automatically tip 0.01 USDC when loving
+          // Call backend to automatically tip when loving
           const response = await fetch('/api/tip-chapter', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -225,7 +230,7 @@ export default function ChapterReader({
                   onClick={handleLove}
                   disabled={hasLoved}
                   className="focus:outline-none"
-                  aria-label="Love this chapter and tip author 0.01 USDC"
+                  aria-label={`Love this chapter ${tipAmountDisplay} USDC`}
                 >
                   <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
                 </button>
@@ -259,11 +264,13 @@ export default function ChapterReader({
 
           {/* Tip feedback */}
           {tradePending && (
-            <div className="text-blue-400 mt-2">Tipping author (0.01 USDC) in progress...</div>
+            <div className="text-blue-400 mt-2">
+              Tipping author ({tipAmountDisplay} USDC) in progress...
+            </div>
           )}
           {tradeSuccess && (
             <div className="text-green-400 mt-2">
-              Tipped! You automatically sent 0.01 USDC to support the author ❤️
+              Tipped! You automatically sent {tipAmountDisplay} USDC to support the author ❤️
             </div>
           )}
           {tradeError && <div className="text-red-400 mt-2">{tradeError}</div>}
@@ -280,7 +287,7 @@ export default function ChapterReader({
 
             <div className="text-sm text-gray-400 text-center max-w-xs">
               <div className="love-hint">
-                Click the ❤️ to love this chapter & tip author (0.01 USDC)
+                Click the ❤️ to love this chapter & tip author ({tipAmountDisplay} USDC)
               </div>
             </div>
 

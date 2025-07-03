@@ -125,6 +125,7 @@ export default function ProfilePage() {
   } = useUser() as { user: User | null; userLoading: boolean; userError: string | null };
   const [showSpendPermission, setShowSpendPermission] = useState(false);
   const [spendLimit, setSpendLimit] = useState(100);
+  const [chapterTipAmount, setChapterTipAmount] = useState(0.01);
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
@@ -137,10 +138,13 @@ export default function ProfilePage() {
   const [transactionStatus, setTransactionStatus] = useState<string | null>(null);
   const [transactionUrl, setTransactionUrl] = useState<string | null>(null);
 
-  // Initialize spendLimit from user profile
+  // Initialize spendLimit and chapterTipAmount from user profile
   useEffect(() => {
     if (profile && typeof profile.spendLimit === 'number') {
       setSpendLimit(profile.spendLimit);
+    }
+    if (profile && typeof profile.chapterTipAmount === 'number') {
+      setChapterTipAmount(profile.chapterTipAmount);
     }
   }, [profile]);
 
@@ -164,6 +168,26 @@ export default function ProfilePage() {
     }
   }
 
+  // Save chapterTipAmount to DB
+  async function saveChapterTipAmount(value: number) {
+    if (!profile?.id) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: profile.id, chapterTipAmount: value })
+      });
+      if (!res.ok) throw new Error('Failed to save chapter tip amount');
+      const updated = await res.json();
+      setChapterTipAmount(updated.chapterTipAmount);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // Move handleApproveSpend inside the component
   async function handleApproveSpend() {
     setApproving(true);
@@ -179,6 +203,10 @@ export default function ProfilePage() {
       // Save spendLimit to DB if changed
       if (spendLimit !== profile?.spendLimit) {
         await saveSpendLimit(spendLimit);
+      }
+      // Save chapterTipAmount to DB if changed
+      if (chapterTipAmount !== profile?.chapterTipAmount) {
+        await saveChapterTipAmount(chapterTipAmount);
       }
       // Prepare spend permission with correct native types for EIP-712 signing
       // Generate unique salt to avoid hash collisions - use timestamp + user address for uniqueness
@@ -469,7 +497,7 @@ export default function ProfilePage() {
                       </div>
                       {tip.chapter ? (
                         <div className="text-sm font-medium text-purple-400">
-                          Chapter: {tip.chapter.title}
+                          {tip.chapter.title}
                         </div>
                       ) : (
                         <div className="text-sm text-gray-500">
@@ -500,18 +528,19 @@ export default function ProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              Spend Limit
-              <Tooltip content="This limit controls the maximum USDC the app can spend on your behalf. You can adjust it anytime.">
+              Spend Settings
+              <Tooltip content="These settings control how much USDC the app can spend on your behalf. You can adjust them anytime.">
                 <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
               </Tooltip>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Overall Spend Limit */}
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium">Spend Limit</div>
-                  <div className="text-sm text-muted-foreground">Maximum tips allowed</div>
+                  <div className="font-medium">Overall Spend Limit</div>
+                  <div className="text-sm text-muted-foreground">Maximum total USDC allowed</div>
                 </div>
                 <div className="flex flex-col items-end">
                   <div className="flex items-center gap-1">
@@ -530,10 +559,40 @@ export default function ProfilePage() {
                   <span className="text-xs text-muted-foreground">USDC</span>
                 </div>
               </div>
-              {saving && <div className="text-xs text-blue-500 animate-pulse">Saving limit...</div>}
-              {!saving && spendLimit !== profile?.spendLimit && (
-                <div className="text-xs text-green-600">Limit updated!</div>
+
+              {/* Chapter Tip Amount */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Chapter Tip Amount</div>
+                  <div className="text-sm text-muted-foreground">USDC per chapter when loving</div>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground text-sm">$</span>
+                    <input
+                      type="number"
+                      min={0.01}
+                      max={10}
+                      step={0.01}
+                      value={chapterTipAmount}
+                      onChange={(e) => setChapterTipAmount(Number(e.target.value))}
+                      className="border rounded px-2 py-1 w-24 text-right text-black"
+                      aria-label="Chapter Tip Amount in USDC"
+                      disabled={saving}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">USDC</span>
+                </div>
+              </div>
+
+              {saving && (
+                <div className="text-xs text-blue-500 animate-pulse">Saving settings...</div>
               )}
+              {!saving &&
+                (spendLimit !== profile?.spendLimit ||
+                  chapterTipAmount !== profile?.chapterTipAmount) && (
+                  <div className="text-xs text-green-600">Settings updated!</div>
+                )}
               <Button onClick={handleApproveSpend} disabled={saving || approving}>
                 {approving ? 'Approving...' : approved ? 'Permission Granted' : 'Approve Spend'}
               </Button>

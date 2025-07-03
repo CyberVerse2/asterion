@@ -54,10 +54,16 @@ export async function POST(request: NextRequest) {
     console.log('[tip-chapter] SpendPermission:', spendPermission);
     console.log('[tip-chapter] Signature:', signature);
 
-    // Spend 0.01 USDC (6 decimals) = 10000 wei
-    const tipAmountUSD = 0.01;
-    const amount = BigInt(tipAmountUSD * 10 ** 6); // 10000 wei for 0.01 USDC
-    console.log('[tip-chapter] Spending amount (USDC, 6 decimals):', amount.toString());
+    // Use user's custom chapter tip amount, fallback to 0.01 USDC
+    const tipAmountUSD = user.chapterTipAmount || 0.01;
+    const amount = BigInt(Math.round(tipAmountUSD * 10 ** 6)); // Convert to USDC wei (6 decimals)
+    console.log(
+      '[tip-chapter] Spending amount (USDC, 6 decimals):',
+      amount.toString(),
+      'for',
+      tipAmountUSD,
+      'USDC'
+    );
 
     const spenderBundlerClient = await getSpenderWalletClient();
     const publicClient = await getPublicClient();
