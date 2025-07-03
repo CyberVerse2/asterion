@@ -217,42 +217,59 @@ I have successfully implemented the wallet-username association feature as the *
 
 **3. User API Endpoint Updates (✅ Complete):**
 
-- Extended `/api/users` POST to accept optional `walletAddress` parameter
+- Extended `/api/users` POST method to accept optional `walletAddress`
 - Implemented dual lookup logic: find by `fid/username` OR `walletAddress`
 - Added automatic username generation for wallet-only users
-- **Existing user address updates:** When existing users connect wallets, their records are updated
-- **Conflict detection:** Prevents duplicate wallet address associations with proper error handling
-- Updated PATCH method to support wallet address updates with conflict resolution
+- Implemented existing user address updates with conflict detection
+- Updated PATCH method to support wallet address updates
+- Added comprehensive error handling for wallet address conflicts
 
 **4. UserProvider Integration (✅ Complete):**
 
-- Extended UserProvider to detect wallet connections via `useAccount` hook
-- Implemented dual-path logic: Farcaster context takes priority, wallet as fallback
-- Added wallet-only user creation when no Farcaster context is available
-- **Address update logic:** Existing Farcaster users automatically get wallet addresses when they connect
+- Extended `providers/UserProvider.tsx` to use wagmi's `useAccount` hook
+- Added wallet connection detection logic
+- Implemented dual-path authentication: Farcaster context priority, wallet fallback
+- Added helper function `createOrFetchUser()` for both authentication methods
 - Maintained full backward compatibility with existing Farcaster flow
 
 **5. Frontend Types Update (✅ Complete):**
 
-- Updated User interface in `lib/types.ts` to include optional `walletAddress` field
+- Updated `lib/types.ts` User interface to include optional `walletAddress` field
 - Made `fid` and `username` optional to support wallet-only users
-- All existing components will continue to work due to optional fields
 
-**6. Existing User Address Handling (✅ Complete):**
+**6. Database Migration Issues Resolved (✅ Complete):**
 
-- Implemented automatic wallet address population for existing users
-- Added conflict resolution for duplicate wallet addresses
-- Both API and UserProvider handle existing user updates seamlessly
+- Resolved Prisma client recognition issues with `walletAddress` field
+- Fixed MongoDB unique constraint conflicts with null values
+- Removed unique constraint from schema, implemented manual checking in API
+- Updated conflict detection logic to handle wallet address uniqueness
+- Successfully regenerated Prisma client and pushed schema changes
 
-**NEXT STEP:**
-The final task is comprehensive testing of the wallet-username association flow. This should include:
+**TESTING RESULTS (✅ Complete):**
+All major flows tested and confirmed working:
 
-- Testing new wallet user creation with generated usernames
-- Testing existing user wallet address updates
-- Testing conflict scenarios
-- Verifying all flows work without breaking existing functionality
+- ✅ New wallet-only users → Random username generated → User created
+- ✅ Existing Farcaster users connecting wallets → Wallet address added to record
+- ✅ Existing wallet users → Found by wallet address
+- ✅ Farcaster users with wallets → Farcaster context prioritized
 
-The implementation is ready for testing. Would you like me to proceed with the testing phase, or would you prefer to manually test the implementation first?
+**NEW TASK COMPLETED - NOVELS RANKING SORT (✅ Complete):**
+
+**7. Home Page Novels Sorting by Rank (✅ Complete):**
+
+- Modified `/api/novels/route.ts` GET endpoint to sort novels by rank
+- Implemented ascending order sorting (rank 1 first, then 2, 3, etc.)
+- Added proper rank parsing with fallback for missing/invalid ranks
+- Fixed TypeScript linter errors with proper type annotations
+- Now novels display in proper ranking order on home page
+
+**Current Status:**
+The wallet-username association feature is fully functional and tested. Additionally, I have implemented the novels ranking sort feature as requested. The home page now displays novels sorted by their rank in ascending order (best-ranked novels first).
+
+**Next Actions Available:**
+
+- Manual testing of the updated novels ranking on the home page
+- Any additional features or refinements needed
 
 # Lessons
 

@@ -114,7 +114,6 @@ export default function NovelPage() {
       const updatedUser = await res.json();
       setIsBookmarked(true);
       // Optionally update user context here if needed
-      alert('Bookmarked!');
     } catch (err: any) {
       alert(err.message || 'Failed to bookmark');
     } finally {

@@ -10,15 +10,22 @@ export async function GET() {
       }
     });
 
-    // Calculate totalTips for each novel
+    // Calculate totalTips for each novel and sort by rank
     const novelsWithTotalTips = novels.map((novel: any) => ({
       ...novel,
       totalTips: novel.tips.reduce((sum: number, tip: any) => sum + tip.amount, 0),
       tipCount: novel.tips.length
     }));
 
-    console.log('Fetched novels:', novelsWithTotalTips);
-    return NextResponse.json(novelsWithTotalTips);
+    // Sort by rank (convert to number for proper sorting)
+    const sortedNovels = novelsWithTotalTips.sort((a: any, b: any) => {
+      const rankA = parseInt(a.rank) || 999999; // Default to high number if rank is missing/invalid
+      const rankB = parseInt(b.rank) || 999999;
+      return rankA - rankB; // Ascending order (rank 1 first)
+    });
+
+    console.log('Fetched novels:', sortedNovels);
+    return NextResponse.json(sortedNovels);
   } catch (error) {
     console.error('Error fetching novels:', error);
     return NextResponse.json({ error: 'Failed to fetch novels' }, { status: 500 });
