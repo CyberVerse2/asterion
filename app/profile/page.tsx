@@ -219,12 +219,19 @@ function SpendPermission() {
     setIsDisabled(true);
     setError(null);
     let accountAddress = account?.address;
+    console.log('[SpendPermission] account.address:', account?.address);
+    console.log(
+      '[SpendPermission] NEXT_PUBLIC_SPENDER_ADDRESS:',
+      process.env.NEXT_PUBLIC_SPENDER_ADDRESS
+    );
+    console.log('[SpendPermission] spendPermissionManagerAddress:', spendPermissionManagerAddress);
     if (!accountAddress) {
       try {
         const requestAccounts = await connectAsync({
           connector: connectors[0]
         });
         accountAddress = requestAccounts.accounts[0];
+        console.log('[SpendPermission] Connected account:', accountAddress);
       } catch (e) {
         setError('Wallet connection failed');
         setIsDisabled(false);
