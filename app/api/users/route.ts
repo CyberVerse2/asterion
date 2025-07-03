@@ -83,18 +83,23 @@ export async function PATCH(req: NextRequest) {
       updateData.spendLimit = spendLimit;
     }
     if (spendPermission) {
-      updateData.spendPermission = deepBigIntToString(spendPermission);
+      const safePermission = deepBigIntToString(spendPermission);
+      console.log('[PATCH /api/users] Storing spendPermission:', safePermission);
+      updateData.spendPermission = safePermission;
     }
     if (spendPermissionSignature) {
+      console.log('[PATCH /api/users] Storing spendPermissionSignature:', spendPermissionSignature);
       updateData.spendPermissionSignature = spendPermissionSignature;
     }
 
     let updatedUser = user;
     if (Object.keys(updateData).length > 0) {
+      console.log('[PATCH /api/users] updateData to be saved:', updateData);
       updatedUser = await prisma.user.update({
         where: { id: userId },
         data: updateData
       });
+      console.log('[PATCH /api/users] Updated user:', updatedUser);
     }
 
     // Optionally handle bookmarks (legacy)
