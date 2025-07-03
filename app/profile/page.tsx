@@ -1,27 +1,26 @@
-"use client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DollarSign, BookOpen, Heart, Settings } from "lucide-react"
-import { mockProfile } from "@/lib/mock-data"
+'use client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DollarSign, BookOpen, Heart, Settings } from 'lucide-react';
+import { mockProfile } from '@/lib/mock-data';
+import { useUser } from '@/providers/UserProvider';
 
 interface UserProfile {
-  farcasterUsername: string
-  totalTipped: number
-  novelsRead: number
-  chaptersLoved: number
+  farcasterUsername: string;
+  totalTipped: number;
+  novelsRead: number;
+  chaptersLoved: number;
   tips: Array<{
-    novelTitle: string
-    amount: number
-    date: string
-  }>
+    novelTitle: string;
+    amount: number;
+    date: string;
+  }>;
 }
 
 export default function ProfilePage() {
-  // Remove the useState and useEffect, and replace with:
-  const profile = mockProfile
-  const isLoading = false
+  const { user: profile, userLoading: isLoading, userError } = useUser();
 
   if (isLoading) {
     return (
@@ -35,10 +34,14 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!profile) return null
+  if (userError) {
+    return <div className="container mx-auto px-4 py-8 text-red-500">Error: {userError}</div>;
+  }
+
+  if (!profile) return null;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,7 +50,9 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6">
           <Avatar className="h-20 w-20">
             <AvatarImage src="/placeholder.svg" />
-            <AvatarFallback className="text-2xl">{profile.farcasterUsername.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="text-2xl">
+              {profile.farcasterUsername.charAt(0).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-2">@{profile.farcasterUsername}</h1>
@@ -103,10 +108,15 @@ export default function ProfilePage() {
           <CardContent>
             <div className="space-y-4">
               {profile.tips.map((tip, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div>
                     <div className="font-medium">{tip.novelTitle}</div>
-                    <div className="text-sm text-muted-foreground">{new Date(tip.date).toLocaleDateString()}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(tip.date).toLocaleDateString()}
+                    </div>
                   </div>
                   <Badge variant="secondary" className="flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
@@ -147,5 +157,5 @@ export default function ProfilePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

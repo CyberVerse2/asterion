@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BookOpen, User } from 'lucide-react';
 import { MiniKitContextProvider } from '@/providers/MiniKitProvider';
+import { UserProvider } from '@/providers/UserProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -38,46 +39,54 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body className={`${inter.className} dark-theme`}>
         <MiniKitContextProvider>
-          <header className="border-b border-white/10 bg-black/50 backdrop-blur supports-[backdrop-filter]:bg-black/30 sticky top-0 z-50">
-            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-3">
-                <BookOpen className="h-6 w-6 text-purple-400" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-xl leading-tight text-white">Asterion</span>
-                  <span className="text-sm text-gray-400 leading-tight">
-                    Discover Amazing Stories
-                  </span>
-                </div>
-              </Link>
+          <UserProvider>
+            <header className="border-b border-white/10 bg-black/50 backdrop-blur supports-[backdrop-filter]:bg-black/30 sticky top-0 z-50">
+              <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-3">
+                  <BookOpen className="h-6 w-6 text-purple-400" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-xl leading-tight text-white">Asterion</span>
+                    <span className="text-sm text-gray-400 leading-tight">
+                      Discover Amazing Stories
+                    </span>
+                  </div>
+                </Link>
 
-              <nav className="hidden md:flex items-center gap-6">
-                <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                  Discover
-                </Link>
-                <Link href="/trending" className="text-gray-400 hover:text-white transition-colors">
-                  Trending
-                </Link>
-                <Link href="/authors" className="text-gray-400 hover:text-white transition-colors">
-                  Authors
-                </Link>
-              </nav>
-
-              <div className="flex items-center gap-4">
-                <Link href="/profile">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/10"
+                <nav className="hidden md:flex items-center gap-6">
+                  <Link href="/" className="text-gray-400 hover:text-white transition-colors">
+                    Discover
+                  </Link>
+                  <Link
+                    href="/trending"
+                    className="text-gray-400 hover:text-white transition-colors"
                   >
-                    <User className="h-4 w-4" />
-                    Profile
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </header>
+                    Trending
+                  </Link>
+                  <Link
+                    href="/authors"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Authors
+                  </Link>
+                </nav>
 
-          <main className="ornate-pattern">{children}</main>
+                <div className="flex items-center gap-4">
+                  <Link href="/profile">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/10"
+                    >
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </header>
+
+            <main className="ornate-pattern">{children}</main>
+          </UserProvider>
         </MiniKitContextProvider>
       </body>
     </html>
