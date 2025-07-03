@@ -11,6 +11,7 @@ import LoveAnimation from './love-animation';
 import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
 import { useAccount, useWalletClient, usePublicClient, useConnect, useConnectors } from 'wagmi';
 import { Address, Account } from 'viem';
+import { useUser } from '@/providers/UserProvider';
 
 interface Chapter {
   id: string;
@@ -50,6 +51,7 @@ export default function ChapterReader({
   currentChapterIndex,
   onChapterChange
 }: ChapterReaderProps) {
+  const { user }: { user: any } = useUser();
   const [tipCount, setTipCount] = useState(chapters[currentChapterIndex]?.tipCount || 0);
   const [hasLoved, setHasLoved] = useState(false);
   const [loveAnimations, setLoveAnimations] = useState<LoveAnimationState[]>([]);
@@ -64,10 +66,7 @@ export default function ChapterReader({
   let farcasterAddress: string | undefined = undefined;
   let farcasterSigner: any = undefined;
   if (typeof window !== 'undefined') {
-    // Log the window object and farcaster context for debugging
-    console.log('window:', window);
     if ((window as any).farcaster) {
-      console.log('window.farcaster:', (window as any).farcaster);
       farcasterAddress =
         (window as any).farcaster.address || (window as any).farcaster.user?.address;
       farcasterSigner = (window as any).farcaster.signer;
@@ -105,55 +104,30 @@ export default function ChapterReader({
         setTradeError(null);
         setTradeSuccess(false);
         try {
-          console.log('--- TRADE DEBUG START ---');
-          console.log('Using address:', address);
-          console.log('Using walletClient:', walletClient);
-          if (!address || !walletClient) throw new Error('Wallet not connected (hybrid context)');
-          const spender = process.env.NEXT_PUBLIC_SPENDER_ADDRESS;
-          if (!spender) throw new Error('Spender address not set');
-          const amount = BigInt(0.1 * 10 ** 6); // 0.1 USDC (6 decimals)
-          console.log('Sending USDC tip:', {
-            from: address,
-            to: spender,
-            amount: amount.toString()
+          if (!user || !user.id) throw new Error('User not loaded');
+          // Call backend to spend via spend permission using user.id
+          const response = await fetch('/api/tip-chapter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chapterId: currentChapter.id, userId: user.id })
           });
-          const hash = await walletClient.writeContract({
-            address: USDC_ADDRESS,
-            abi: ERC20_ABI,
-            functionName: 'transfer',
-            args: [spender, amount],
-            account: address
-          });
-          console.log('USDC transfer tx hash:', hash);
-          setTradeSuccess(true);
-          // Only after successful trade, call the API to increment tip count
-          try {
-            console.log('Calling /api/chapters/' + currentChapter.id + '/love');
-            const response = await fetch(`/api/chapters/${currentChapter.id}/love`, {
-              method: 'POST'
-            });
-            if (response.ok) {
-              const data = await response.json();
-              console.log('API response:', data);
-              setTipCount(data.tipCount);
-              setHasLoved(true);
-            } else {
-              console.error('Failed to update tip count in backend', response.status);
-              setTradeError('Failed to update tip count in backend');
-            }
-          } catch (apiError) {
-            console.error('API error:', apiError);
-            setTradeError('Failed to update tip count in backend');
+          const data = await response.json();
+          if (response.ok && data.status === 'success') {
+            setTipCount(data.tipCount);
+            setHasLoved(true);
+            setTradeSuccess(true);
+          } else if (data.error === 'User has not granted spend permission') {
+            setTradeError('Please approve spend permission in your profile before tipping.');
+          } else {
+            setTradeError('Onchain tip failed.');
           }
         } catch (err: any) {
-          console.error('tradeCoin error:', err);
-          setTradeError(err.message || 'Trade failed');
+          setTradeError(err.message || 'Tip failed');
         }
-        console.log('--- TRADE DEBUG END ---');
         setTradePending(false);
       }
     },
-    [currentChapter.id, hasLoved, address, walletClient]
+    [currentChapter.id, hasLoved, address, user]
   );
 
   const handleMouseDown = useCallback(() => {
