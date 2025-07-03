@@ -186,9 +186,9 @@ export default function ProfilePage() {
         spender: normalizedSpender,
         token: normalizedToken,
         allowance: parseUnits(spendLimit.toString(), 6), // BigInt
-        period: BigInt(2592000), // BigInt (30 days in seconds)
-        start: BigInt(0), // BigInt (immediate start)
-        end: BigInt('0xffffffffffff'), // BigInt (max uint48: 281474976710655)
+        period: 2592000, // number (30 days in seconds) - matching the working example
+        start: Math.ceil(Date.now() / 1000), // number (current unix timestamp) - matching the working example
+        end: Math.ceil(Date.now() / 1000) + 7 * 24 * 60 * 60, // number (7 days from now) - matching the working example
         salt: uniqueSalt, // BigInt (unique salt to prevent hash collisions)
         extraData: '0x' as Hex
       };
@@ -202,11 +202,18 @@ export default function ProfilePage() {
       });
       console.log('[handleApproveSpend] Chain ID being used:', chainId);
 
+      // Ensure we're on Base mainnet (8453)
+      if (chainId !== 8453) {
+        setApproveError(`Please switch to Base mainnet. Current chain: ${chainId}, Expected: 8453`);
+        setApproving(false);
+        return;
+      }
+
       const signature = await signTypedDataAsync({
         domain: {
           name: 'Spend Permission Manager',
           version: '1',
-          chainId: chainId,
+          chainId: chainId, // Keep as number for wagmi compatibility
           verifyingContract: spendPermissionManagerAddress
         },
         types: {
@@ -223,7 +230,7 @@ export default function ProfilePage() {
           ]
         },
         primaryType: 'SpendPermission',
-        message: spendPermission as any
+        message: spendPermission // Pass raw object directly, no string conversion
       });
 
       console.log('[handleApproveSpend] Generated signature:', signature);

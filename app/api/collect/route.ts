@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPublicClient, getSpenderWalletClient } from '@/lib/spender';
-import { getAddress } from 'viem';
+import { getAddress, verifyTypedData } from 'viem';
 import {
   spendPermissionManagerAbi,
   spendPermissionManagerAddress
@@ -26,17 +26,16 @@ export async function POST(request: NextRequest) {
       console.log(`[collect] received field: ${k}, value: ${v}, type: ${typeof v}`);
     });
 
-    // Convert the string values back to proper types for contract call
-    // The signature was created with BigInt values, but JSON transport converts them to strings
-    // Also normalize addresses to ensure checksum consistency
+    // Convert the values back to proper types for contract call
+    // The signature was created with mixed types: BigInt for allowance/salt, numbers for period/start/end
     const contractSpendPermission = {
       account: getAddress(spendPermission.account),
       spender: getAddress(spendPermission.spender),
       token: getAddress(spendPermission.token),
       allowance: BigInt(spendPermission.allowance),
-      period: BigInt(spendPermission.period),
-      start: BigInt(spendPermission.start),
-      end: BigInt(spendPermission.end),
+      period: BigInt(spendPermission.period), // Convert number to BigInt for contract
+      start: BigInt(spendPermission.start), // Convert number to BigInt for contract
+      end: BigInt(spendPermission.end), // Convert number to BigInt for contract
       salt: BigInt(spendPermission.salt),
       extraData: spendPermission.extraData
     };
@@ -48,31 +47,71 @@ export async function POST(request: NextRequest) {
 
     console.log('[collect] About to call approveWithSignature with converted spend permission');
 
-    // Convert to tuple format that the contract expects
-    const spendPermissionTuple = [
-      contractSpendPermission.account,
-      contractSpendPermission.spender,
-      contractSpendPermission.token,
-      contractSpendPermission.allowance,
-      contractSpendPermission.period,
-      contractSpendPermission.start,
-      contractSpendPermission.end,
-      contractSpendPermission.salt,
-      contractSpendPermission.extraData
-    ];
+    // Verify the signature locally before sending to contract
+    // Use the original mixed types for verification to match what was actually signed
+    const messageForVerification = {
+      account: getAddress(spendPermission.account),
+      spender: getAddress(spendPermission.spender),
+      token: getAddress(spendPermission.token),
+      allowance: BigInt(spendPermission.allowance), // Convert back to BigInt
+      period: Number(spendPermission.period), // Keep as number for verification
+      start: Number(spendPermission.start), // Keep as number for verification
+      end: Number(spendPermission.end), // Keep as number for verification
+      salt: BigInt(spendPermission.salt), // Convert back to BigInt
+      extraData: spendPermission.extraData
+    };
 
-    console.log('[collect] SpendPermission tuple for contract:', spendPermissionTuple);
+    console.log('[collect] Message for verification (mixed types):', messageForVerification);
+
+    const isValidSignature = await verifyTypedData({
+      address: getAddress(spendPermission.account),
+      domain: {
+        name: 'Spend Permission Manager',
+        version: '1',
+        chainId: 8453, // Base mainnet
+        verifyingContract: spendPermissionManagerAddress
+      },
+      types: {
+        SpendPermission: [
+          { name: 'account', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'token', type: 'address' },
+          { name: 'allowance', type: 'uint160' },
+          { name: 'period', type: 'uint48' },
+          { name: 'start', type: 'uint48' },
+          { name: 'end', type: 'uint48' },
+          { name: 'salt', type: 'uint256' },
+          { name: 'extraData', type: 'bytes' }
+        ]
+      },
+      primaryType: 'SpendPermission',
+      message: messageForVerification as any,
+      signature: signature as `0x${string}`
+    });
+
+    console.log('[collect] Local signature verification result:', isValidSignature);
+
+    if (!isValidSignature) {
+      console.error('[collect] Signature verification failed locally!');
+      return NextResponse.json(
+        { error: 'Invalid signature - verification failed locally' },
+        { status: 400 }
+      );
+    }
+
+    // Use the contractSpendPermission directly - it already has correct types
+    console.log('[collect] Contract spend permission for contract call:', contractSpendPermission);
     console.log(
-      '[collect] Types of tuple elements:',
-      spendPermissionTuple.map((item, i) => `[${i}]: ${typeof item}`)
+      '[collect] Types of contract object:',
+      Object.entries(contractSpendPermission).map(([k, v]) => `${k}: ${typeof v}`)
     );
 
-    // Use the tuple structure for the contract call
+    // Use the typed object structure for the contract call
     const approvalTxnHash = await spenderBundlerClient.writeContract({
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'approveWithSignature',
-      args: [spendPermissionTuple, signature]
+      args: [contractSpendPermission as any, signature as `0x${string}`]
     });
 
     const approvalReceipt = await publicClient.waitForTransactionReceipt({
@@ -86,7 +125,7 @@ export async function POST(request: NextRequest) {
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'spend',
-      args: [spendPermissionTuple, BigInt(1)] // Spend 1 USDC wei
+      args: [contractSpendPermission as any, BigInt(1)] // Spend 1 USDC wei
     });
 
     const spendReceipt = await publicClient.waitForTransactionReceipt({

@@ -154,9 +154,75 @@ The main changes:
 
 The user should test the spend permission approval flow again to see if the `InvalidSignature()` error is resolved with these multi-faceted fixes.
 
+**LATEST FIX - SIGNATURE VERIFICATION ADDED:**
+
+Added local signature verification using `verifyTypedData` before sending to contract. This will help us determine if the signature is actually valid for the spend permission structure. If the signature fails local verification, we'll get a clear error message instead of the cryptic `InvalidSignature()` from the contract.
+
+This debugging step will show us whether:
+
+1. The signature is invalid due to wrong message structure
+2. The signature is valid locally but the contract rejects it for other reasons (like gas, nonce, or spender permissions)
+
+The enhanced logging will show the verification result, helping us pinpoint the exact cause of the signature failure.
+
+**CRITICAL FIX - EIP-712 MESSAGE FORMAT:**
+
+Fixed the "field type mismatch" error from Coinbase Smart Wallet by ensuring proper EIP-712 message format:
+
+**The Issue**: Coinbase wallet expects string values for uint160/uint48/uint256 types in EIP-712 messages, but we were passing BigInt values directly.
+
+**The Fix**:
+
+- Frontend: Create separate `messageForSigning` with string values for wallet
+- Backend: Use string values in `messageForVerification` to match what was signed
+- Contract: Still receives proper BigInt values for execution
+
+This ensures the signature is created correctly by the wallet and verified correctly by our backend, while the contract still gets the proper typed values it expects.
+
 # Lessons
 
 - Always read the file before editing.
 - Include debug info in program output.
 - Use TDD where possible.
 - If you find any bugs, fix them before moving to the next task.
+
+**LATEST CHAINID VALIDATION FIX:**
+
+Added chainId validation to ensure user is on Base mainnet (8453) before attempting EIP-712 signing. The "field type mismatch" error from Coinbase Smart Wallet could be caused by:
+
+1. **ChainId Mismatch**: Frontend using dynamic chainId from wagmi but backend verification hardcoded to 8453
+2. **Network Issues**: User might not be on the correct network
+
+**The Fix**:
+
+- Added explicit chainId validation in frontend before signing
+- Ensures both frontend signing and backend verification use chainId 8453
+- Provides clear error message if user is on wrong network
+
+This should resolve the EIP-712 domain mismatch that was causing the "field type mismatch" error from Coinbase Smart Wallet.
+
+**MAJOR FIX - CORRECTED MESSAGE FORMAT:**
+
+Based on a working example, discovered that Coinbase Smart Wallet expects **mixed types in the message**, not string conversions!
+
+**The Issue**: We were converting all BigInt values to strings for EIP-712 signing, but the working example shows:
+
+- `allowance`: BigInt (from parseUnits)
+- `period/start/end`: Regular numbers (not BigInt, not strings)
+- `salt`: BigInt
+- Addresses: Proper address format
+
+**The Fix**:
+
+- **Frontend**: Pass raw `spendPermission` object directly to `signTypedDataAsync`
+- **Backend**: Handle mixed types in verification (BigInt for allowance/salt, numbers for period/start/end)
+- **Contract**: Convert all numeric values to BigInt for contract calls
+
+**Key Changes**:
+
+1. Removed `messageForSigning` string conversion logic
+2. Changed period/start/end from BigInt to regular numbers
+3. Used realistic time values (current timestamp + 7 days) instead of max values
+4. Updated backend verification to match the signed message format
+
+This aligns with the working example and should resolve the "field type mismatch" error from Coinbase Smart Wallet.
