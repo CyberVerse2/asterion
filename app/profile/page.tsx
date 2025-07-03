@@ -162,18 +162,21 @@ export default function ProfilePage() {
       if (spendLimit !== profile?.spendLimit) {
         await saveSpendLimit(spendLimit);
       }
-      // Prepare spend permission
+      // Prepare spend permission directly with strings (what contract expects)
       const spendPermission = {
         account: accountAddress,
         spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
         token: USDC_ADDRESS,
-        allowance: parseUnits(spendLimit.toString(), 6),
-        period: BigInt(2592000),
-        start: BigInt(0),
-        end: BigInt(281474976710655),
-        salt: BigInt(0),
+        allowance: parseUnits(spendLimit.toString(), 6).toString(),
+        period: '2592000',
+        start: '0',
+        end: '281474976710655',
+        salt: '0',
         extraData: '0x' as Hex
       };
+
+      console.log('[handleApproveSpend] spendPermission for signing:', spendPermission);
+
       const signature = await signTypedDataAsync({
         domain: {
           name: 'Spend Permission Manager',
@@ -201,25 +204,16 @@ export default function ProfilePage() {
 
       // PATCH user with spendPermission and spendPermissionSignature
       if (profile?.id) {
-        const replacer = (key: string, value: any) => {
-          if (typeof value === 'bigint') {
-            return value.toString();
-          }
-          return value;
-        };
         let patchOk = false;
         try {
           const patchRes = await fetch('/api/users', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(
-              {
-                userId: profile.id,
-                spendPermission,
-                spendPermissionSignature: signature
-              },
-              replacer
-            )
+            body: JSON.stringify({
+              userId: profile.id,
+              spendPermission: spendPermission,
+              spendPermissionSignature: signature
+            })
           });
           const patchData = await patchRes
             .clone()
@@ -248,7 +242,10 @@ export default function ProfilePage() {
           const response = await fetch('/api/collect', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ spendPermission, signature }, replacer)
+            body: JSON.stringify({
+              spendPermission: spendPermission,
+              signature
+            })
           });
           const data = await response
             .clone()
