@@ -5,7 +5,7 @@ import {
   spendPermissionManagerAddress,
   USDC_ADDRESS
 } from '@/lib/abi/SpendPermissionManager';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,17 +24,32 @@ export async function POST(request: NextRequest) {
       console.error('[tip-chapter] User has not granted spend permission', { user });
       return NextResponse.json({ error: 'User has not granted spend permission' }, { status: 400 });
     }
+
+    // Get the chapter to find the novel
+    const chapter = await prisma.chapter.findUnique({
+      where: { id: chapterId },
+      include: { novelRel: true }
+    });
+
+    if (!chapter || !chapter.novelRel) {
+      console.error('[tip-chapter] Chapter or novel not found', { chapterId });
+      return NextResponse.json({ error: 'Chapter or novel not found' }, { status: 400 });
+    }
+
     const spendPermission = user.spendPermission;
     const signature = user.spendPermissionSignature;
     console.log('[tip-chapter] SpendPermission:', spendPermission);
     console.log('[tip-chapter] Signature:', signature);
 
-    // Spend 1.0 USDC (6 decimals)
-    const amount = BigInt(1.0 * 10 ** 6);
+    // Spend 0.01 USDC (6 decimals) = 10000 wei
+    const tipAmountUSD = 0.01;
+    const amount = BigInt(tipAmountUSD * 10 ** 6); // 10000 wei for 0.01 USDC
     console.log('[tip-chapter] Spending amount (USDC, 6 decimals):', amount.toString());
+
     const spenderBundlerClient = await getSpenderWalletClient();
     const publicClient = await getPublicClient();
     console.log('[tip-chapter] Got spenderBundlerClient and publicClient');
+
     const spendTxnHash = await spenderBundlerClient.writeContract({
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
@@ -42,26 +57,78 @@ export async function POST(request: NextRequest) {
       args: [spendPermission, amount]
     });
     console.log('[tip-chapter] spendTxnHash:', spendTxnHash);
+
     const spendReceipt = await publicClient.waitForTransactionReceipt({ hash: spendTxnHash });
     console.log('[tip-chapter] spendReceipt:', spendReceipt);
 
-    // Update tip count in DB
-    const updatedChapter = await prisma.chapter.update({
-      where: { id: chapterId },
-      data: { tipCount: { increment: 1 } }
-    });
-    console.log('[tip-chapter] updatedChapter:', updatedChapter);
+    // If transaction was successful, update database
+    if (spendReceipt.status) {
+      // Update tip count in chapter
+      const updatedChapter = await prisma.chapter.update({
+        where: { id: chapterId },
+        data: { tipCount: { increment: 1 } }
+      });
+      console.log('[tip-chapter] updatedChapter:', updatedChapter);
 
-    return NextResponse.json({
-      status: spendReceipt.status ? 'success' : 'failure',
-      transactionHash: spendReceipt.transactionHash,
-      transactionUrl: `https://basescan.org/tx/${spendReceipt.transactionHash}`,
-      tipCount: updatedChapter.tipCount
-    });
+      // Create tip record for user
+      await prisma.tip.create({
+        data: {
+          userId,
+          novelId: chapter.novelRel.id,
+          amount: tipAmountUSD
+        }
+      });
+      console.log('[tip-chapter] Created tip record');
+
+      // Update or create supporter record
+      const existingSupporter = await prisma.supporter.findFirst({
+        where: {
+          userId,
+          novelId: chapter.novelRel.id
+        }
+      });
+
+      if (existingSupporter) {
+        await prisma.supporter.update({
+          where: { id: existingSupporter.id },
+          data: {
+            totalTipped: {
+              increment: tipAmountUSD
+            }
+          }
+        });
+        console.log('[tip-chapter] Updated existing supporter');
+      } else {
+        await prisma.supporter.create({
+          data: {
+            userId,
+            novelId: chapter.novelRel.id,
+            totalTipped: tipAmountUSD
+          }
+        });
+        console.log('[tip-chapter] Created new supporter record');
+      }
+
+      return NextResponse.json({
+        status: 'success',
+        transactionHash: spendReceipt.transactionHash,
+        transactionUrl: `https://basescan.org/tx/${spendReceipt.transactionHash}`,
+        tipCount: updatedChapter.tipCount,
+        tipAmount: tipAmountUSD
+      });
+    } else {
+      return NextResponse.json(
+        {
+          status: 'failure',
+          error: 'Transaction failed'
+        },
+        { status: 400 }
+      );
+    }
   } catch (error) {
     console.error('[tip-chapter] Caught error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error?.message || error },
+      { error: 'Internal server error', details: (error as Error)?.message || String(error) },
       { status: 500 }
     );
   }
