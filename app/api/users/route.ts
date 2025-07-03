@@ -47,8 +47,15 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   console.log('[PATCH /api/users] Incoming request');
   try {
-    const { userId, spendLimit, novelId } = await req.json();
-    console.log('[PATCH /api/users] Payload:', { userId, spendLimit, novelId });
+    const { userId, spendLimit, novelId, spendPermission, spendPermissionSignature } =
+      await req.json();
+    console.log('[PATCH /api/users] Payload:', {
+      userId,
+      spendLimit,
+      novelId,
+      spendPermission,
+      spendPermissionSignature
+    });
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
@@ -60,12 +67,23 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Update spendLimit if present
-    let updatedUser = user;
+    // Build update data
+    const updateData: any = {};
     if (typeof spendLimit === 'number') {
+      updateData.spendLimit = spendLimit;
+    }
+    if (spendPermission) {
+      updateData.spendPermission = spendPermission;
+    }
+    if (spendPermissionSignature) {
+      updateData.spendPermissionSignature = spendPermissionSignature;
+    }
+
+    let updatedUser = user;
+    if (Object.keys(updateData).length > 0) {
       updatedUser = await prisma.user.update({
         where: { id: userId },
-        data: { spendLimit }
+        data: updateData
       });
     }
 
@@ -82,6 +100,9 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(updatedUser);
   } catch (e) {
     console.error('[PATCH /api/users] Error:', e);
-    return NextResponse.json({ error: e.message || 'Unknown error' }, { status: 500 });
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }

@@ -198,6 +198,20 @@ export default function ProfilePage() {
         message: spendPermission
       });
       setApproved(true);
+
+      // PATCH user with spendPermission and spendPermissionSignature
+      if (profile?.id) {
+        await fetch('/api/users', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: profile.id,
+            spendPermission,
+            spendPermissionSignature: signature
+          })
+        });
+      }
+
       setTransactionStatus('pending');
       // POST to /api/collect
       const replacer = (key: string, value: any) => {

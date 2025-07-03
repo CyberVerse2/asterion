@@ -49,6 +49,7 @@ export default function NovelPage() {
   const params = useParams();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<any[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isReading, setIsReading] = useState(false);
@@ -68,30 +69,21 @@ export default function NovelPage() {
   const randomReviews = useMemo(() => Math.floor(Math.random() * 991) + 10, []);
 
   useEffect(() => {
-    const fetchNovelAndChapters = async () => {
+    const fetchNovel = async () => {
       try {
         const response = await fetch(`/api/novels/${params.id}`);
         if (response.ok) {
           const data = await response.json();
           setNovel(data);
-          // Fetch chapters for this novel
-          const chaptersRes = await fetch(`/api/chapters?novelId=${data.id}`);
-          if (chaptersRes.ok) {
-            const chaptersData = await chaptersRes.json();
-            setChapters(chaptersData);
-          } else {
-            setChapters([]);
-          }
         }
       } catch (error) {
-        console.error('Error fetching novel or chapters:', error);
+        console.error('Error fetching novel:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
     if (params.id) {
-      fetchNovelAndChapters();
+      fetchNovel();
     }
   }, [params.id]);
 
@@ -143,6 +135,26 @@ export default function NovelPage() {
     }
   };
 
+  const handleReadNow = async () => {
+    setChaptersLoading(true);
+    try {
+      if (!novel) return;
+      const chaptersRes = await fetch(`/api/chapters?novelId=${novel.id}`);
+      if (chaptersRes.ok) {
+        const chaptersData = await chaptersRes.json();
+        setChapters(chaptersData);
+        setIsReading(true);
+      } else {
+        setChapters([]);
+      }
+    } catch (error) {
+      setChapters([]);
+      console.error('Error fetching chapters:', error);
+    } finally {
+      setChaptersLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -187,7 +199,6 @@ export default function NovelPage() {
           chapters={Array.isArray(chapters) ? chapters : []}
           currentChapterIndex={currentChapterIndex}
           onChapterChange={setCurrentChapterIndex}
-          coin={novel.coin as `0x${string}`}
         />
       </div>
     );
@@ -357,10 +368,11 @@ export default function NovelPage() {
         {/* Action Buttons */}
         <div className="space-y-3 pb-32">
           <Button
-            onClick={() => setIsReading(true)}
+            onClick={handleReadNow}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-medium"
+            disabled={chaptersLoading}
           >
-            READ NOW (FIRST TIME)
+            {chaptersLoading ? 'Loading...' : 'READ NOW (FIRST TIME)'}
           </Button>
         </div>
 

@@ -1,9 +1,8 @@
 import { Address } from 'viem';
 
-export const spendPermissionManagerAddress =
-  '0xf85210B21cC50302F477BA56686d2019dC9b67Ad' as Address;
+export const spendPermissionManagerAddress = '0xf85210B21cC50302F477BA56686d2019dC9b67Ad' as Address;
 
-// USDC token address on Base (official, checksummed)
+// USDC token address on Base Mainnet (official, checksummed)
 export const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as Address;
 
 export const spendPermissionManagerAbi = [
