@@ -57,10 +57,7 @@ export default function ChapterReader({
   const [tipCount, setTipCount] = useState(chapters[currentChapterIndex]?.tipCount || 0);
   const [hasLoved, setHasLoved] = useState(false);
   const [loveAnimations, setLoveAnimations] = useState<LoveAnimationState[]>([]);
-  const [isSelecting, setIsSelecting] = useState(false);
   const animationIdRef = useRef(0);
-  const lastClickTimeRef = useRef(0);
-  const clickTimeoutRef = useRef<NodeJS.Timeout>();
   const [tradePending, setTradePending] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
   const [tradeSuccess, setTradeSuccess] = useState(false);
@@ -92,8 +89,26 @@ export default function ChapterReader({
       setHasLoved(false); // Reset love state for new chapter
       setTradeSuccess(false);
       setTradeError(null);
+
+      // Check if user has already tipped this chapter
+      if (user && user.id) {
+        checkIfAlreadyTipped();
+      }
     }
-  }, [currentChapter]);
+  }, [currentChapter, user]);
+
+  const checkIfAlreadyTipped = async () => {
+    if (!user || !user.id || !currentChapter) return;
+
+    try {
+      // Check user's tip history for this chapter
+      const userTips = user.tips || [];
+      const hasAlreadyTipped = userTips.some((tip: any) => tip.chapterId === currentChapter.id);
+      setHasLoved(hasAlreadyTipped);
+    } catch (error) {
+      console.error('Error checking tip status:', error);
+    }
+  };
 
   const handleLove = useCallback(
     async (event?: React.MouseEvent) => {
@@ -149,6 +164,10 @@ export default function ChapterReader({
             setTradeError(
               'Please approve spend permission in your profile before loving chapters.'
             );
+          } else if (data.error === 'You have already tipped this chapter') {
+            // Keep hasLoved state since they have already tipped
+            setHasLoved(true);
+            setTradeError('You have already tipped this chapter.');
           } else {
             // Revert hasLoved state on error
             setHasLoved(false);
@@ -166,36 +185,6 @@ export default function ChapterReader({
     [currentChapter.id, hasLoved, user, refreshUser, onChapterTipped]
   );
 
-  const handleMouseDown = useCallback(() => {
-    const now = Date.now();
-    const timeSinceLastClick = now - lastClickTimeRef.current;
-
-    // Clear any existing timeout
-    if (clickTimeoutRef.current) {
-      clearTimeout(clickTimeoutRef.current);
-    }
-
-    // If this is a potential double-click (within 300ms), don't enable text selection
-    if (timeSinceLastClick < 300) {
-      setIsSelecting(false);
-      return;
-    }
-
-    // Set a timeout to enable text selection if no second click comes
-    clickTimeoutRef.current = setTimeout(() => {
-      setIsSelecting(true);
-    }, 300);
-
-    lastClickTimeRef.current = now;
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    // Small delay to allow double-click to be processed first
-    setTimeout(() => {
-      setIsSelecting(true);
-    }, 50);
-  }, []);
-
   const removeLoveAnimation = useCallback((id: number) => {
     setLoveAnimations((prev) => prev.filter((animation) => animation.id !== id));
   }, []);
@@ -204,7 +193,6 @@ export default function ChapterReader({
     if (currentChapterIndex > 0) {
       onChapterChange(currentChapterIndex - 1);
       setHasLoved(false);
-      setIsSelecting(false);
     }
   };
 
@@ -212,7 +200,6 @@ export default function ChapterReader({
     if (currentChapterIndex < chapters.length - 1) {
       onChapterChange(currentChapterIndex + 1);
       setHasLoved(false);
-      setIsSelecting(false);
     }
   };
 
@@ -262,14 +249,8 @@ export default function ChapterReader({
         </CardHeader>
         <CardContent>
           <div
-            className={`prose prose-lg max-w-none leading-relaxed text-gray-300 chapter-content ${
-              isSelecting ? 'selecting' : ''
-            }`}
-            onDoubleClick={handleLove}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
+            className={`prose prose-lg max-w-none leading-relaxed text-gray-300 chapter-content`}
             style={{
-              cursor: isSelecting ? 'text' : 'pointer',
               lineHeight: '1.8'
             }}
             // Only use dangerouslySetInnerHTML if you trust the HTML source
@@ -298,8 +279,8 @@ export default function ChapterReader({
             </Button>
 
             <div className="text-sm text-gray-400 text-center max-w-xs">
-              <div className="double-click-hint">
-                Double-click anywhere to love this chapter & tip author (0.01 USDC) ❤️
+              <div className="love-hint">
+                Click the ❤️ to love this chapter & tip author (0.01 USDC)
               </div>
             </div>
 

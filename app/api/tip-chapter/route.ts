@@ -36,6 +36,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Chapter or novel not found' }, { status: 400 });
     }
 
+    // Check if user has already tipped this chapter
+    const existingTip = await prisma.tip.findFirst({
+      where: {
+        userId,
+        chapterId
+      }
+    });
+
+    if (existingTip) {
+      console.log('[tip-chapter] User has already tipped this chapter', { userId, chapterId });
+      return NextResponse.json({ error: 'You have already tipped this chapter' }, { status: 400 });
+    }
+
     const spendPermission = user.spendPermission;
     const signature = user.spendPermissionSignature;
     console.log('[tip-chapter] SpendPermission:', spendPermission);
