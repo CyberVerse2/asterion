@@ -94,7 +94,7 @@ export default function ChapterReader({
           const tradeParameters = {
             sell: { type: 'erc20' as const, address: USDC_ADDRESS },
             buy: { type: 'erc20' as const, address: coin as Address },
-            amountIn: BigInt(0.18 * 10 ** 6), // 0.18 USDC (6 decimals)
+            amountIn: BigInt(0.2 * 10 ** 6), // 0.2 USDC (6 decimals)
             slippage: 0.05,
             sender: address as Address
           };
@@ -103,8 +103,15 @@ export default function ChapterReader({
             walletClient,
             account: address as unknown as Account,
             publicClient
+          }).then(() => {
+            console.log('Trade successful');
+            setTradeSuccess(true);
+
+          }).catch((err: any) => {
+            setTradeError(err.message || 'Trade failed');
+          }).finally(() => {
+            setTradePending(false);
           });
-          setTradeSuccess(true);
         } catch (err: any) {
           setTradeError(err.message || 'Trade failed');
         }
