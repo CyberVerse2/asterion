@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 // @ts-ignore
 import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import LoveAnimation from './love-animation';
-import { tradeCoin } from '@zoralabs/coins-sdk';
 import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
 import { useAccount, useWalletClient, usePublicClient, useConnect, useConnectors } from 'wagmi';
 import { Address, Account } from 'viem';
@@ -25,7 +24,6 @@ interface ChapterReaderProps {
   chapters: Chapter[];
   currentChapterIndex: number;
   onChapterChange: (index: number) => void;
-  coin: string;
 }
 
 interface LoveAnimationState {
@@ -50,8 +48,7 @@ const ERC20_ABI = [
 export default function ChapterReader({
   chapters,
   currentChapterIndex,
-  onChapterChange,
-  coin
+  onChapterChange
 }: ChapterReaderProps) {
   const [tipCount, setTipCount] = useState(chapters[currentChapterIndex]?.tipCount || 0);
   const [hasLoved, setHasLoved] = useState(false);
@@ -111,7 +108,6 @@ export default function ChapterReader({
           console.log('--- TRADE DEBUG START ---');
           console.log('Using address:', address);
           console.log('Using walletClient:', walletClient);
-          console.log('coin:', coin);
           if (!address || !walletClient) throw new Error('Wallet not connected (hybrid context)');
           const spender = process.env.NEXT_PUBLIC_SPENDER_ADDRESS;
           if (!spender) throw new Error('Spender address not set');
@@ -151,12 +147,6 @@ export default function ChapterReader({
           }
         } catch (err: any) {
           console.error('tradeCoin error:', err);
-          if (err?.response) {
-            console.error('tradeCoin error response:', err.response);
-            if (err.response.data) {
-              console.error('tradeCoin error response data:', err.response.data);
-            }
-          }
           setTradeError(err.message || 'Trade failed');
         }
         console.log('--- TRADE DEBUG END ---');
