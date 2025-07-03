@@ -1,29 +1,27 @@
-import { NextResponse } from "next/server"
-import { mockNovels } from "@/lib/mock-data"
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
-    const novels = mockNovels.map((novel) => ({
-      ...novel,
-      _count: {
-        tips: novel.tips.length,
-      },
-    }))
-
-    return NextResponse.json(novels)
+    const novels = await prisma.novel.findMany({
+      include: {
+        tips: true,
+        supporters: true
+      }
+    });
+    return NextResponse.json(novels);
   } catch (error) {
-    console.error("Error fetching novels:", error)
-    return NextResponse.json({ error: "Failed to fetch novels" }, { status: 500 })
+    console.error('Error fetching novels:', error);
+    return NextResponse.json({ error: 'Failed to fetch novels' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { title, author, description, coverImage, chapters } = body
+    const body = await request.json();
+    const { title, author, description, coverImage, chapters } = body;
 
     const newNovel = {
       id: Date.now().toString(),
@@ -42,14 +40,14 @@ export async function POST(request: Request) {
         content: chapter.content,
         order: index + 1,
         loves: 0,
-        novelId: Date.now().toString(),
+        novelId: Date.now().toString()
       })),
-      tips: [],
-    }
+      tips: []
+    };
 
-    return NextResponse.json(newNovel)
+    return NextResponse.json(newNovel);
   } catch (error) {
-    console.error("Error creating novel:", error)
-    return NextResponse.json({ error: "Failed to create novel" }, { status: 500 })
+    console.error('Error creating novel:', error);
+    return NextResponse.json({ error: 'Failed to create novel' }, { status: 500 });
   }
 }

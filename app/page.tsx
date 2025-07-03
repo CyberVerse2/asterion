@@ -14,7 +14,9 @@ function getPopularNovels() {
 
 export default function HomePage() {
   const { setFrameReady, isFrameReady } = useMiniKit();
-  // const { user, userLoading, userError } = useUser(); // Uncomment if needed in this page
+  const [novels, setNovels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!isFrameReady) {
@@ -22,14 +24,36 @@ export default function HomePage() {
     }
   }, [setFrameReady, isFrameReady]);
 
-  const novels = getPopularNovels();
+  useEffect(() => {
+    async function fetchNovels() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/novels');
+        if (!res.ok) throw new Error('Failed to fetch novels');
+        const data = await res.json();
+        setNovels(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchNovels();
+  }, []);
 
   return (
     <div className="min-h-screen">
       <section className="container mx-auto px-4 py-8">
-        <Suspense fallback={<LoadingSkeleton />}>
-          <NovelGrid novels={novels} />
-        </Suspense>
+        {loading ? (
+          <LoadingSkeleton />
+        ) : error ? (
+          <div className="text-red-500">{error}</div>
+        ) : (
+          <Suspense fallback={<LoadingSkeleton />}>
+            <NovelGrid novels={novels} />
+          </Suspense>
+        )}
       </section>
     </div>
   );
