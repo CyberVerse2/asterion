@@ -201,29 +201,32 @@ export default function ProfilePage() {
 
       // PATCH user with spendPermission and spendPermissionSignature
       if (profile?.id) {
+        const replacer = (key: string, value: any) => {
+          if (typeof value === 'bigint') {
+            return value.toString();
+          }
+          return value;
+        };
         await fetch('/api/users', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: profile.id,
-            spendPermission,
-            spendPermissionSignature: signature
-          })
+          body: JSON.stringify(
+            {
+              userId: profile.id,
+              spendPermission,
+              spendPermissionSignature: signature
+            },
+            replacer
+          )
         });
       }
 
       setTransactionStatus('pending');
       // POST to /api/collect
-      const replacer = (key: string, value: any) => {
-        if (typeof value === 'bigint') {
-          return value.toString();
-        }
-        return value;
-      };
       const response = await fetch('/api/collect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spendPermission, signature }, replacer)
+        body: JSON.stringify({ spendPermission, signature })
       });
       if (!response.ok) throw new Error('Failed to approve onchain');
       const data = await response.json();
