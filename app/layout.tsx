@@ -8,6 +8,7 @@ import { BookOpen, User } from 'lucide-react';
 import { MiniKitContextProvider } from '@/providers/MiniKitProvider';
 import { UserProvider } from '@/providers/UserProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import ConnectWalletButton from '@/components/connect-wallet-button';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </nav>
 
                   <div className="flex items-center gap-4">
+                    <ConnectWalletButton />
                     <Link href="/profile">
                       <Button
                         variant="ghost"
