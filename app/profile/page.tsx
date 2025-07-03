@@ -6,13 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Avatar as OnchainAvatar,
   Name as OnchainName,
-  Address,
   Identity
 } from '@coinbase/onchainkit/identity';
 import { Wallet } from '@coinbase/onchainkit/wallet';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAccount, useChainId, useConnect, useConnectors, useSignTypedData } from 'wagmi';
 import { Address as ViemAddress, Hex, parseUnits, getAddress } from 'viem';
 import {
@@ -20,7 +19,7 @@ import {
   spendPermissionManagerAddress,
   USDC_ADDRESS
 } from '@/lib/abi/SpendPermissionManager';
-import { Tooltip } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 
 interface UserProfile {
@@ -146,9 +145,27 @@ export default function ProfilePage() {
   const [transactionUrl, setTransactionUrl] = useState<string | null>(null);
   const { context } = useMiniKit();
 
-  // Check if user is wallet-only (no Farcaster profile)
-  const isInRealFarcasterApp = context && context.client && process.env.NODE_ENV !== 'development';
-  const isWalletOnly = profile && profile.walletAddress && !isInRealFarcasterApp;
+  // Dev-mode context mock for local testing (same as UserProvider)
+  const devContext = {
+    client: {
+      fid: 123456,
+      username: 'devuser',
+      displayName: 'Dev User',
+      name: 'Dev User'
+    }
+  };
+  const effectiveContext =
+    process.env.NODE_ENV === 'development' && (!context || !context.client) ? devContext : context;
+
+  // Check if user has Farcaster context (same logic as UserProvider)
+  const hasFarcasterContext =
+    effectiveContext &&
+    (((effectiveContext as any).user && (effectiveContext as any).user.fid) ||
+      ((effectiveContext as any).client &&
+        ((effectiveContext as any).client.fid || (effectiveContext as any).client.clientFid)));
+
+  // Use OnchainKit components only for wallet-only users (no Farcaster context)
+  const isWalletOnly = profile && profile.walletAddress && !hasFarcasterContext;
 
   // Initialize spendLimit and chapterTipAmount from user profile
   useEffect(() => {
@@ -411,22 +428,24 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3 md:gap-6">
           {isWalletOnly ? (
             <>
-              <Wallet>
-                <Identity address={profile.walletAddress as ViemAddress}>
-                  <OnchainAvatar className="h-16 w-16 md:h-20 md:w-20 !border-none !bg-transparent !shadow-none !rounded-full overflow-hidden" />
-                </Identity>
-              </Wallet>
-              <div className="flex-1 min-w-0">
-                <div className="text-xl md:text-3xl font-bold mb-1 md:mb-2">
+              <div className="h-16 w-16 md:h-20 md:w-20">
+                <Wallet>
+                  <Identity address={profile.walletAddress as ViemAddress}>
+                    <OnchainAvatar className="h-16 w-16 md:h-20 md:w-20" />
+                  </Identity>
+                </Wallet>
+              </div>
+              <div className="flex-1 min-w-0 md:hidden">
+                <div className="text-xl font-bold mb-1">
                   <Wallet>
                     <Identity address={profile.walletAddress as ViemAddress}>
-                      <OnchainName className="!bg-transparent !border-none !shadow-none !p-0 !m-0 !rounded-none !block !text-left" />
+                      <OnchainName />
                     </Identity>
                   </Wallet>
                 </div>
-                <p className="text-sm md:text-base text-muted-foreground">
+                <div className="text-sm text-muted-foreground pr-4">
                   Asterion Reader & Supporter
-                </p>
+                </div>
               </div>
             </>
           ) : (
@@ -445,13 +464,13 @@ export default function ProfilePage() {
                     : '?'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl md:text-3xl font-bold mb-1 md:mb-2">
+              <div className="flex-1 min-w-0 md:hidden">
+                <div className="text-xl font-bold mb-1">
                   @{typeof profile?.username === 'string' ? profile.username : 'unknown'}
-                </h1>
-                <p className="text-sm md:text-base text-muted-foreground">
+                </div>
+                <div className="text-sm text-muted-foreground pr-4">
                   Asterion Reader & Supporter
-                </p>
+                </div>
               </div>
             </>
           )}
@@ -564,9 +583,17 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               Spend Settings
-              <Tooltip content="These settings control how much USDC the app can spend on your behalf. You can adjust them anytime.">
-                <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    These settings control how much USDC the app can spend on your behalf. You can
+                    adjust them anytime.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </CardTitle>
           </CardHeader>
           <CardContent>
