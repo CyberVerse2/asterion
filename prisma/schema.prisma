@@ -19,6 +19,7 @@ model User {
   createdAt  DateTime? @map("createdAt")
   updatedAt  DateTime? @map("updatedAt")
   spendLimit Float    @default(100)
+  chapterTipAmount Float @default(0.01) // Amount in USDC to tip per chapter
   spendPermission Json?
   spendPermissionSignature String?
 }

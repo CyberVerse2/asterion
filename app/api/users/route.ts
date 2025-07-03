@@ -153,11 +153,18 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   console.log('[PATCH /api/users] Incoming request');
   try {
-    const { userId, spendLimit, novelId, spendPermission, spendPermissionSignature } =
-      await req.json();
+    const {
+      userId,
+      spendLimit,
+      chapterTipAmount,
+      novelId,
+      spendPermission,
+      spendPermissionSignature
+    } = await req.json();
     console.log('[PATCH /api/users] Payload:', {
       userId,
       spendLimit,
+      chapterTipAmount,
       novelId,
       spendPermission,
       spendPermissionSignature
@@ -177,6 +184,9 @@ export async function PATCH(req: NextRequest) {
     const updateData: any = {};
     if (typeof spendLimit === 'number') {
       updateData.spendLimit = spendLimit;
+    }
+    if (typeof chapterTipAmount === 'number') {
+      updateData.chapterTipAmount = chapterTipAmount;
     }
     if (spendPermission) {
       const safePermission = deepBigIntToString(spendPermission);

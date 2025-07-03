@@ -8,6 +8,7 @@ export interface User {
   updatedAt: Date;
   pfpUrl?: string;
   spendLimit?: number;
+  chapterTipAmount?: number; // Amount in USDC to tip per chapter
 }
 
 export interface Novel {

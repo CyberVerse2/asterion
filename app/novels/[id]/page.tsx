@@ -186,7 +186,7 @@ export default function NovelPage() {
           {/* @ts-ignore: variant is supported by ButtonProps */}
           <Button
             onClick={() => setIsReading(false)}
-            className="flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/10"
+            className="flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Novel
@@ -304,7 +304,7 @@ export default function NovelPage() {
             <h3 className="text-white font-semibold">Synopsis</h3>
             {/* @ts-ignore: variant and size are supported by ButtonProps */}
             <Button
-              className="text-gray-400 hover:text-white p-0"
+              className="bg-transparent text-gray-400 hover:text-white p-0"
               onClick={() => setShowSummary((prev) => !prev)}
             >
               {showSummary ? 'LESS ↑' : 'MORE →'}
@@ -379,7 +379,7 @@ export default function NovelPage() {
           <div className="grid grid-cols-2 gap-4 w-full max-w-md">
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
-              className={`flex flex-col items-center gap-1 py-4 ${
+              className={`flex flex-col items-center gap-1 py-4 bg-transparent border-white/20 ${
                 isBookmarked ? 'text-green-400' : 'text-gray-400 hover:text-white hover:bg-white/10'
               }`}
               onClick={handleBookmark}
@@ -391,7 +391,7 @@ export default function NovelPage() {
               </span>
             </Button>
             {/* @ts-ignore: variant is supported by ButtonProps */}
-            <Button className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4">
+            <Button className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 bg-transparent border-white/20 py-4">
               <BookOpen className="h-5 w-5" />
               <span className="text-xs">Chapters</span>
             </Button>
