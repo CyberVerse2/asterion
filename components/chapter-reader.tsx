@@ -98,36 +98,43 @@ export default function ChapterReader({
         };
         setLoveAnimations((prev) => [...prev, newAnimation]);
       }
-      // Update tip count only if not already tipped
+
+      // Auto-tip when loving a chapter (only if not already loved)
       if (!hasLoved) {
         setTradePending(true);
         setTradeError(null);
         setTradeSuccess(false);
+
         try {
-          if (!user || !user.id) throw new Error('User not loaded');
-          // Call backend to spend via spend permission using user.id
+          if (!user || !user.id) throw new Error('User not logged in');
+
+          // Call backend to automatically tip 0.01 USDC when loving
           const response = await fetch('/api/tip-chapter', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chapterId: currentChapter.id, userId: user.id })
           });
+
           const data = await response.json();
           if (response.ok && data.status === 'success') {
             setTipCount(data.tipCount);
             setHasLoved(true);
             setTradeSuccess(true);
           } else if (data.error === 'User has not granted spend permission') {
-            setTradeError('Please approve spend permission in your profile before tipping.');
+            setTradeError(
+              'Please approve spend permission in your profile before loving chapters.'
+            );
           } else {
-            setTradeError('Onchain tip failed.');
+            setTradeError('Auto-tip failed. Please try again.');
           }
         } catch (err: any) {
-          setTradeError(err.message || 'Tip failed');
+          setTradeError(err.message || 'Auto-tip failed');
         }
+
         setTradePending(false);
       }
     },
-    [currentChapter.id, hasLoved, address, user]
+    [currentChapter.id, hasLoved, user]
   );
 
   const handleMouseDown = useCallback(() => {
@@ -202,7 +209,7 @@ export default function ChapterReader({
                   onClick={handleLove}
                   disabled={hasLoved}
                   className="focus:outline-none"
-                  aria-label="Love this chapter"
+                  aria-label="Love this chapter and tip author 0.01 USDC"
                 >
                   <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
                 </button>
@@ -241,10 +248,12 @@ export default function ChapterReader({
           />
 
           {/* Tip feedback */}
-          {tradePending && <div className="text-blue-400 mt-2">Tipping in progress...</div>}
+          {tradePending && (
+            <div className="text-blue-400 mt-2">Tipping author (0.01 USDC) in progress...</div>
+          )}
           {tradeSuccess && (
             <div className="text-green-400 mt-2">
-              Tipped! Thank you for supporting the author ❤️
+              Tipped! You automatically sent 0.01 USDC to support the author ❤️
             </div>
           )}
           {tradeError && <div className="text-red-400 mt-2">{tradeError}</div>}
@@ -260,7 +269,9 @@ export default function ChapterReader({
             </Button>
 
             <div className="text-sm text-gray-400 text-center max-w-xs">
-              <div className="double-click-hint">Double-click anywhere to love this chapter ❤️</div>
+              <div className="double-click-hint">
+                Double-click anywhere to love this chapter & tip author (0.01 USDC) ❤️
+              </div>
             </div>
 
             {/* @ts-ignore: variant is supported by ButtonProps */}

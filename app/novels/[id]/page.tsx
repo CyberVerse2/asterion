@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ChapterReader from '@/components/chapter-reader';
-import TipModal from '@/components/tip-modal';
 // @ts-ignore
 import { DollarSign, BookOpen, ArrowLeft, Star, Library } from 'lucide-react';
 import Link from 'next/link';
@@ -53,7 +52,6 @@ export default function NovelPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isReading, setIsReading] = useState(false);
-  const [showTipModal, setShowTipModal] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const { user }: { user: any } = useUser();
   const summaryRef = useRef<HTMLDivElement>(null);
@@ -100,16 +98,6 @@ export default function NovelPage() {
       setIsBookmarked(user.bookmarks.includes(novel.id));
     }
   }, [user, novel && novel.id]);
-
-  const handleTipSuccess = () => {
-    if (novel) {
-      setNovel({
-        ...novel,
-        totalTips: novel.totalTips + 1,
-        tipCount: novel.tipCount + 1
-      });
-    }
-  };
 
   const handleBookmark = async () => {
     if (!user || !user.id || !novel) return alert('You must be logged in to bookmark novels.');
@@ -378,7 +366,7 @@ export default function NovelPage() {
 
         {/* Sticky Action Bar */}
         <div className="sticky bottom-0 left-0 w-full z-20 backdrop-blur border-t border-white/10 shadow-2xl px-4 py-3 flex justify-center">
-          <div className="grid grid-cols-3 gap-4 w-full max-w-md">
+          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
               className={`flex flex-col items-center gap-1 py-4 ${
@@ -397,27 +385,9 @@ export default function NovelPage() {
               <BookOpen className="h-5 w-5" />
               <span className="text-xs">Chapters</span>
             </Button>
-            {/* @ts-ignore: variant is supported by ButtonProps */}
-            <Button
-              onClick={() => setShowTipModal(true)}
-              className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4"
-            >
-              <DollarSign className="h-5 w-5" />
-              <span className="text-xs">Tip Author</span>
-            </Button>
           </div>
         </div>
       </div>
-
-      <TipModal
-        isOpen={showTipModal}
-        onClose={() => setShowTipModal(false)}
-        novelId={novel.id}
-        novelTitle={novel.title}
-        author={novel.author}
-        onTipSuccess={handleTipSuccess}
-        user={user}
-      />
     </div>
   );
 }
