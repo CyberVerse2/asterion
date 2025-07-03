@@ -219,23 +219,23 @@ export default function ProfilePage() {
             replacer
           )
         });
-      }
 
-      setTransactionStatus('pending');
-      // POST to /api/collect
-      const response = await fetch('/api/collect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spendPermission, signature })
-      });
-      if (!response.ok) throw new Error('Failed to approve onchain');
-      const data = await response.json();
-      if (data.status === 'success') {
-        setTransactionStatus('success');
-        setTransactionUrl(data.transactionUrl);
-      } else {
-        setTransactionStatus('failure');
-        setTransactionUrl(null);
+        setTransactionStatus('pending');
+        // POST to /api/collect
+        const response = await fetch('/api/collect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spendPermission, signature }, replacer)
+        });
+        if (!response.ok) throw new Error('Failed to approve onchain');
+        const data = await response.json();
+        if (data.status === 'success') {
+          setTransactionStatus('success');
+          setTransactionUrl(data.transactionUrl);
+        } else {
+          setTransactionStatus('failure');
+          setTransactionUrl(null);
+        }
       }
     } catch (e: any) {
       setApproveError(e.message || 'Signature or onchain approval failed');
