@@ -50,10 +50,27 @@ export default function ChapterReader({
   const [tradePending, setTradePending] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
   const [tradeSuccess, setTradeSuccess] = useState(false);
-  const { address } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  // Hybrid context: prefer Farcaster miniapp context if present, else Wagmi
+  let farcasterAddress: string | undefined = undefined;
+  let farcasterSigner: any = undefined;
+  if (typeof window !== 'undefined') {
+    // Log the window object and farcaster context for debugging
+    console.log('window:', window);
+    if ((window as any).farcaster) {
+      console.log('window.farcaster:', (window as any).farcaster);
+      farcasterAddress =
+        (window as any).farcaster.address || (window as any).farcaster.user?.address;
+      farcasterSigner = (window as any).farcaster.signer;
+    }
+  }
+  const { address: wagmiAddress } = useAccount();
+  const { data: wagmiWalletClient } = useWalletClient();
   const publicClient = usePublicClient();
   const { connect, connectors, isPending } = useConnect();
+
+  // Use Farcaster context if present, else Wagmi
+  const address = farcasterAddress || wagmiAddress;
+  const walletClient = farcasterSigner || wagmiWalletClient;
 
   const currentChapter = chapters[currentChapterIndex];
 
@@ -79,15 +96,15 @@ export default function ChapterReader({
         setTradeSuccess(false);
         try {
           console.log('--- TRADE DEBUG START ---');
-          console.log('address:', address);
-          console.log('walletClient:', walletClient);
-          console.log('publicClient:', publicClient);
+          console.log('Using address:', address);
+          console.log('Using walletClient:', walletClient);
           console.log('coin:', coin);
-          if (!address || !walletClient || !publicClient) throw new Error('Wallet not connected');
+          if (!address || !walletClient || !publicClient)
+            throw new Error('Wallet not connected (hybrid context)');
           const tradeParameters = {
             sell: { type: 'erc20' as const, address: USDC_ADDRESS },
             buy: { type: 'erc20' as const, address: coin as Address },
-            amountIn: BigInt(0.2 * 10 ** 6), // 0.2 USDC (6 decimals)
+            amountIn: BigInt(1 * 10 ** 6), // 0.2 USDC (6 decimals)
             slippage: 0.05,
             sender: address as Address
           };
@@ -121,6 +138,12 @@ export default function ChapterReader({
           }
         } catch (err: any) {
           console.error('tradeCoin error:', err);
+          if (err?.response) {
+            console.error('tradeCoin error response:', err.response);
+            if (err.response.data) {
+              console.error('tradeCoin error response data:', err.response.data);
+            }
+          }
           setTradeError(err.message || 'Trade failed');
         }
         console.log('--- TRADE DEBUG END ---');
