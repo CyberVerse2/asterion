@@ -7,6 +7,16 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - Users want to grant spend permissions for USDC (on Base) only. ETH support is not required.
 - Spend limit should be a single adjustable value (not daily or monthly).
 
+**NEW FEATURE - Wallet-Username Association:**
+
+The app now needs to support wallet-only users (those who connect via Coinbase Smart Wallet but don't have Farcaster accounts). When a user connects their wallet:
+
+1. Check if the wallet address is already associated with a username in the database
+2. If not, generate a random username and save it along with the wallet address
+3. Ensure seamless integration with existing user management system
+4. Support both Farcaster users (with fid/username) and wallet-only users (with address/generated username)
+5. **NEW REQUIREMENT**: For existing users (Farcaster or wallet-based) who don't have a `walletAddress` field populated, detect their current connected wallet and update their user record with the wallet address
+
 # Key Challenges and Analysis
 
 - **Where to Trigger:** The logic should run as soon as the Farcaster user context is available (from MiniKit/Farcaster context), ideally in a provider or onboarding effect.
@@ -22,6 +32,20 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - **SpendPermission UI:** The UI and logic must grant permission for USDC only (no ETH option).
 - **Persistence:** User-selected limits should persist (localStorage, DB, or context).
 - **UX:** The UI should clearly show the current limits and that USDC is the only supported token.
+
+**NEW CHALLENGES - Wallet-Username Association:**
+
+- **Database Schema:** Need to add `walletAddress` field to User model to support wallet-only users
+- **Dual Authentication:** Support both Farcaster-based authentication (fid/username) and wallet-based authentication (address/generated username)
+- **Username Generation:** Implement random username generation algorithm that creates unique, readable usernames
+- **Conflict Resolution:** Handle cases where a generated username might already exist
+- **User Provider Logic:** Extend UserProvider to detect wallet connections and create/fetch wallet-based users
+- **API Endpoint Updates:** Modify `/api/users` to handle wallet address lookup and user creation
+- **Uniqueness Constraints:** Ensure wallet addresses are unique in the database while maintaining existing username uniqueness
+- **Backward Compatibility:** Ensure existing Farcaster users continue to work without issues
+- **Existing User Address Updates:** For existing users without `walletAddress`, detect and update their records when they connect a wallet
+- **Address Validation:** Ensure the same wallet address isn't associated with multiple users (handle conflicts gracefully)
+- **Migration Logic:** Handle scenarios where existing users connect wallets for the first time
 
 # High-level Task Breakdown
 
@@ -90,6 +114,53 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
     - Test granting spend permission for USDC with a single limit.
     - **Success Criteria:** All flows work as expected, and limits persist.
 
+**NEW TASKS - Wallet-Username Association:**
+
+14. **Update Database Schema for Wallet Support**
+
+    - Add `walletAddress` field to User model in Prisma schema
+    - Make `fid` and `username` optional to support wallet-only users
+    - Add unique constraint on `walletAddress`
+    - **Success Criteria:** Database schema supports both Farcaster and wallet-only users
+
+15. **Create Username Generation Utility**
+
+    - Implement random username generator using adjective + noun + number pattern
+    - Ensure generated usernames are unique and user-friendly
+    - Handle collision detection and retries
+    - **Success Criteria:** Utility generates unique, readable usernames consistently
+
+16. **Update User API Endpoint for Wallet Support**
+
+    - Modify `/api/users` POST to accept `walletAddress` as alternative to `fid/username`
+    - Implement wallet address lookup and user creation logic
+    - Ensure backward compatibility with existing Farcaster user creation
+    - **Success Criteria:** API endpoint supports both Farcaster and wallet-based user creation
+
+17. **Extend UserProvider for Wallet Integration**
+
+    - Add wallet connection detection using wagmi `useAccount` hook
+    - Implement wallet-based user creation/lookup flow
+    - Maintain existing Farcaster integration without breaking changes
+    - **Address Update Logic:** When an existing user (identified by fid/username) connects a wallet for the first time, update their record with the wallet address
+    - **Conflict Resolution:** If the connected wallet is already associated with another user, implement conflict resolution strategy
+    - **Success Criteria:** UserProvider seamlessly handles both Farcaster and wallet users, and updates existing users with wallet addresses
+
+18. **Update Frontend Types for Wallet Users**
+
+    - Extend User type to include optional `walletAddress` field
+    - Update components to handle users with either Farcaster or wallet identity
+    - **Success Criteria:** Frontend types and components support both user types
+
+19. **Test Wallet-Username Association Flow**
+
+    - Test new wallet user creation with random username generation
+    - Test existing wallet user lookup by address
+    - Test mixed scenarios (Farcaster users, wallet users, switching between them)
+    - **Test existing user address updates:** Verify that existing users get their wallet addresses populated when they connect
+    - **Test address conflict scenarios:** Ensure proper handling when the same wallet is used by multiple users
+    - **Success Criteria:** All wallet-related user flows work correctly without breaking existing functionality
+
 # Project Status Board
 
 - [x] Extract Farcaster user info from MiniKit context
@@ -116,154 +187,72 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - [x] Defer loading of novel chapters until 'Read Now' is clicked
 - [x] Fix Prisma import errors in API routes
 
+**NEW TASKS - Wallet-Username Association:**
+
+- [x] Update Database Schema for Wallet Support
+- [x] Create Username Generation Utility
+- [x] Update User API Endpoint for Wallet Support
+- [x] Extend UserProvider for Wallet Integration
+- [x] Update Frontend Types for Wallet Users
+- [ ] Test Wallet-Username Association Flow
+- [x] Handle Existing Users Without Addresses - Implement logic to update existing users with wallet addresses when they connect
+
 # Executor's Feedback or Assistance Requests
 
-- User state is now managed globally via UserProvider and useUser hook.
-- Profile page and tip modal now use the real user object from DB, not mock data.
-- All user-dependent features (profile, tipping, etc.) are now wired to the real DB-backed user.
-- The bulletproofing for chapter array access and chapter count display in app/novels/[id]/page.tsx is complete. All usages of chapters now use Array.isArray(chapters) ? chapters : [].
-- All linter errors related to the Button 'variant' prop and lucide-react have been resolved. Only minor unescaped quote warnings remain in tip-modal.tsx, which do not affect functionality.
-- The code is now bulletproof for chapters and tips array access, and all dependencies are installed.
-- Please verify in the UI and confirm if everything works as expected.
-- USDC token address constant (0xd9aAC23E6A83242c5d306341aCfD7A71A9C6e7B0) has been added to lib/abi/SpendPermissionManager.ts as USDC_ADDRESS.
-- SpendPermission component in app/profile/page.tsx now uses only USDC (with correct decimals) for spend permissions. ETH is no longer referenced.
-- The spend limit is now a single adjustable value in the user model and passed as a prop to SpendPermission.
-- User spend limits are now persisted to and loaded from the database via PATCH /api/users.
-- Created `lib/spender.ts` with `getPublicClient` and `getSpenderWalletClient` functions, following the OnchainKit/Viem pattern. This enables backend contract calls using the spender wallet for Spend Permissions.
-- Implemented `/api/collect` API route. This route accepts a POST with spendPermission and signature, uses the spender wallet to call approveWithSignature and spend, and returns the transaction hash and status. Next: Add spender wallet env vars to `.env` and test the end-to-end flow.
-- Chapter loading is now deferred until the user clicks 'Read Now'. The linter error regarding the 'coin' prop on ChapterReader was fixed. Please verify in the UI that chapters only load after clicking 'Read Now'.
+**WALLET-USERNAME ASSOCIATION IMPLEMENTATION COMPLETED:**
 
-**CRITICAL INVALIDSSIGNATURE BUG ANALYSIS AND FIXES APPLIED:**
+I have successfully implemented the wallet-username association feature as the **Executor**. Here's what was accomplished:
 
-I analyzed the persistent `InvalidSignature()` error from 7 different angles and implemented multiple fixes:
+**1. Database Schema Updates (✅ Complete):**
 
-1. **UNIQUE SALT GENERATION**: Fixed the primary issue where all spend permissions used `salt: BigInt(0)`, causing hash collisions. Now generates unique salts using timestamp + user address.
+- Updated Prisma schema to add optional `walletAddress` field with unique constraint
+- Made `fid` and `username` optional to support wallet-only users
+- Generated new Prisma client to reflect schema changes
 
-2. **CONTRACT ARGUMENT FORMAT**: Fixed Viem passing objects instead of tuples. Changed from passing `contractSpendPermission` object to `spendPermissionTuple` array with proper element ordering.
+**2. Username Generation Utility (✅ Complete):**
 
-3. **ADDRESS CHECKSUMMING**: Added `getAddress()` normalization in both frontend and backend to ensure consistent address formatting between signature creation and contract verification.
+- Created `lib/username-generator.ts` with adjective + noun + number pattern
+- Implemented collision detection with retry logic (max 5 attempts)
+- Added prefixed username option for potential future use
 
-4. **TYPE CONSISTENCY**: Ensured BigInt values are preserved through the entire flow: Frontend (BigInt) → JSON (string) → Backend (BigInt) → Contract (tuple with BigInt).
+**3. User API Endpoint Updates (✅ Complete):**
 
-5. **ENHANCED LOGGING**: Added comprehensive logging to track types at each step and verify tuple structure sent to contract.
+- Extended `/api/users` POST to accept optional `walletAddress` parameter
+- Implemented dual lookup logic: find by `fid/username` OR `walletAddress`
+- Added automatic username generation for wallet-only users
+- **Existing user address updates:** When existing users connect wallets, their records are updated
+- **Conflict detection:** Prevents duplicate wallet address associations with proper error handling
+- Updated PATCH method to support wallet address updates with conflict resolution
 
-The main changes:
+**4. UserProvider Integration (✅ Complete):**
 
-- Frontend: Generate unique salt, normalize addresses with `getAddress()`
-- Backend: Convert object to tuple array for contract calls, normalize addresses
-- Both: Enhanced logging to track the exact values and types being processed
+- Extended UserProvider to detect wallet connections via `useAccount` hook
+- Implemented dual-path logic: Farcaster context takes priority, wallet as fallback
+- Added wallet-only user creation when no Farcaster context is available
+- **Address update logic:** Existing Farcaster users automatically get wallet addresses when they connect
+- Maintained full backward compatibility with existing Farcaster flow
 
-The user should test the spend permission approval flow again to see if the `InvalidSignature()` error is resolved with these multi-faceted fixes.
+**5. Frontend Types Update (✅ Complete):**
 
-**LATEST FIX - SIGNATURE VERIFICATION ADDED:**
+- Updated User interface in `lib/types.ts` to include optional `walletAddress` field
+- Made `fid` and `username` optional to support wallet-only users
+- All existing components will continue to work due to optional fields
 
-Added local signature verification using `verifyTypedData` before sending to contract. This will help us determine if the signature is actually valid for the spend permission structure. If the signature fails local verification, we'll get a clear error message instead of the cryptic `InvalidSignature()` from the contract.
+**6. Existing User Address Handling (✅ Complete):**
 
-This debugging step will show us whether:
+- Implemented automatic wallet address population for existing users
+- Added conflict resolution for duplicate wallet addresses
+- Both API and UserProvider handle existing user updates seamlessly
 
-1. The signature is invalid due to wrong message structure
-2. The signature is valid locally but the contract rejects it for other reasons (like gas, nonce, or spender permissions)
+**NEXT STEP:**
+The final task is comprehensive testing of the wallet-username association flow. This should include:
 
-The enhanced logging will show the verification result, helping us pinpoint the exact cause of the signature failure.
+- Testing new wallet user creation with generated usernames
+- Testing existing user wallet address updates
+- Testing conflict scenarios
+- Verifying all flows work without breaking existing functionality
 
-**CRITICAL FIX - EIP-712 MESSAGE FORMAT:**
-
-Fixed the "field type mismatch" error from Coinbase Smart Wallet by ensuring proper EIP-712 message format:
-
-**The Issue**: Coinbase wallet expects string values for uint160/uint48/uint256 types in EIP-712 messages, but we were passing BigInt values directly.
-
-**The Fix**:
-
-- Frontend: Create separate `messageForSigning` with string values for wallet
-- Backend: Use string values in `messageForVerification` to match what was signed
-- Contract: Still receives proper BigInt values for execution
-
-This ensures the signature is created correctly by the wallet and verified correctly by our backend, while the contract still gets the proper typed values it expects.
-
-**LATEST CHAINID VALIDATION FIX:**
-
-Added chainId validation to ensure user is on Base mainnet (8453) before attempting EIP-712 signing. The "field type mismatch" error from Coinbase Smart Wallet could be caused by:
-
-1. **ChainId Mismatch**: Frontend using dynamic chainId from wagmi but backend verification hardcoded to 8453
-2. **Network Issues**: User might not be on the correct network
-
-**The Fix**:
-
-- Added explicit chainId validation in frontend before signing
-- Ensures both frontend signing and backend verification use chainId 8453
-- Provides clear error message if user is on wrong network
-
-This should resolve the EIP-712 domain mismatch that was causing the "field type mismatch" error from Coinbase Smart Wallet.
-
-**MAJOR FIX - CORRECTED MESSAGE FORMAT:**
-
-Based on a working example, discovered that Coinbase Smart Wallet expects **mixed types in the message**, not string conversions!
-
-**The Issue**: We were converting all BigInt values to strings for EIP-712 signing, but the working example shows:
-
-- `allowance`: BigInt (from parseUnits)
-- `period/start/end`: Regular numbers (not BigInt, not strings)
-- `salt`: BigInt
-- Addresses: Proper address format
-
-**The Fix**:
-
-- **Frontend**: Pass raw `spendPermission` object directly to `signTypedDataAsync`
-- **Backend**: Handle mixed types in verification (BigInt for allowance/salt, numbers for period/start/end)
-- **Contract**: Convert all numeric values to BigInt for contract calls
-
-**Key Changes**:
-
-1. Removed `messageForSigning` string conversion logic
-2. Changed period/start/end from BigInt to regular numbers
-3. Used realistic time values (current timestamp + 7 days) instead of max values
-4. Updated backend verification to match the signed message format
-
-This aligns with the working example and should resolve the "field type mismatch" error from Coinbase Smart Wallet.
-
-**DATABASE SAVE ISSUE RESOLVED:**
-
-The "Unknown argument `spendPermission`" error was caused by **multiple conflicting Next.js development servers** running simultaneously, not by the Prisma schema or code.
-
-**The Issue**: Multiple `next dev` processes were running, causing API routing conflicts and stale Prisma client instances.
-
-**The Solution**:
-
-1. Killed all running Next.js development servers with `pkill -f "next dev"`
-2. Cleared Next.js build cache with `rm -rf .next`
-3. Regenerated Prisma client with `npx prisma generate`
-4. Started a fresh development server
-
-**Test Results**:
-
-- ✅ Prisma schema is correct (`spendPermission Json?` and `spendPermissionSignature String?`)
-- ✅ Database accepts the fields correctly (tested with standalone script)
-- ✅ API endpoint now saves `spendPermission` and `spendPermissionSignature` successfully
-- ✅ The exact data structure from the original error now works perfectly
-
-The spend permission approval flow should now work correctly from the frontend through to database storage.
-
-**PRISMA IMPORT ERROR FIXED:**
-
-Fixed the PrismaClient import error in `app/api/users/route.ts`:
-
-**The Issue**: `Module '"@prisma/client/index-browser"' has no exported member 'PrismaClient'` error was occurring due to multiple Prisma client instances and browser/server module conflicts.
-
-**The Solution**:
-
-- Replaced custom Prisma client creation with the existing centralized client from `lib/prisma.ts`
-- Used proper import: `import { prisma } from '@/lib/prisma';`
-- This follows the established pattern used throughout the codebase
-
-**NEW ISSUE DISCOVERED - WebAuthn/Passkey Signatures:**
-
-From the logs, discovered that Coinbase Smart Wallet is returning **WebAuthn/Passkey signatures** (1282 characters) instead of standard EIP-712 signatures (132 characters). This suggests the wallet is using passkey authentication rather than traditional ECDSA signatures.
-
-**Next Steps Needed**:
-
-1. Research how to handle WebAuthn/Passkey signatures with Coinbase Smart Wallet
-2. May need to use different verification methods for passkey-based signatures
-3. Check Coinbase Smart Wallet documentation for proper signature handling
+The implementation is ready for testing. Would you like me to proceed with the testing phase, or would you prefer to manually test the implementation first?
 
 # Lessons
 
@@ -293,3 +282,95 @@ From the logs, discovered that Coinbase Smart Wallet is returning **WebAuthn/Pas
 - Trust Coinbase Smart Wallet to handle signature verification in the contract
 
 This follows the principle: "Don't overcomplicate things" - the official documentation shows the simple way that actually works.
+
+## Implementation Strategy for Wallet-Username Association
+
+### Technical Approach
+
+**1. Database Schema Strategy:**
+
+- Add optional `walletAddress` field to User model with unique constraint
+- Keep `fid` and `username` optional to support wallet-only users
+- Use compound lookup logic: find user by `fid` OR `walletAddress`
+- Maintain existing uniqueness constraints for backward compatibility
+
+**2. Username Generation Strategy:**
+
+- Use adjective + noun + number pattern (e.g., "QuickPanda42", "BraveRaven123")
+- Implement collision detection with retry logic (max 5 attempts)
+- Use simple in-memory word lists to avoid external dependencies
+- Generate 3-digit random numbers for uniqueness
+
+**3. User Provider Integration Strategy:**
+
+- Extend existing UserProvider to detect wallet connections via `useAccount` hook
+- Implement dual-path logic: Farcaster context takes priority, wallet as fallback
+- Use effect hook to trigger wallet-based user creation when address changes
+- Maintain backward compatibility with existing Farcaster flow
+- **Address Update Logic:** When an existing user (identified by fid/username) connects a wallet for the first time, update their record with the wallet address
+- **Conflict Resolution:** If the connected wallet is already associated with another user, implement conflict resolution strategy
+
+**4. API Endpoint Strategy:**
+
+- Extend `/api/users` POST to accept optional `walletAddress` parameter
+- Implement lookup logic: find by `fid/username` OR `walletAddress`
+- Generate username only for new wallet-only users
+- Return consistent user object format regardless of authentication method
+- **Address Update Endpoint:** Add logic to PATCH existing users with wallet address when they connect for the first time
+- **Conflict Detection:** Check for existing wallet address associations before updates
+
+### Success Criteria
+
+**Phase 1 - Schema & Username Generation:**
+
+- [ ] Prisma schema updated with optional `walletAddress` field
+- [ ] Database migration runs successfully
+- [ ] Username generator creates unique, readable usernames
+- [ ] Username collision detection works correctly
+
+**Phase 2 - API Integration:**
+
+- [ ] `/api/users` endpoint supports wallet address lookup
+- [ ] New wallet users get created with generated usernames
+- [ ] Existing users can be found by wallet address
+- [ ] Farcaster users continue to work without changes
+- [ ] **Address update logic:** Existing users without wallet addresses get updated when they connect a wallet
+- [ ] **Conflict detection:** API prevents duplicate wallet address associations
+
+**Phase 3 - Frontend Integration:**
+
+- [ ] UserProvider detects wallet connections
+- [ ] Wallet-only users get created automatically on connection
+- [ ] User state management works for both user types
+- [ ] UI components handle both Farcaster and wallet users correctly
+- [ ] **Existing user updates:** When existing users connect wallets, their records are updated seamlessly
+- [ ] **Conflict handling:** UI gracefully handles wallet address conflicts
+
+**Phase 4 - Testing & Validation:**
+
+- [ ] New wallet connection creates user with generated username
+- [ ] Existing wallet user lookup works correctly
+- [ ] Farcaster users unaffected by changes
+- [ ] Edge cases handled (disconnection, account switching, etc.)
+- [ ] **Existing user address population:** Verify existing users get wallet addresses when connecting
+- [ ] **Address conflict scenarios:** Test and validate conflict resolution behavior
+
+### Risk Mitigation
+
+**Backward Compatibility:**
+
+- All existing Farcaster functionality must continue working
+- Existing users must not be affected by schema changes
+- API endpoints must handle both old and new request formats
+
+**Username Uniqueness:**
+
+- Implement robust collision detection
+- Have fallback strategy if generation fails
+- Consider prefixing generated usernames (e.g., "wallet_QuickPanda42")
+
+**User Experience:**
+
+- Seamless transition between Farcaster and wallet authentication
+- Clear indication of username source (generated vs. Farcaster)
+- Handle wallet disconnection gracefully

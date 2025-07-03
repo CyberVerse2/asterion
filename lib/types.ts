@@ -1,6 +1,8 @@
 export interface User {
   id: string;
-  username: string;
+  fid?: number; // Farcaster ID - optional for wallet-only users
+  username?: string; // Username - optional for wallet-only users (will be generated for wallet-only)
+  walletAddress?: string; // Wallet address for wallet-only users
   novels: string[];
   bookmarks: string[];
   tips: Tip[];

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { generateUniqueUsername } from '@/lib/username-generator';
 
 // Utility to deeply convert BigInt values to strings
 function deepBigIntToString(obj: any): any {
@@ -65,16 +66,48 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   console.log('[POST /api/users] Incoming request');
   try {
-    const { fid, username, pfpUrl } = await req.json();
-    console.log('[POST /api/users] Payload:', { fid, username, pfpUrl });
-    if (!fid || !username) {
-      return NextResponse.json({ error: 'fid and username are required' }, { status: 400 });
+    const { fid, username, pfpUrl, walletAddress } = await req.json();
+    console.log('[POST /api/users] Payload:', { fid, username, pfpUrl, walletAddress });
+
+    // Validate input: either (fid AND username) OR walletAddress must be provided
+    if ((!fid || !username) && !walletAddress) {
+      return NextResponse.json(
+        {
+          error: 'Either (fid and username) or walletAddress is required'
+        },
+        { status: 400 }
+      );
     }
 
-    // Try to find the user by fid or username with tips included
+    // Helper function to check username uniqueness
+    const checkUsernameUniqueness = async (usernameToCheck: string): Promise<boolean> => {
+      const existingUser = await prisma.user.findUnique({
+        where: { username: usernameToCheck }
+      });
+      return !existingUser; // Returns true if username is unique
+    };
+
+    // Helper function to check wallet address uniqueness
+    const checkWalletAddressUniqueness = async (addressToCheck: string): Promise<boolean> => {
+      const existingUser = await prisma.user.findFirst({
+        where: { walletAddress: addressToCheck }
+      });
+      return !existingUser; // Returns true if wallet address is unique
+    };
+
+    // Build search criteria
+    const searchCriteria: any[] = [];
+    if (fid && username) {
+      searchCriteria.push({ fid: Number(fid) }, { username: username });
+    }
+    if (walletAddress) {
+      searchCriteria.push({ walletAddress: walletAddress });
+    }
+
+    // Try to find the user by fid, username, or walletAddress with tips included
     let user = await prisma.user.findFirst({
       where: {
-        OR: [{ fid: Number(fid) }, { username: username }]
+        OR: searchCriteria
       },
       include: {
         tips: {
@@ -100,14 +133,119 @@ export async function POST(req: NextRequest) {
     });
     console.log('[POST /api/users] Found user:', user);
 
-    // If not found, create the user and fetch with tips
-    if (!user) {
-      const newUser = await prisma.user.create({
-        data: {
-          fid: Number(fid),
-          username: username,
-          ...(pfpUrl ? { pfpUrl } : {})
+    // Handle existing user without wallet address - update with current wallet
+    if (user && !user.walletAddress && walletAddress) {
+      console.log('[POST /api/users] Updating existing user with wallet address');
+
+      // Check if this wallet address is already associated with another user
+      const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
+      if (!isWalletUnique) {
+        const conflictingUser = await prisma.user.findFirst({
+          where: { walletAddress: walletAddress }
+        });
+        console.log('[POST /api/users] Wallet address conflict detected');
+        return NextResponse.json(
+          {
+            error: 'This wallet address is already associated with another user',
+            conflictingUser: { id: conflictingUser?.id, username: conflictingUser?.username }
+          },
+          { status: 409 }
+        );
+      }
+
+      // Update user with wallet address
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { walletAddress: walletAddress },
+        include: {
+          tips: {
+            include: {
+              novel: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              },
+              chapter: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              }
+            },
+            orderBy: {
+              date: 'desc'
+            }
+          }
         }
+      });
+      console.log('[POST /api/users] Updated existing user with wallet address:', user);
+    }
+
+    // If not found, create the user
+    if (!user) {
+      const userData: any = {};
+
+      // Handle Farcaster user creation
+      if (fid && username) {
+        userData.fid = Number(fid);
+        userData.username = username;
+        if (pfpUrl) userData.pfpUrl = pfpUrl;
+        if (walletAddress) {
+          // Check wallet address uniqueness before creating
+          const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
+          if (!isWalletUnique) {
+            const conflictingUser = await prisma.user.findFirst({
+              where: { walletAddress: walletAddress }
+            });
+            console.log('[POST /api/users] Wallet address conflict during creation');
+            return NextResponse.json(
+              {
+                error: 'This wallet address is already associated with another user',
+                conflictingUser: { id: conflictingUser?.id, username: conflictingUser?.username }
+              },
+              { status: 409 }
+            );
+          }
+          userData.walletAddress = walletAddress;
+        }
+      }
+      // Handle wallet-only user creation
+      else if (walletAddress) {
+        // Check wallet address uniqueness before creating
+        const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
+        if (!isWalletUnique) {
+          const conflictingUser = await prisma.user.findFirst({
+            where: { walletAddress: walletAddress }
+          });
+          console.log('[POST /api/users] Wallet address conflict during wallet-only user creation');
+          return NextResponse.json(
+            {
+              error: 'This wallet address is already associated with another user',
+              conflictingUser: { id: conflictingUser?.id, username: conflictingUser?.username }
+            },
+            { status: 409 }
+          );
+        }
+
+        userData.walletAddress = walletAddress;
+        // Generate unique username for wallet-only user
+        try {
+          userData.username = await generateUniqueUsername(checkUsernameUniqueness);
+          console.log('[POST /api/users] Generated username for wallet user:', userData.username);
+        } catch (error) {
+          console.error('[POST /api/users] Username generation failed:', error);
+          return NextResponse.json(
+            {
+              error: 'Failed to generate unique username'
+            },
+            { status: 500 }
+          );
+        }
+      }
+
+      const newUser = await prisma.user.create({
+        data: userData
       });
 
       // Fetch the created user with tips included
@@ -159,7 +297,8 @@ export async function PATCH(req: NextRequest) {
       chapterTipAmount,
       novelId,
       spendPermission,
-      spendPermissionSignature
+      spendPermissionSignature,
+      walletAddress
     } = await req.json();
     console.log('[PATCH /api/users] Payload:', {
       userId,
@@ -167,11 +306,26 @@ export async function PATCH(req: NextRequest) {
       chapterTipAmount,
       novelId,
       spendPermission,
-      spendPermissionSignature
+      spendPermissionSignature,
+      walletAddress
     });
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
+
+    // Helper function to check wallet address uniqueness
+    const checkWalletAddressUniqueness = async (
+      addressToCheck: string,
+      excludeUserId: string
+    ): Promise<boolean> => {
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          walletAddress: addressToCheck,
+          id: { not: excludeUserId } // Exclude current user
+        }
+      });
+      return !existingUser; // Returns true if wallet address is unique
+    };
 
     // Find the user
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -198,6 +352,29 @@ export async function PATCH(req: NextRequest) {
     if (spendPermissionSignature) {
       console.log('[PATCH /api/users] Storing spendPermissionSignature:', spendPermissionSignature);
       updateData.spendPermissionSignature = spendPermissionSignature;
+    }
+    if (walletAddress) {
+      // Check if this wallet address is already associated with another user
+      const isWalletUnique = await checkWalletAddressUniqueness(walletAddress, userId);
+      if (!isWalletUnique) {
+        const conflictingUser = await prisma.user.findFirst({
+          where: {
+            walletAddress: walletAddress,
+            id: { not: userId } // Exclude current user
+          }
+        });
+        console.log('[PATCH /api/users] Wallet address conflict detected');
+        return NextResponse.json(
+          {
+            error: 'This wallet address is already associated with another user',
+            conflictingUser: { id: conflictingUser?.id, username: conflictingUser?.username }
+          },
+          { status: 409 }
+        );
+      }
+
+      updateData.walletAddress = walletAddress;
+      console.log('[PATCH /api/users] Adding wallet address to update:', walletAddress);
     }
 
     let updatedUser = user;

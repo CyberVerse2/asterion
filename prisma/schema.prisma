@@ -9,8 +9,9 @@ datasource db {
 
 model User {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  fid        Int      @unique // Farcaster ID
-  username   String   @unique
+  fid        Int?     @unique // Farcaster ID - now optional for wallet-only users
+  username   String?  @unique // Username - now optional for wallet-only users
+  walletAddress String? // Wallet address for wallet-only users (uniqueness handled in app code)
   pfpUrl     String?
   tips       Tip[]
   bookmarks  String[] // Array of Novel IDs (as strings)
