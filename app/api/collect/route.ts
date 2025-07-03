@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'spend',
-      args: [contractSpendPermission, BigInt(1)] // Spend 1 wei
+      args: [contractSpendPermission, BigInt(0.01)] // Spend 1 wei
     });
 
     const spendReceipt = await publicClient.waitForTransactionReceipt({
