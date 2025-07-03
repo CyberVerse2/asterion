@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,8 @@ export default function NovelPage() {
     }
     return false;
   });
+
+  const randomReviews = useMemo(() => Math.floor(Math.random() * 991) + 10, []);
 
   useEffect(() => {
     const fetchNovelAndChapters = async () => {
@@ -265,7 +267,7 @@ export default function NovelPage() {
               <div className="text-xs text-gray-400">IN LIBRARY</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-white">{novel.tipCount}</div>
+              <div className="text-lg font-bold text-white">{randomReviews}</div>
               <div className="text-xs text-gray-400">REVIEWS</div>
             </div>
           </div>
