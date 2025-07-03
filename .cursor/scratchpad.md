@@ -132,6 +132,28 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - Implemented `/api/collect` API route. This route accepts a POST with spendPermission and signature, uses the spender wallet to call approveWithSignature and spend, and returns the transaction hash and status. Next: Add spender wallet env vars to `.env` and test the end-to-end flow.
 - Chapter loading is now deferred until the user clicks 'Read Now'. The linter error regarding the 'coin' prop on ChapterReader was fixed. Please verify in the UI that chapters only load after clicking 'Read Now'.
 
+**CRITICAL INVALIDSSIGNATURE BUG ANALYSIS AND FIXES APPLIED:**
+
+I analyzed the persistent `InvalidSignature()` error from 7 different angles and implemented multiple fixes:
+
+1. **UNIQUE SALT GENERATION**: Fixed the primary issue where all spend permissions used `salt: BigInt(0)`, causing hash collisions. Now generates unique salts using timestamp + user address.
+
+2. **CONTRACT ARGUMENT FORMAT**: Fixed Viem passing objects instead of tuples. Changed from passing `contractSpendPermission` object to `spendPermissionTuple` array with proper element ordering.
+
+3. **ADDRESS CHECKSUMMING**: Added `getAddress()` normalization in both frontend and backend to ensure consistent address formatting between signature creation and contract verification.
+
+4. **TYPE CONSISTENCY**: Ensured BigInt values are preserved through the entire flow: Frontend (BigInt) → JSON (string) → Backend (BigInt) → Contract (tuple with BigInt).
+
+5. **ENHANCED LOGGING**: Added comprehensive logging to track types at each step and verify tuple structure sent to contract.
+
+The main changes:
+
+- Frontend: Generate unique salt, normalize addresses with `getAddress()`
+- Backend: Convert object to tuple array for contract calls, normalize addresses
+- Both: Enhanced logging to track the exact values and types being processed
+
+The user should test the spend permission approval flow again to see if the `InvalidSignature()` error is resolved with these multi-faceted fixes.
+
 # Lessons
 
 - Always read the file before editing.

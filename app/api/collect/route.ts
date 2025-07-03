@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPublicClient, getSpenderWalletClient } from '@/lib/spender';
+import { getAddress } from 'viem';
 import {
   spendPermissionManagerAbi,
   spendPermissionManagerAddress
@@ -27,10 +28,11 @@ export async function POST(request: NextRequest) {
 
     // Convert the string values back to proper types for contract call
     // The signature was created with BigInt values, but JSON transport converts them to strings
+    // Also normalize addresses to ensure checksum consistency
     const contractSpendPermission = {
-      account: spendPermission.account,
-      spender: spendPermission.spender,
-      token: spendPermission.token,
+      account: getAddress(spendPermission.account),
+      spender: getAddress(spendPermission.spender),
+      token: getAddress(spendPermission.token),
       allowance: BigInt(spendPermission.allowance),
       period: BigInt(spendPermission.period),
       start: BigInt(spendPermission.start),
@@ -46,12 +48,31 @@ export async function POST(request: NextRequest) {
 
     console.log('[collect] About to call approveWithSignature with converted spend permission');
 
-    // Use the converted structure for the contract call
+    // Convert to tuple format that the contract expects
+    const spendPermissionTuple = [
+      contractSpendPermission.account,
+      contractSpendPermission.spender,
+      contractSpendPermission.token,
+      contractSpendPermission.allowance,
+      contractSpendPermission.period,
+      contractSpendPermission.start,
+      contractSpendPermission.end,
+      contractSpendPermission.salt,
+      contractSpendPermission.extraData
+    ];
+
+    console.log('[collect] SpendPermission tuple for contract:', spendPermissionTuple);
+    console.log(
+      '[collect] Types of tuple elements:',
+      spendPermissionTuple.map((item, i) => `[${i}]: ${typeof item}`)
+    );
+
+    // Use the tuple structure for the contract call
     const approvalTxnHash = await spenderBundlerClient.writeContract({
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'approveWithSignature',
-      args: [contractSpendPermission, signature]
+      args: [spendPermissionTuple, signature]
     });
 
     const approvalReceipt = await publicClient.waitForTransactionReceipt({
@@ -60,12 +81,12 @@ export async function POST(request: NextRequest) {
 
     console.log('[collect] Approval successful, proceeding to spend...');
 
-    // Spend (use the permission) - use converted structure
+    // Spend (use the permission) - use tuple structure
     const spendTxnHash = await spenderBundlerClient.writeContract({
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'spend',
-      args: [contractSpendPermission, BigInt(1)] // Spend 1 USDC wei
+      args: [spendPermissionTuple, BigInt(1)] // Spend 1 USDC wei
     });
 
     const spendReceipt = await publicClient.waitForTransactionReceipt({

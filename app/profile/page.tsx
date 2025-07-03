@@ -7,7 +7,7 @@ import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { useAccount, useChainId, useConnect, useConnectors, useSignTypedData } from 'wagmi';
-import { Address, Hex, parseUnits } from 'viem';
+import { Address, Hex, parseUnits, getAddress } from 'viem';
 import {
   spendPermissionManagerAbi,
   spendPermissionManagerAddress,
@@ -170,10 +170,21 @@ export default function ProfilePage() {
 
       console.log('[handleApproveSpend] Generated unique salt:', uniqueSalt.toString());
 
+      // Normalize addresses to proper checksum format
+      const normalizedAccount = getAddress(accountAddress);
+      const normalizedSpender = getAddress(process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address);
+      const normalizedToken = getAddress(USDC_ADDRESS);
+
+      console.log('[handleApproveSpend] Normalized addresses:', {
+        account: normalizedAccount,
+        spender: normalizedSpender,
+        token: normalizedToken
+      });
+
       const spendPermission = {
-        account: accountAddress,
-        spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
-        token: USDC_ADDRESS,
+        account: normalizedAccount,
+        spender: normalizedSpender,
+        token: normalizedToken,
         allowance: parseUnits(spendLimit.toString(), 6), // BigInt
         period: BigInt(2592000), // BigInt (30 days in seconds)
         start: BigInt(0), // BigInt (immediate start)
