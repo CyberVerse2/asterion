@@ -5,12 +5,31 @@ import {
   spendPermissionManagerAddress
 } from '@/lib/abi/SpendPermissionManager';
 
+// Utility to deeply convert stringified BigInts and numbers to BigInt
+function deepToBigInt(obj: any): any {
+  if (typeof obj === 'string' && obj.match(/^\d+$/)) return BigInt(obj);
+  if (typeof obj === 'number') return BigInt(obj);
+  if (Array.isArray(obj)) return obj.map(deepToBigInt);
+  if (obj && typeof obj === 'object') {
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, deepToBigInt(v)]));
+  }
+  return obj;
+}
+
 export async function POST(request: NextRequest) {
   const spenderBundlerClient = await getSpenderWalletClient();
   const publicClient = await getPublicClient();
   try {
     const body = await request.json();
-    const { spendPermission, signature } = body;
+    let { spendPermission, signature } = body;
+
+    // Convert stringified BigInts and numbers to BigInt
+    spendPermission = deepToBigInt(spendPermission);
+    console.log('[collect] Reconstructed spendPermission:', spendPermission);
+    Object.entries(spendPermission).forEach(([k, v]) => {
+      console.log(`[collect] spendPermission field: ${k}, value: ${v}, type: ${typeof v}`);
+    });
+    console.log('[collect] Signature:', signature);
 
     // Approve spend permission onchain
     const approvalTxnHash = await spenderBundlerClient.writeContract({
