@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
     console.log('[tip-chapter] SpendPermission:', spendPermission);
     console.log('[tip-chapter] Signature:', signature);
 
-    // Spend 0.1 USDC (6 decimals)
-    const amount = BigInt(0.1 * 10 ** 6);
-    console.log('[tip-chapter] Spending amount:', amount.toString());
+    // Spend 1.0 USDC (6 decimals)
+    const amount = BigInt(1.0 * 10 ** 6);
+    console.log('[tip-chapter] Spending amount (USDC, 6 decimals):', amount.toString());
     const spenderBundlerClient = await getSpenderWalletClient();
     const publicClient = await getPublicClient();
     console.log('[tip-chapter] Got spenderBundlerClient and publicClient');
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: spendReceipt.status ? 'success' : 'failure',
       transactionHash: spendReceipt.transactionHash,
-      transactionUrl: `https://sepolia.basescan.org/tx/${spendReceipt.transactionHash}`,
+      transactionUrl: `https://basescan.org/tx/${spendReceipt.transactionHash}`,
       tipCount: updatedChapter.tipCount
     });
   } catch (error) {

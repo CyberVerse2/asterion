@@ -207,32 +207,65 @@ export default function ProfilePage() {
           }
           return value;
         };
-        await fetch('/api/users', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(
-            {
-              userId: profile.id,
-              spendPermission,
-              spendPermissionSignature: signature
-            },
-            replacer
-          )
-        });
+        let patchOk = false;
+        try {
+          const patchRes = await fetch('/api/users', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(
+              {
+                userId: profile.id,
+                spendPermission,
+                spendPermissionSignature: signature
+              },
+              replacer
+            )
+          });
+          const patchData = await patchRes
+            .clone()
+            .json()
+            .catch(() => ({}));
+          console.log(
+            '[handleApproveSpend] PATCH /api/users response:',
+            patchRes.status,
+            patchData
+          );
+          if (!patchRes.ok) {
+            setApproveError('Failed to save spend permission to database');
+            setApproving(false);
+            return;
+          }
+          patchOk = true;
+        } catch (err) {
+          console.error('[handleApproveSpend] PATCH /api/users error:', err);
+          setApproveError('Failed to save spend permission to database');
+          setApproving(false);
+          return;
+        }
 
         setTransactionStatus('pending');
-        // POST to /api/collect
-        const response = await fetch('/api/collect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ spendPermission, signature }, replacer)
-        });
-        if (!response.ok) throw new Error('Failed to approve onchain');
-        const data = await response.json();
-        if (data.status === 'success') {
-          setTransactionStatus('success');
-          setTransactionUrl(data.transactionUrl);
-        } else {
+        try {
+          const response = await fetch('/api/collect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spendPermission, signature }, replacer)
+          });
+          const data = await response
+            .clone()
+            .json()
+            .catch(() => ({}));
+          console.log('[handleApproveSpend] POST /api/collect response:', response.status, data);
+          if (!response.ok) throw new Error('Failed to approve onchain');
+          if (data.status === 'success') {
+            setTransactionStatus('success');
+            setTransactionUrl(data.transactionUrl);
+          } else {
+            setTransactionStatus('failure');
+            setTransactionUrl(null);
+          }
+        } catch (err) {
+          console.error('[handleApproveSpend] POST /api/collect error:', err);
+          setApproveError('Onchain approval failed');
           setTransactionStatus('failure');
           setTransactionUrl(null);
         }
