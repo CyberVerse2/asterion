@@ -114,6 +114,7 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - [ ] Add spender wallet env vars to `.env`
 - [ ] Test end-to-end spend permission flow
 - [x] Defer loading of novel chapters until 'Read Now' is clicked
+- [x] Fix Prisma import errors in API routes
 
 # Executor's Feedback or Assistance Requests
 
@@ -179,13 +180,6 @@ Fixed the "field type mismatch" error from Coinbase Smart Wallet by ensuring pro
 
 This ensures the signature is created correctly by the wallet and verified correctly by our backend, while the contract still gets the proper typed values it expects.
 
-# Lessons
-
-- Always read the file before editing.
-- Include debug info in program output.
-- Use TDD where possible.
-- If you find any bugs, fix them before moving to the next task.
-
 **LATEST CHAINID VALIDATION FIX:**
 
 Added chainId validation to ensure user is on Base mainnet (8453) before attempting EIP-712 signing. The "field type mismatch" error from Coinbase Smart Wallet could be caused by:
@@ -226,3 +220,76 @@ Based on a working example, discovered that Coinbase Smart Wallet expects **mixe
 4. Updated backend verification to match the signed message format
 
 This aligns with the working example and should resolve the "field type mismatch" error from Coinbase Smart Wallet.
+
+**DATABASE SAVE ISSUE RESOLVED:**
+
+The "Unknown argument `spendPermission`" error was caused by **multiple conflicting Next.js development servers** running simultaneously, not by the Prisma schema or code.
+
+**The Issue**: Multiple `next dev` processes were running, causing API routing conflicts and stale Prisma client instances.
+
+**The Solution**:
+
+1. Killed all running Next.js development servers with `pkill -f "next dev"`
+2. Cleared Next.js build cache with `rm -rf .next`
+3. Regenerated Prisma client with `npx prisma generate`
+4. Started a fresh development server
+
+**Test Results**:
+
+- ✅ Prisma schema is correct (`spendPermission Json?` and `spendPermissionSignature String?`)
+- ✅ Database accepts the fields correctly (tested with standalone script)
+- ✅ API endpoint now saves `spendPermission` and `spendPermissionSignature` successfully
+- ✅ The exact data structure from the original error now works perfectly
+
+The spend permission approval flow should now work correctly from the frontend through to database storage.
+
+**PRISMA IMPORT ERROR FIXED:**
+
+Fixed the PrismaClient import error in `app/api/users/route.ts`:
+
+**The Issue**: `Module '"@prisma/client/index-browser"' has no exported member 'PrismaClient'` error was occurring due to multiple Prisma client instances and browser/server module conflicts.
+
+**The Solution**:
+
+- Replaced custom Prisma client creation with the existing centralized client from `lib/prisma.ts`
+- Used proper import: `import { prisma } from '@/lib/prisma';`
+- This follows the established pattern used throughout the codebase
+
+**NEW ISSUE DISCOVERED - WebAuthn/Passkey Signatures:**
+
+From the logs, discovered that Coinbase Smart Wallet is returning **WebAuthn/Passkey signatures** (1282 characters) instead of standard EIP-712 signatures (132 characters). This suggests the wallet is using passkey authentication rather than traditional ECDSA signatures.
+
+**Next Steps Needed**:
+
+1. Research how to handle WebAuthn/Passkey signatures with Coinbase Smart Wallet
+2. May need to use different verification methods for passkey-based signatures
+3. Check Coinbase Smart Wallet documentation for proper signature handling
+
+# Lessons
+
+- Always read the file before editing.
+- Include debug info in program output.
+- Use TDD where possible.
+- If you find any bugs, fix them before moving to the next task.
+- Use centralized Prisma client instances instead of creating multiple instances to avoid import conflicts.
+- Coinbase Smart Wallet may use WebAuthn/Passkey signatures which require different handling than standard EIP-712 signatures.
+- **Don't overcomplicate signature verification** - Coinbase Smart Wallet handles signature verification internally in `approveWithSignature`. Skip local verification and pass signatures directly to the contract.
+
+**FINAL FIX - SIMPLIFIED SIGNATURE HANDLING:**
+
+**The Issue**: Was trying to verify WebAuthn/Passkey signatures locally using standard EIP-712 verification methods, which caused "invalid signature length" errors.
+
+**The Solution**: Follow the official Coinbase documentation approach:
+
+1. **Skip local signature verification** - Coinbase Smart Wallet handles this internally
+2. **Pass signatures directly** to `approveWithSignature` contract method
+3. **Simplify the backend** - just convert JSON string values to BigInt and call contract
+
+**Key Changes**:
+
+- Removed `verifyTypedData` call and all complex verification logic
+- Removed excessive logging and debugging code
+- Simplified `/api/collect` route to match official documentation example
+- Trust Coinbase Smart Wallet to handle signature verification in the contract
+
+This follows the principle: "Don't overcomplicate things" - the official documentation shows the simple way that actually works.
