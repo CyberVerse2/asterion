@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DollarSign, BookOpen, Heart, Settings } from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
+import { useState } from 'react';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -25,6 +26,7 @@ export default function ProfilePage() {
     userLoading: isLoading,
     userError
   } = useUser() as { user: User | null; userLoading: boolean; userError: string | null };
+  const [showSpendPermission, setShowSpendPermission] = useState(false);
 
   if (isLoading) {
     return (
@@ -181,10 +183,39 @@ export default function ProfilePage() {
                 </div>
                 <Badge>$200.00</Badge>
               </div>
-              <Button>Adjust Limits</Button>
+              <Button onClick={() => setShowSpendPermission((v) => !v)}>Adjust Limits</Button>
+              {showSpendPermission && (
+                <div className="mt-4">
+                  <SpendPermission />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
+      </div>
+    </div>
+  );
+}
+
+function SpendPermission() {
+  // Placeholder state for wallet connection and permission
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+
+  return (
+    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+      <h3 className="font-semibold mb-2">Manage Spend Permission</h3>
+      {!walletConnected ? (
+        <Button onClick={() => setWalletConnected(true)}>Connect Wallet</Button>
+      ) : !permissionGranted ? (
+        <Button onClick={() => setPermissionGranted(true)}>Grant Spend Permission</Button>
+      ) : (
+        <div className="text-green-600 dark:text-green-400 font-medium">
+          Spend Permission Granted!
+        </div>
+      )}
+      <div className="text-xs text-muted-foreground mt-2">
+        This allows the app to spend up to your daily/monthly limit automatically.
       </div>
     </div>
   );
