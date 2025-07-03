@@ -107,6 +107,12 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - [ ] Update Profile page UI to show and adjust a single spend limit
 - [ ] Update SpendPermission logic to use spendLimit
 - [ ] Test all flows with new single limit
+- [x] Create `lib/spender.ts` for spender wallet client
+- [x] Implement `/app/collect/route.ts` API route for spend permission approval and spending
+- [ ] Refactor spend permission UI into a dedicated component
+- [ ] Integrate spend permission component into profile page
+- [ ] Add spender wallet env vars to `.env`
+- [ ] Test end-to-end spend permission flow
 
 # Executor's Feedback or Assistance Requests
 
@@ -121,6 +127,8 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - SpendPermission component in app/profile/page.tsx now uses only USDC (with correct decimals) for spend permissions. ETH is no longer referenced.
 - The spend limit is now a single adjustable value in the user model and passed as a prop to SpendPermission.
 - User spend limits are now persisted to and loaded from the database via PATCH /api/users.
+- Created `lib/spender.ts` with `getPublicClient` and `getSpenderWalletClient` functions, following the OnchainKit/Viem pattern. This enables backend contract calls using the spender wallet for Spend Permissions.
+- Implemented `/api/collect` API route. This route accepts a POST with spendPermission and signature, uses the spender wallet to call approveWithSignature and spend, and returns the transaction hash and status. Next: Add spender wallet env vars to `.env` and test the end-to-end flow.
 
 # Lessons
 

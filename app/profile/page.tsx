@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DollarSign, BookOpen, Heart, Settings, Info } from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
 import { useState, useEffect } from 'react';
@@ -28,6 +27,78 @@ interface UserProfile {
   }>;
 }
 
+// Inline SVG icon components
+const DollarSign = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <line x1="12" y1="1" x2="12" y2="23" />
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+  </svg>
+);
+const BookOpen = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M2 7V17A2 2 0 0 0 4 19H20A2 2 0 0 0 22 17V7" />
+    <path d="M12 3V21" />
+  </svg>
+);
+const Heart = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
+  </svg>
+);
+const Settings = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+const Info = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
 export default function ProfilePage() {
   const {
     user: profile,
@@ -45,6 +116,8 @@ export default function ProfilePage() {
   const chainId = useChainId();
   const { connectAsync } = useConnect();
   const connectors = useConnectors();
+  const [transactionStatus, setTransactionStatus] = useState<string | null>(null);
+  const [transactionUrl, setTransactionUrl] = useState<string | null>(null);
 
   // Initialize spendLimit from user profile
   useEffect(() => {
@@ -77,6 +150,8 @@ export default function ProfilePage() {
   async function handleApproveSpend() {
     setApproving(true);
     setApproveError(null);
+    setTransactionStatus(null);
+    setTransactionUrl(null);
     let accountAddress = account?.address;
     try {
       if (!accountAddress) {
@@ -99,7 +174,7 @@ export default function ProfilePage() {
         salt: BigInt(0),
         extraData: '0x' as Hex
       };
-      await signTypedDataAsync({
+      const signature = await signTypedDataAsync({
         domain: {
           name: 'Spend Permission Manager',
           version: '1',
@@ -123,8 +198,32 @@ export default function ProfilePage() {
         message: spendPermission
       });
       setApproved(true);
+      setTransactionStatus('pending');
+      // POST to /api/collect
+      const replacer = (key: string, value: any) => {
+        if (typeof value === 'bigint') {
+          return value.toString();
+        }
+        return value;
+      };
+      const response = await fetch('/api/collect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spendPermission, signature }, replacer)
+      });
+      if (!response.ok) throw new Error('Failed to approve onchain');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setTransactionStatus('success');
+        setTransactionUrl(data.transactionUrl);
+      } else {
+        setTransactionStatus('failure');
+        setTransactionUrl(null);
+      }
     } catch (e: any) {
-      setApproveError(e.message || 'Signature failed');
+      setApproveError(e.message || 'Signature or onchain approval failed');
+      setTransactionStatus('failure');
+      setTransactionUrl(null);
     }
     setApproving(false);
   }
@@ -314,6 +413,29 @@ export default function ProfilePage() {
               {approveError && (
                 <div className="text-red-600 dark:text-red-400 font-medium mt-2">
                   {approveError}
+                </div>
+              )}
+              {transactionStatus === 'pending' && (
+                <div className="text-blue-600 dark:text-blue-400 font-medium mt-2">
+                  Onchain approval pending...
+                </div>
+              )}
+              {transactionStatus === 'success' && transactionUrl && (
+                <div className="text-green-600 dark:text-green-400 font-medium mt-2">
+                  Onchain approval successful!{' '}
+                  <a
+                    href={transactionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    View on BaseScan
+                  </a>
+                </div>
+              )}
+              {transactionStatus === 'failure' && (
+                <div className="text-red-600 dark:text-red-400 font-medium mt-2">
+                  Onchain approval failed.
                 </div>
               )}
             </div>
