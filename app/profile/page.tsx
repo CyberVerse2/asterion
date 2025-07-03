@@ -7,6 +7,12 @@ import { DollarSign, BookOpen, Heart, Settings } from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
 import { useState } from 'react';
+import { useAccount, useChainId, useConnect, useConnectors, useSignTypedData } from 'wagmi';
+import { Address, Hex, parseUnits } from 'viem';
+import {
+  spendPermissionManagerAbi,
+  spendPermissionManagerAddress
+} from '@/lib/abi/SpendPermissionManager';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -198,22 +204,91 @@ export default function ProfilePage() {
 }
 
 function SpendPermission() {
-  // Placeholder state for wallet connection and permission
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [signature, setSignature] = useState<Hex>();
+  const [spendPermission, setSpendPermission] = useState<any>();
+  const [error, setError] = useState<string | null>(null);
+
+  const { signTypedDataAsync } = useSignTypedData();
+  const account = useAccount();
+  const chainId = useChainId();
+  const { connectAsync } = useConnect();
+  const connectors = useConnectors();
+
+  async function handleSubmit() {
+    setIsDisabled(true);
+    setError(null);
+    let accountAddress = account?.address;
+    if (!accountAddress) {
+      try {
+        const requestAccounts = await connectAsync({
+          connector: connectors[0]
+        });
+        accountAddress = requestAccounts.accounts[0];
+      } catch (e) {
+        setError('Wallet connection failed');
+        setIsDisabled(false);
+        return;
+      }
+    }
+
+    // Define the spend permission object
+    const spendPermission = {
+      account: accountAddress,
+      spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
+      token: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' as Address, // ETH
+      allowance: parseUnits('10', 18), // 10 ETH
+      period: 86400, // 1 day
+      start: 0,
+      end: 281474976710655,
+      salt: BigInt(0),
+      extraData: '0x' as Hex
+    };
+
+    try {
+      const signature = await signTypedDataAsync({
+        domain: {
+          name: 'Spend Permission Manager',
+          version: '1',
+          chainId: chainId,
+          verifyingContract: spendPermissionManagerAddress
+        },
+        types: {
+          SpendPermission: [
+            { name: 'account', type: 'address' },
+            { name: 'spender', type: 'address' },
+            { name: 'token', type: 'address' },
+            { name: 'allowance', type: 'uint160' },
+            { name: 'period', type: 'uint48' },
+            { name: 'start', type: 'uint48' },
+            { name: 'end', type: 'uint48' },
+            { name: 'salt', type: 'uint256' },
+            { name: 'extraData', type: 'bytes' }
+          ]
+        },
+        primaryType: 'SpendPermission',
+        message: spendPermission
+      });
+      setSpendPermission(spendPermission);
+      setSignature(signature);
+    } catch (e: any) {
+      setError(e.message || 'Signature failed');
+    }
+    setIsDisabled(false);
+  }
 
   return (
     <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
       <h3 className="font-semibold mb-2">Manage Spend Permission</h3>
-      {!walletConnected ? (
-        <Button onClick={() => setWalletConnected(true)}>Connect Wallet</Button>
-      ) : !permissionGranted ? (
-        <Button onClick={() => setPermissionGranted(true)}>Grant Spend Permission</Button>
-      ) : (
-        <div className="text-green-600 dark:text-green-400 font-medium">
-          Spend Permission Granted!
+      <Button onClick={handleSubmit} disabled={isDisabled || !!signature}>
+        {signature ? 'Permission Granted' : 'Grant Spend Permission'}
+      </Button>
+      {signature && (
+        <div className="text-green-600 dark:text-green-400 font-medium mt-2">
+          Spend Permission Signed!
         </div>
       )}
+      {error && <div className="text-red-600 dark:text-red-400 font-medium mt-2">{error}</div>}
       <div className="text-xs text-muted-foreground mt-2">
         This allows the app to spend up to your daily/monthly limit automatically.
       </div>
