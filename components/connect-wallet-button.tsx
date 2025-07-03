@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { Wallet, ChevronDown } from 'lucide-react';
 import {
@@ -9,13 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { useEffect, useState } from 'react';
 
 export default function ConnectWalletButton() {
   const { context } = useMiniKit();
-  const [isConnected, setIsConnected] = useState(false);
-  const [address, setAddress] = useState<string>('');
-  const [isPending, setIsPending] = useState(false);
+  const { address, isConnected } = useAccount();
+  const { connect, connectors, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
 
   // Check if we're in a Farcaster mini app
   const isFarcasterMiniApp = !!(context?.client || context?.user);
@@ -31,56 +31,15 @@ export default function ConnectWalletButton() {
     return null;
   }
 
-  // Check for existing wallet connection
-  useEffect(() => {
-    const checkConnection = async () => {
-      if (typeof window !== 'undefined' && (window as any).ethereum) {
-        try {
-          const accounts = await (window as any).ethereum.request({
-            method: 'eth_accounts'
-          });
-          if (accounts.length > 0) {
-            setIsConnected(true);
-            setAddress(accounts[0]);
-          }
-        } catch (error) {
-          console.log('Error checking wallet connection:', error);
-        }
-      }
-    };
-    checkConnection();
-  }, []);
-
-  const connectWallet = async () => {
-    if (typeof window === 'undefined' || !(window as any).ethereum) {
-      alert('Please install MetaMask or another Web3 wallet');
-      return;
-    }
-
-    setIsPending(true);
-    try {
-      const accounts = await (window as any).ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-
-      if (accounts.length > 0) {
-        setIsConnected(true);
-        setAddress(accounts[0]);
-      }
-    } catch (error) {
-      console.error('Error connecting wallet:', error);
-    } finally {
-      setIsPending(false);
-    }
-  };
-
-  const disconnectWallet = () => {
-    setIsConnected(false);
-    setAddress('');
-  };
-
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  const handleConnect = () => {
+    // Use the first (and only) connector which should be Coinbase Smart Wallet
+    if (connectors.length > 0) {
+      connect({ connector: connectors[0] });
+    }
   };
 
   if (isConnected && address) {
@@ -98,7 +57,7 @@ export default function ConnectWalletButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={disconnectWallet}>Disconnect Wallet</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => disconnect()}>Disconnect Wallet</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -108,12 +67,12 @@ export default function ConnectWalletButton() {
     <Button
       variant="outline"
       size="sm"
-      className="flex items-center gap-2 bg-purple-600 text-white border-purple-600 hover:bg-purple-700 hover:border-purple-700"
+      className="flex items-center gap-2 bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700"
       disabled={isPending}
-      onClick={connectWallet}
+      onClick={handleConnect}
     >
       <Wallet className="h-4 w-4" />
-      {isPending ? 'Connecting...' : 'Connect Wallet'}
+      {isPending ? 'Connecting...' : 'Connect Coinbase Wallet'}
     </Button>
   );
 }
