@@ -240,9 +240,13 @@ export default function ChapterReader({
             dangerouslySetInnerHTML={{ __html: currentChapter.content }}
           />
 
-          {/* Trade feedback */}
-          {tradePending && <div className="text-blue-400 mt-2">Buying coin (0.1 USDC)...</div>}
-          {tradeSuccess && <div className="text-green-400 mt-2">Coin purchased successfully!</div>}
+          {/* Tip feedback */}
+          {tradePending && <div className="text-blue-400 mt-2">Tipping in progress...</div>}
+          {tradeSuccess && (
+            <div className="text-green-400 mt-2">
+              Tipped! Thank you for supporting the author ❤️
+            </div>
+          )}
           {tradeError && <div className="text-red-400 mt-2">{tradeError}</div>}
 
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
