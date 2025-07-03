@@ -27,7 +27,7 @@ interface UserProfile {
   }>;
 }
 
-// Extended tip type that includes novel relation for profile display
+// Extended tip type that includes novel and chapter relations for profile display
 interface TipWithNovel {
   id: string;
   username: string;
@@ -36,6 +36,10 @@ interface TipWithNovel {
   userId: string;
   date: Date;
   novel?: {
+    id: string;
+    title: string;
+  };
+  chapter?: {
     id: string;
     title: string;
   };
@@ -463,6 +467,11 @@ export default function ProfilePage() {
                       <div className="font-medium">
                         {tip.novel?.title || `Novel ID: ${tip.novelId}`}
                       </div>
+                      {tip.chapter && (
+                        <div className="text-sm font-medium text-purple-400">
+                          Chapter: {tip.chapter.title}
+                        </div>
+                      )}
                       <div className="text-sm text-muted-foreground">
                         {tip.date ? new Date(tip.date).toLocaleDateString() : 'Unknown date'}
                       </div>

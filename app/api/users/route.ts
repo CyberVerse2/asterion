@@ -121,6 +121,12 @@ export async function POST(req: NextRequest) {
                   id: true,
                   title: true
                 }
+              },
+              chapter: {
+                select: {
+                  id: true,
+                  title: true
+                }
               }
             },
             orderBy: {
