@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const novels = await prisma.novel.findMany({});
+    const novels = await prisma.novel.findMany({
+      include: { chapters: true }
+    });
     console.log('Fetched novels:', novels);
     return NextResponse.json(novels);
   } catch (error) {

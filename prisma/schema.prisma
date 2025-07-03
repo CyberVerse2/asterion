@@ -52,18 +52,20 @@ model Novel {
   summary       String?
   chaptersUrl   String?
   imageUrl      String?
-  chapters      Chapter[]
+  chapters      Chapter[] @relation("NovelChapters")
   lastScraped   DateTime? @default(now())
   createdAt     DateTime? @map("createdAt")
   updatedAt     DateTime? @map("updatedAt")
   tips          Tip[]
   supporters    Supporter[]
+
+  @@map("novels")
 }
 
 model Chapter {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  novel         Novel?   @relation(fields: [novelId], references: [id])
-  novelId       String?  // Reference to Novel
+  novel         String?  @db.ObjectId // Reference to Novel
+  novelRel      Novel?   @relation("NovelChapters", fields: [novel], references: [id])
   chapterNumber Int
   url           String   @unique
   title         String
@@ -71,5 +73,6 @@ model Chapter {
   createdAt     DateTime? @map("createdAt")
   updatedAt     DateTime? @map("updatedAt")
 
-  @@index([novelId, chapterNumber], name: "novel_chapterNumber_idx")
+  @@index([novel, chapterNumber], name: "novel_chapterNumber_idx")
+  @@map("chapters")
 }
