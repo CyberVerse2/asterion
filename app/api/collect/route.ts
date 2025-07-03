@@ -31,24 +31,44 @@ export async function POST(request: NextRequest) {
     });
     console.log('[collect] Signature:', signature);
 
+    // Ensure all numeric fields are explicitly BigInt for the contract call
+    const contractSpendPermission = {
+      account: spendPermission.account,
+      spender: spendPermission.spender,
+      token: spendPermission.token,
+      allowance: BigInt(spendPermission.allowance),
+      period: BigInt(spendPermission.period),
+      start: BigInt(spendPermission.start),
+      end: BigInt(spendPermission.end),
+      salt: BigInt(spendPermission.salt),
+      extraData: spendPermission.extraData
+    };
+
+    console.log('[collect] Contract spendPermission before call:');
+    Object.entries(contractSpendPermission).forEach(([k, v]) => {
+      console.log(`[collect] contract field: ${k}, value: ${v}, type: ${typeof v}`);
+    });
+
     // Approve spend permission onchain
     const approvalTxnHash = await spenderBundlerClient.writeContract({
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'approveWithSignature',
-      args: [spendPermission, signature]
+      args: [contractSpendPermission, signature]
     });
 
     const approvalReceipt = await publicClient.waitForTransactionReceipt({
       hash: approvalTxnHash
     });
 
+    console.log('[collect] Approval successful, proceeding to spend...');
+
     // Spend (use the permission)
     const spendTxnHash = await spenderBundlerClient.writeContract({
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'spend',
-      args: [spendPermission, '1'] // You may want to adjust the spend amount
+      args: [contractSpendPermission, BigInt(1)] // Use BigInt for spend amount too
     });
 
     const spendReceipt = await publicClient.waitForTransactionReceipt({
@@ -61,7 +81,13 @@ export async function POST(request: NextRequest) {
       transactionUrl: `https://basescan.org/tx/${spendReceipt.transactionHash}`
     });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({}, { status: 500 });
+    console.error('[collect] Error:', error);
+    return NextResponse.json(
+      {
+        error: 'Contract call failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
 }
