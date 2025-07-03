@@ -3,6 +3,16 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Utility to deeply convert BigInt values to strings
+function deepBigIntToString(obj: any): any {
+  if (typeof obj === 'bigint') return obj.toString();
+  if (Array.isArray(obj)) return obj.map(deepBigIntToString);
+  if (obj && typeof obj === 'object') {
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, deepBigIntToString(v)]));
+  }
+  return obj;
+}
+
 export async function POST(req: NextRequest) {
   console.log('[POST /api/users] Incoming request');
   try {
@@ -73,7 +83,7 @@ export async function PATCH(req: NextRequest) {
       updateData.spendLimit = spendLimit;
     }
     if (spendPermission) {
-      updateData.spendPermission = spendPermission;
+      updateData.spendPermission = deepBigIntToString(spendPermission);
     }
     if (spendPermissionSignature) {
       updateData.spendPermissionSignature = spendPermissionSignature;
