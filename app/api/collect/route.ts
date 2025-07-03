@@ -4,14 +4,15 @@ import {
   spendPermissionManagerAbi,
   spendPermissionManagerAddress
 } from '@/lib/abi/SpendPermissionManager';
+import { BigNumber } from 'ethers';
 
-// Utility to deeply convert stringified BigInts and numbers to BigInt
-function deepToBigInt(obj: any): any {
-  if (typeof obj === 'string' && obj.match(/^\d+$/)) return BigInt(obj);
-  if (typeof obj === 'number') return BigInt(obj);
-  if (Array.isArray(obj)) return obj.map(deepToBigInt);
+// Utility to deeply convert stringified BigInts and numbers to ethers.BigNumber
+function deepToBigNumber(obj: any): any {
+  if (typeof obj === 'string' && obj.match(/^\d+$/)) return BigNumber.from(obj);
+  if (typeof obj === 'number') return BigNumber.from(obj);
+  if (Array.isArray(obj)) return obj.map(deepToBigNumber);
   if (obj && typeof obj === 'object') {
-    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, deepToBigInt(v)]));
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, deepToBigNumber(v)]));
   }
   return obj;
 }
@@ -23,8 +24,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     let { spendPermission, signature } = body;
 
-    // Convert stringified BigInts and numbers to BigInt
-    spendPermission = deepToBigInt(spendPermission);
+    // Convert stringified BigInts and numbers to ethers.BigNumber
+    spendPermission = deepToBigNumber(spendPermission);
     console.log('[collect] Reconstructed spendPermission:', spendPermission);
     Object.entries(spendPermission).forEach(([k, v]) => {
       console.log(`[collect] spendPermission field: ${k}, value: ${v}, type: ${typeof v}`);
