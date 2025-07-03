@@ -150,3 +150,15 @@
   -moz-user-select: text;
   -ms-user-select: text;
 }
+
+/* OnchainKit CSS variable overrides ONLY for profile page */
+.profile-page :root,
+.profile-page .default-light,
+.profile-page .default-dark {
+  --ock-bg-default: transparent !important;
+  --ock-bg-alternate: transparent !important;
+  --ock-bg-default-hover: transparent !important;
+  --ock-bg-alternate-hover: transparent !important;
+  --ock-bg-secondary: transparent !important;
+  --ock-bg-secondary-hover: transparent !important;
+}
