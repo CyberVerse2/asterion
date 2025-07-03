@@ -29,6 +29,8 @@ model Tip {
   userId    String?
   novel     Novel?   @relation(fields: [novelId], references: [id])
   novelId   String?
+  chapter   Chapter? @relation(fields: [chapterId], references: [id])
+  chapterId String?  @db.ObjectId
   amount    Float
   date      DateTime @default(now())
 }
@@ -75,6 +77,7 @@ model Chapter {
   title         String
   content       String
   tipCount      Int      @default(0)
+  tips          Tip[]    // Tips made on this chapter
   createdAt     DateTime? @map("createdAt")
   updatedAt     DateTime? @map("updatedAt")
 

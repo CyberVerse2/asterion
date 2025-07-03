@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId,
           novelId: chapter.novelRel.id,
+          chapterId: chapterId,
           amount: tipAmountUSD
         }
       });
