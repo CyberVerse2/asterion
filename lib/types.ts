@@ -7,8 +7,7 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   pfpUrl?: string;
-  dailyLimit?: number;
-  monthlyLimit?: number;
+  spendLimit?: number;
 }
 
 export interface Novel {

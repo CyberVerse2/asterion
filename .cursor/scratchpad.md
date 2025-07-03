@@ -5,11 +5,11 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 **Update:**
 
 - Users want to grant spend permissions for USDC (on Base) only. ETH support is not required.
-- Spend limits (daily/monthly) should be user-adjustable in the UI, not hardcoded.
+- Spend limit should be a single adjustable value (not daily or monthly).
 
 # Key Challenges and Analysis
 
-- **Where to Trigger:** The logic should run as soon as the Farcaster user context is available (from MiniKit/Farcaster context), ideally on app launch or first render after authentication.
+- **Where to Trigger:** The logic should run as soon as the Farcaster user context is available (from MiniKit/Farcaster context), ideally in a provider or onboarding effect.
 - **User Data:** We need to extract the user's `fid` and `username` from the Farcaster context (via `useMiniKit`).
 - **API Call:** The frontend should POST to `/api/users` with the `fid` and `username`.
 - **Idempotency:** The endpoint is idempotent (find or create), so repeated calls are safe.
@@ -20,8 +20,6 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 
 - **USDC Token Address:** Need to add the USDC token address for Base (0xd9aAC23E6A83242c5d306341aCfD7A71A9C6e7B0).
 - **SpendPermission UI:** The UI and logic must grant permission for USDC only (no ETH option).
-- **Adjustable Limits:** The daily/monthly limits should be editable by the user, not hardcoded.
-- **Allowance Handling:** The spend permission object must use the correct allowance (from user input) and the USDC token address.
 - **Persistence:** User-selected limits should persist (localStorage, DB, or context).
 - **UX:** The UI should clearly show the current limits and that USDC is the only supported token.
 
@@ -62,28 +60,34 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
    - Remove ETH option; grant spend permission for USDC only.
    - **Success Criteria:** User can only grant permission for USDC in the UI.
 
-8. **Make Spend Limits Adjustable**
+8. **Refactor DB/User model to use a single spendLimit field**
 
-   - Replace hardcoded daily/monthly limits with input fields.
-   - **Success Criteria:** User can input custom daily/monthly limits in the UI.
+   - Remove daily/monthly fields from the user model.
+   - **Success Criteria:** User model is updated to use a single spendLimit field.
 
-9. **Update SpendPermission Logic to Use User Inputs**
+9. **Update /api/users PATCH to support spendLimit**
 
-   - Use the user-defined limits to construct the spend permission for USDC.
-   - **Success Criteria:** The correct allowance and USDC token address are used in the spend permission signature.
+   - Modify the API endpoint to accept a single spendLimit field.
+   - **Success Criteria:** API endpoint supports updating the spendLimit field.
 
-10. **Persist User Spend Limits**
+10. **Update frontend types and state to use spendLimit**
 
-    - Store user-selected limits (localStorage, DB, or context).
-    - **Success Criteria:** Limits persist across page reloads.
+    - Modify frontend code to use the spendLimit field instead of daily/monthly fields.
+    - **Success Criteria:** Frontend code uses spendLimit field.
 
-11. **UI/UX Improvements**
+11. **Update Profile page UI to show and adjust a single spend limit**
 
-    - Clearly display that USDC is the only supported token and show the current limits.
-    - **Success Criteria:** UI is clear, intuitive, and error-free.
+    - Modify the profile page to display and allow the user to adjust a single spend limit.
+    - **Success Criteria:** Profile page shows and allows adjustment of spend limit.
 
-12. **Test all flows (USDC, custom limits, persistence)**
-    - Test granting spend permission for USDC with custom limits.
+12. **Update SpendPermission logic to use spendLimit**
+
+    - Modify the spend permission logic to use the spendLimit field.
+    - **Success Criteria:** Spend permission logic uses spendLimit field.
+
+13. **Test all flows with new single limit**
+
+    - Test granting spend permission for USDC with a single limit.
     - **Success Criteria:** All flows work as expected, and limits persist.
 
 # Project Status Board
@@ -97,11 +101,12 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - [ ] Test with new and existing users
 - [x] Add USDC token address constant
 - [x] Update SpendPermission component for USDC only
-- [x] Make spend limits adjustable in the UI
-- [x] Update SpendPermission logic to use user inputs
-- [x] Persist user spend limits
-- [ ] UI/UX improvements for clarity
-- [ ] Test all flows (USDC, custom limits, persistence)
+- [ ] Refactor DB/User model to use a single spendLimit field
+- [ ] Update /api/users PATCH to support spendLimit
+- [ ] Update frontend types and state to use spendLimit
+- [ ] Update Profile page UI to show and adjust a single spend limit
+- [ ] Update SpendPermission logic to use spendLimit
+- [ ] Test all flows with new single limit
 
 # Executor's Feedback or Assistance Requests
 
@@ -114,8 +119,7 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 - Please verify in the UI and confirm if everything works as expected.
 - USDC token address constant (0xd9aAC23E6A83242c5d306341aCfD7A71A9C6e7B0) has been added to lib/abi/SpendPermissionManager.ts as USDC_ADDRESS.
 - SpendPermission component in app/profile/page.tsx now uses only USDC (with correct decimals) for spend permissions. ETH is no longer referenced.
-- Daily and monthly spend limits are now adjustable input fields in the UI and passed as props to SpendPermission.
-- User can now select whether to grant a daily or monthly spend permission; the correct limit and period are used in the spend permission logic.
+- The spend limit is now a single adjustable value in the user model and passed as a prop to SpendPermission.
 - User spend limits are now persisted to and loaded from the database via PATCH /api/users.
 
 # Lessons
