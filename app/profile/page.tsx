@@ -162,20 +162,20 @@ export default function ProfilePage() {
       if (spendLimit !== profile?.spendLimit) {
         await saveSpendLimit(spendLimit);
       }
-      // Prepare spend permission directly with strings (what contract expects)
+      // Prepare spend permission with correct native types for EIP-712 signing
       const spendPermission = {
         account: accountAddress,
         spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
         token: USDC_ADDRESS,
-        allowance: parseUnits(spendLimit.toString(), 6).toString(),
-        period: '2592000',
-        start: '0',
-        end: '281474976710655',
-        salt: '0',
+        allowance: parseUnits(spendLimit.toString(), 6), // BigInt
+        period: BigInt(2592000), // BigInt
+        start: BigInt(0), // BigInt
+        end: BigInt(281474976710655), // BigInt
+        salt: BigInt(0), // BigInt
         extraData: '0x' as Hex
       };
 
-      console.log('[handleApproveSpend] spendPermission for signing:', spendPermission);
+      console.log('[handleApproveSpend] spendPermission with native types:', spendPermission);
 
       const signature = await signTypedDataAsync({
         domain: {
@@ -205,15 +205,27 @@ export default function ProfilePage() {
       // PATCH user with spendPermission and spendPermissionSignature
       if (profile?.id) {
         let patchOk = false;
+
+        // Convert BigInt to strings for JSON serialization
+        const replacer = (key: string, value: any) => {
+          if (typeof value === 'bigint') {
+            return value.toString();
+          }
+          return value;
+        };
+
         try {
           const patchRes = await fetch('/api/users', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: profile.id,
-              spendPermission: spendPermission,
-              spendPermissionSignature: signature
-            })
+            body: JSON.stringify(
+              {
+                userId: profile.id,
+                spendPermission: spendPermission,
+                spendPermissionSignature: signature
+              },
+              replacer
+            )
           });
           const patchData = await patchRes
             .clone()
@@ -242,10 +254,13 @@ export default function ProfilePage() {
           const response = await fetch('/api/collect', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              spendPermission: spendPermission,
-              signature
-            })
+            body: JSON.stringify(
+              {
+                spendPermission: spendPermission,
+                signature
+              },
+              replacer
+            )
           });
           const data = await response
             .clone()

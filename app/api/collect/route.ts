@@ -12,14 +12,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { spendPermission, signature } = body;
 
-    console.log('[collect] Received spendPermission (signed structure):', spendPermission);
+    console.log(
+      '[collect] Received spendPermission (with string values from JSON):',
+      spendPermission
+    );
     console.log('[collect] Received signature:', signature);
 
     Object.entries(spendPermission).forEach(([k, v]) => {
-      console.log(`[collect] signed field: ${k}, value: ${v}, type: ${typeof v}`);
+      console.log(`[collect] received field: ${k}, value: ${v}, type: ${typeof v}`);
     });
 
-    // Convert the signed structure (with string numbers) back to proper types for contract
+    // Convert the string values back to proper types for contract call
+    // The signature was created with BigInt values, but JSON transport converts them to strings
     const contractSpendPermission = {
       account: spendPermission.account,
       spender: spendPermission.spender,
