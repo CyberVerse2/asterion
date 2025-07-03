@@ -11,7 +11,8 @@ import { useAccount, useChainId, useConnect, useConnectors, useSignTypedData } f
 import { Address, Hex, parseUnits } from 'viem';
 import {
   spendPermissionManagerAbi,
-  spendPermissionManagerAddress
+  spendPermissionManagerAddress,
+  USDC_ADDRESS
 } from '@/lib/abi/SpendPermissionManager';
 
 interface UserProfile {
@@ -78,7 +79,7 @@ export default function ProfilePage() {
             <h1 className="text-3xl font-bold mb-2">
               @{typeof profile?.username === 'string' ? profile.username : 'unknown'}
             </h1>
-            <p className="text-muted-foreground">Asterion Reader & Supporter</p>
+            <p className="text-muted-foreground">Asterion Reader &amp; Supporter</p>
           </div>
           <Button className="flex items-center gap-2 bg-transparent">
             <Settings className="h-4 w-4" />
@@ -112,15 +113,15 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Novels Read</CardTitle>
+              <CardTitle className="text-sm font-medium">Novels Bookmarked</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {/* Placeholder: Number of bookmarks */}
+              {/* Number of bookmarks */}
               <div className="text-2xl font-bold">
                 {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
               </div>
-              <p className="text-xs text-muted-foreground">Stories discovered</p>
+              <p className="text-xs text-muted-foreground">Stories you've saved to your library</p>
             </CardContent>
           </Card>
 
@@ -239,12 +240,12 @@ function SpendPermission() {
       }
     }
 
-    // Define the spend permission object
+    // Define the spend permission object for USDC only
     const spendPermission = {
       account: accountAddress,
       spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
-      token: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' as Address, // ETH
-      allowance: parseUnits('10', 18), // 10 ETH
+      token: USDC_ADDRESS,
+      allowance: parseUnits('10', 6), // 10 USDC (USDC has 6 decimals)
       period: 86400, // 1 day
       start: 0,
       end: 281474976710655,
