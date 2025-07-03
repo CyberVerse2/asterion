@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   console.log('[PATCH /api/users] Incoming request');
   try {
-    const { userId, novelId, dailyLimit, monthlyLimit } = await req.json();
-    console.log('[PATCH /api/users] Payload:', { userId, novelId, dailyLimit, monthlyLimit });
+    const { userId, spendLimit, novelId } = await req.json();
+    console.log('[PATCH /api/users] Payload:', { userId, spendLimit, novelId });
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
@@ -60,40 +60,28 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // If novelId is present, update bookmarks as before
-    let updateData: any = {};
+    // Update spendLimit if present
+    let updatedUser = user;
+    if (typeof spendLimit === 'number') {
+      updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { spendLimit }
+      });
+    }
+
+    // Optionally handle bookmarks (legacy)
     if (novelId) {
-      const bookmarks = Array.isArray(user.bookmarks) ? user.bookmarks : [];
-      if (!bookmarks.includes(novelId)) {
-        bookmarks.push(novelId);
+      if (!user.bookmarks.includes(novelId)) {
+        updatedUser = await prisma.user.update({
+          where: { id: userId },
+          data: { bookmarks: { push: novelId } }
+        });
       }
-      updateData.bookmarks = bookmarks;
-    }
-    // If dailyLimit or monthlyLimit is present, update those fields
-    if (typeof dailyLimit === 'number') {
-      updateData.dailyLimit = dailyLimit;
-    }
-    if (typeof monthlyLimit === 'number') {
-      updateData.monthlyLimit = monthlyLimit;
-    }
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: updateData
-    });
-    console.log('[PATCH /api/users] Updated user:', updatedUser);
-
-    const response = NextResponse.json(updatedUser);
-    console.log('[PATCH /api/users] Response:', updatedUser);
-    return response;
-  } catch (error) {
-    console.error('[PATCH /api/users] Error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json(updatedUser);
+  } catch (e) {
+    console.error('[PATCH /api/users] Error:', e);
+    return NextResponse.json({ error: e.message || 'Unknown error' }, { status: 500 });
   }
 }
