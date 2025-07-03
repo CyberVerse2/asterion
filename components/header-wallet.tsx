@@ -4,7 +4,8 @@ import {
   ConnectWallet,
   Wallet,
   WalletDropdown,
-  WalletDropdownDisconnect
+  WalletDropdownDisconnect,
+  WalletDropdownLink
 } from '@coinbase/onchainkit/wallet';
 import { Address, Avatar, Name, Identity } from '@coinbase/onchainkit/identity';
 
@@ -22,6 +23,9 @@ export default function HeaderWallet() {
             <Name />
             <Address className="text-gray-400" />
           </Identity>
+          <WalletDropdownLink icon="user" href="/profile">
+            Profile
+          </WalletDropdownLink>
           <WalletDropdownDisconnect />
         </WalletDropdown>
       </Wallet>

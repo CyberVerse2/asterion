@@ -3,9 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import '@coinbase/onchainkit/styles.css';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { User } from 'lucide-react';
 import { MiniKitContextProvider } from '@/providers/MiniKitProvider';
 import { WagmiContextProvider } from '@/providers/WagmiProvider';
 import { OnchainKitContextProvider } from '@/providers/OnchainKitProvider';
@@ -82,16 +80,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
                       <div className="flex items-center gap-4">
                         <HeaderWallet />
-                        <Link href="/profile">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/10"
-                          >
-                            <User className="h-4 w-4" />
-                            Profile
-                          </Button>
-                        </Link>
                       </div>
                     </div>
                   </header>
