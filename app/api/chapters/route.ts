@@ -14,6 +14,7 @@ export async function GET(request: Request) {
       where: { novel: novelId },
       orderBy: { chapterNumber: 'asc' }
     });
+    console.log('Fetched chapters:', chapters);
     return NextResponse.json(chapters);
   } catch (error) {
     console.error('Error fetching chapters:', error);

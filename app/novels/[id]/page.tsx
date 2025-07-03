@@ -125,7 +125,7 @@ export default function NovelPage() {
           </Button>
         </div>
         <ChapterReader
-          chapters={chapters}
+          chapters={Array.isArray(chapters) ? chapters : []}
           currentChapterIndex={currentChapterIndex}
           onChapterChange={setCurrentChapterIndex}
         />
@@ -186,7 +186,18 @@ export default function NovelPage() {
           <div className="grid grid-cols-4 gap-4 text-center">
             <div>
               <div className="text-lg font-bold text-white">
-                {((Number(novel.totalChapters) || chapters.length) / 1000).toFixed(2)}K
+                {(() => {
+                  const chaptersNum = Number(novel.totalChapters);
+                  if (!isNaN(chaptersNum) && chaptersNum > 0) {
+                    return (chaptersNum / 1000).toFixed(2) + 'K';
+                  }
+                  // fallback to chapters array length if available
+                  const arr = Array.isArray(chapters) ? chapters : [];
+                  if (arr.length > 0) {
+                    return (arr.length / 1000).toFixed(2) + 'K';
+                  }
+                  return '0K';
+                })()}
               </div>
               <div className="text-xs text-gray-400">CHAPTERS</div>
             </div>

@@ -39,7 +39,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
             </div>
             <div className="absolute top-2 left-2">
               <Badge className="bg-red-600 text-white border-0">
-                RANK {Math.floor(Math.random() * 100) + 1}
+                RANK {novel.rank}
               </Badge>
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2">
-            {['Action', 'Adventure', 'Fantasy'].map((category) => (
+            {novel.genres.map((category) => (
               <span
                 key={category}
                 className="category-tag px-3 py-1 rounded-full text-xs text-gray-300"
@@ -93,7 +93,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
             ))}
           </div>
 
-          <p className="text-sm text-gray-400 line-clamp-3">{novel.description}</p>
+          <p className="text-sm text-gray-400 line-clamp-3">{novel.summary}</p>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <div className="w-full">
@@ -109,7 +109,13 @@ export default function NovelCard({ novel }: NovelCardProps) {
                 </div>
               </div>
               <div className="text-purple-400 font-medium">
-                ${novel.totalTips.toFixed(2)} tipped
+                {(() => {
+                  const tipsNum = Number(novel.totalTips);
+                  if (!isNaN(tipsNum) && tipsNum > 0) {
+                    return `$${tipsNum.toFixed(2)} tipped`;
+                  }
+                  return '$0.00 tipped';
+                })()}
               </div>
             </div>
           </div>
