@@ -81,12 +81,13 @@ export async function POST(request: NextRequest) {
           });
 
           if (existingSupporter) {
+            // Manual increment for supporter totalTipped (Prisma increment doesn't work reliably with MongoDB)
+            const newTotalTipped = (existingSupporter.totalTipped || 0) + tipAmountUSD;
+
             await prisma.supporter.update({
               where: { id: existingSupporter.id },
               data: {
-                totalTipped: {
-                  increment: tipAmountUSD
-                }
+                totalTipped: newTotalTipped
               }
             });
           } else {

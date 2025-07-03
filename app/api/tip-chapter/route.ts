@@ -63,10 +63,16 @@ export async function POST(request: NextRequest) {
 
     // If transaction was successful, update database
     if (spendReceipt.status) {
+      // Get current tip count and increment manually (Prisma increment doesn't work reliably with MongoDB)
+      const currentChapter = await prisma.chapter.findUnique({
+        where: { id: chapterId }
+      });
+      const newTipCount = (currentChapter?.tipCount || 0) + 1;
+
       // Update tip count in chapter
       const updatedChapter = await prisma.chapter.update({
         where: { id: chapterId },
-        data: { tipCount: { increment: 1 } }
+        data: { tipCount: newTipCount }
       });
       console.log('[tip-chapter] updatedChapter:', updatedChapter);
 
@@ -90,12 +96,13 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingSupporter) {
+        // Manual increment for supporter totalTipped as well
+        const newTotalTipped = (existingSupporter.totalTipped || 0) + tipAmountUSD;
+
         await prisma.supporter.update({
           where: { id: existingSupporter.id },
           data: {
-            totalTipped: {
-              increment: tipAmountUSD
-            }
+            totalTipped: newTotalTipped
           }
         });
         console.log('[tip-chapter] Updated existing supporter');

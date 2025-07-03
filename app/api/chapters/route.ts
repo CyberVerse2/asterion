@@ -12,9 +12,9 @@ export async function GET(request: Request) {
     }
     const chapters = await prisma.chapter.findMany({
       where: { novel: novelId },
-      orderBy: { chapterNumber: 'asc' }
+      orderBy: { chapterNumber: 'asc' },
+      take: 50
     });
-    console.log('Fetched chapters:', chapters);
     return NextResponse.json(chapters);
   } catch (error) {
     console.error('Error fetching chapters:', error);
