@@ -77,6 +77,11 @@ export default function ChapterReader({
         setTradeError(null);
         setTradeSuccess(false);
         try {
+          console.log('--- TRADE DEBUG START ---');
+          console.log('address:', address);
+          console.log('walletClient:', walletClient);
+          console.log('publicClient:', publicClient);
+          console.log('coin:', coin);
           if (!address || !walletClient || !publicClient) throw new Error('Wallet not connected');
           const tradeParameters = {
             sell: { type: 'erc20' as const, address: USDC_ADDRESS },
@@ -85,31 +90,39 @@ export default function ChapterReader({
             slippage: 0.05,
             sender: address as Address
           };
+          console.log('tradeParameters:', tradeParameters);
           await tradeCoin({
             tradeParameters,
             walletClient,
             account: address as unknown as Account,
             publicClient
           });
+          console.log('tradeCoin: SUCCESS');
           setTradeSuccess(true);
           // Only after successful trade, call the API to increment tip count
           try {
+            console.log('Calling /api/chapters/' + currentChapter.id + '/love');
             const response = await fetch(`/api/chapters/${currentChapter.id}/love`, {
               method: 'POST'
             });
             if (response.ok) {
               const data = await response.json();
+              console.log('API response:', data);
               setTipCount(data.tipCount);
               setHasLoved(true);
             } else {
+              console.error('Failed to update tip count in backend', response.status);
               setTradeError('Failed to update tip count in backend');
             }
           } catch (apiError) {
+            console.error('API error:', apiError);
             setTradeError('Failed to update tip count in backend');
           }
         } catch (err: any) {
+          console.error('tradeCoin error:', err);
           setTradeError(err.message || 'Trade failed');
         }
+        console.log('--- TRADE DEBUG END ---');
         setTradePending(false);
       }
     },
