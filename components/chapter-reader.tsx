@@ -10,7 +10,7 @@ import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import LoveAnimation from './love-animation';
 import { tradeCoin } from '@zoralabs/coins-sdk';
 import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
-import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
+import { useAccount, useWalletClient, usePublicClient, useConnect, useConnectors } from 'wagmi';
 import { Address, Account } from 'viem';
 
 interface Chapter {
@@ -53,6 +53,7 @@ export default function ChapterReader({
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
+  const { connect, connectors, isPending } = useConnect();
 
   const currentChapter = chapters[currentChapterIndex];
 
@@ -188,15 +189,27 @@ export default function ChapterReader({
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl text-white">{currentChapter.title}</CardTitle>
             <div className="flex items-center gap-2 text-gray-400">
-              <button
-                type="button"
-                onClick={handleLove}
-                disabled={hasLoved}
-                className="focus:outline-none"
-                aria-label="Love this chapter"
-              >
-                <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
-              </button>
+              {address ? (
+                <button
+                  type="button"
+                  onClick={handleLove}
+                  disabled={hasLoved}
+                  className="focus:outline-none"
+                  aria-label="Love this chapter"
+                >
+                  <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => connect({ connector: connectors[0] })}
+                  className="focus:outline-none bg-purple-600 text-white px-3 py-1 rounded"
+                  aria-label="Connect Wallet"
+                  disabled={isPending}
+                >
+                  {isPending ? 'Connecting...' : 'Connect Wallet'}
+                </button>
+              )}
               <span>{tipCount}</span>
             </div>
           </div>
