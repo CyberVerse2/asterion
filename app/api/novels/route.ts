@@ -1,15 +1,24 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
     const novels = await prisma.novel.findMany({
       take: 5,
-    })
-    console.log('Fetched novels:', novels);
-    return NextResponse.json(novels);
+      include: {
+        tips: true // Include tips to calculate totalTips
+      }
+    });
+
+    // Calculate totalTips for each novel
+    const novelsWithTotalTips = novels.map((novel: any) => ({
+      ...novel,
+      totalTips: novel.tips.reduce((sum: number, tip: any) => sum + tip.amount, 0),
+      tipCount: novel.tips.length
+    }));
+
+    console.log('Fetched novels:', novelsWithTotalTips);
+    return NextResponse.json(novelsWithTotalTips);
   } catch (error) {
     console.error('Error fetching novels:', error);
     return NextResponse.json({ error: 'Failed to fetch novels' }, { status: 500 });

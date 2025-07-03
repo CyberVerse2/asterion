@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+// @ts-ignore
 import { Heart, Users, Star } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,12 +12,16 @@ interface NovelCardProps {
     author: string;
     description: string;
     coverImage?: string;
+    imageUrl?: string;
+    rank?: string;
     totalTips: number;
     tipCount: number;
     loves: number;
     chapters: { id: string; title: string }[];
     totalChapters?: string;
     views?: string;
+    genres?: string[];
+    summary?: string;
   };
 }
 
@@ -25,7 +30,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
 
   return (
     <Link href={`/novels/${novel.id}`}>
-      <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50">
+      <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 flex flex-col">
         <CardHeader className="p-0">
           <div className="relative aspect-[3/4] w-full">
             <Image
@@ -38,13 +43,11 @@ export default function NovelCard({ novel }: NovelCardProps) {
               <Badge className="bg-green-600 text-white border-0">COMPLETED</Badge>
             </div>
             <div className="absolute top-2 left-2">
-              <Badge className="bg-red-600 text-white border-0">
-                RANK {novel.rank}
-              </Badge>
+              <Badge className="bg-red-600 text-white border-0">RANK {novel.rank}</Badge>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-4 space-y-3 flex-grow">
           <div>
             <h3 className="font-bold text-lg mb-1 line-clamp-2 text-white">{novel.title}</h3>
             <p className="text-sm text-gray-400 mb-2">Author: {novel.author}</p>
@@ -83,7 +86,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2">
-            {novel.genres.map((category) => (
+            {novel.genres?.map((category: string) => (
               <span
                 key={category}
                 className="category-tag px-3 py-1 rounded-full text-xs text-gray-300"
@@ -95,9 +98,9 @@ export default function NovelCard({ novel }: NovelCardProps) {
 
           <p className="text-sm text-gray-400 line-clamp-3">{novel.summary}</p>
         </CardContent>
-        <CardFooter className="p-4 pt-0">
+        <CardFooter className="p-4 pt-0 mt-auto">
           <div className="w-full">
-            <div className="flex justify-between items-center text-sm text-gray-400 mb-3">
+            <div className="flex justify-between items-center text-sm text-gray-400">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                   <Heart className="h-4 w-4" />
