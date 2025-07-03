@@ -31,10 +31,9 @@ interface Novel {
     order: number;
     loves: number;
   }>;
-  tips: Array<{
+  supporters: Array<{
     username: string;
-    amount: number;
-    date: string;
+    totalTipped: number;
   }>;
   totalChapters?: string;
   views?: string;
@@ -334,30 +333,31 @@ export default function NovelPage() {
         </div>
 
         {/* Recent Tips Section - Prominent Feature */}
-        {Array.isArray(novel.tips) && novel.tips.length > 0 && (
+        {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
           <Card className="novel-card-dark border-purple-400/30">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-purple-400" />
-                Recent Tips
+                Top Supporters
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {(Array.isArray(novel.tips) ? novel.tips : []).map((tip, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-                  >
-                    <span className="font-medium text-white">{tip.username}</span>
-                    <div className="text-right">
-                      <div className="font-medium text-purple-400">${tip.amount.toFixed(2)}</div>
-                      <div className="text-xs text-gray-400">
-                        {new Date(tip.date).toLocaleDateString()}
+                {(Array.isArray(novel.supporters) ? novel.supporters : []).map(
+                  (supporter, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                    >
+                      <span className="font-medium text-white">{supporter.username}</span>
+                      <div className="text-right">
+                        <div className="font-medium text-purple-400">
+                          ${supporter.totalTipped.toFixed(2)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             </CardContent>
           </Card>
