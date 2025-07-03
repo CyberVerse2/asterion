@@ -28,23 +28,20 @@ export function UserProvider({ children }) {
 
   useEffect(() => {
     console.debug('[UserProvider] Farcaster context:', effectiveContext);
-    if (effectiveContext) {
-      console.debug('[UserProvider] effectiveContext.user:', effectiveContext.user);
-      console.debug('[UserProvider] effectiveContext.client:', effectiveContext.client);
+    if (!effectiveContext) {
+      console.warn(
+        '[UserProvider] effectiveContext is null or undefined. Skipping user extraction.'
+      );
+      return;
     }
-    const fid =
-      (effectiveContext.user && effectiveContext.user.fid) ||
-      (effectiveContext.client &&
-        (effectiveContext.client.fid || effectiveContext.client.clientFid));
+    const userObj = effectiveContext.user;
+    const clientObj = effectiveContext.client;
+    console.debug('[UserProvider] effectiveContext.user:', userObj);
+    console.debug('[UserProvider] effectiveContext.client:', clientObj);
+    const fid = (userObj && userObj.fid) || (clientObj && (clientObj.fid || clientObj.clientFid));
     const username =
-      (effectiveContext.user &&
-        (effectiveContext.user.username ||
-          effectiveContext.user.displayName ||
-          effectiveContext.user.name)) ||
-      (effectiveContext.client &&
-        (effectiveContext.client.username ||
-          effectiveContext.client.displayName ||
-          effectiveContext.client.name));
+      (userObj && (userObj.username || userObj.displayName || userObj.name)) ||
+      (clientObj && (clientObj.username || clientObj.displayName || clientObj.name));
     console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
     if (fid && username && !user && !userLoading) {
       setUserLoading(true);
