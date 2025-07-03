@@ -6,12 +6,7 @@ const prisma = new PrismaClient();
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const novel = await prisma.novel.findUnique({
-      where: { id: params.id },
-      include: {
-        chapters: true,
-        tips: true,
-        supporters: true
-      }
+      where: { id: params.id }
     });
 
     if (!novel) {
