@@ -22,6 +22,7 @@ interface NovelCardProps {
     views?: string;
     genres?: string[];
     summary?: string;
+    status?: string;
   };
 }
 
@@ -40,7 +41,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
               className="object-cover rounded-t-lg"
             />
             <div className="absolute top-2 right-2">
-              <Badge className="bg-green-600 text-white border-0">COMPLETED</Badge>
+              <Badge className="bg-green-600 text-white border-0">{novel.status?.toUpperCase()}</Badge>
             </div>
             <div className="absolute top-2 left-2">
               <Badge className="bg-red-600 text-white border-0">RANK {novel.rank}</Badge>
