@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DollarSign, BookOpen, Heart, Settings } from 'lucide-react';
-import { mockProfile } from '@/lib/mock-data';
 import { useUser } from '@/providers/UserProvider';
+import type { User } from '@/lib/types';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -20,7 +20,11 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { user: profile, userLoading: isLoading, userError } = useUser();
+  const {
+    user: profile,
+    userLoading: isLoading,
+    userError
+  } = useUser() as { user: User | null; userLoading: boolean; userError: string | null };
 
   if (isLoading) {
     return (
@@ -51,14 +55,22 @@ export default function ProfilePage() {
           <Avatar className="h-20 w-20">
             <AvatarImage src="/placeholder.svg" />
             <AvatarFallback className="text-2xl">
-              {profile.farcasterUsername.charAt(0).toUpperCase()}
+              {typeof profile?.farcasterUsername === 'string' &&
+              profile.farcasterUsername.length > 0
+                ? profile.farcasterUsername.charAt(0).toUpperCase()
+                : '?'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">@{profile.farcasterUsername}</h1>
+            <h1 className="text-3xl font-bold mb-2">
+              @
+              {typeof profile?.farcasterUsername === 'string'
+                ? profile.farcasterUsername
+                : 'unknown'}
+            </h1>
             <p className="text-muted-foreground">Asterion Reader & Supporter</p>
           </div>
-          <Button variant="outline" className="flex items-center gap-2 bg-transparent">
+          <Button className="flex items-center gap-2 bg-transparent">
             <Settings className="h-4 w-4" />
             Settings
           </Button>
@@ -72,7 +84,18 @@ export default function ProfilePage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${profile.totalTipped.toFixed(2)}</div>
+              {/* Placeholder: Sum of tip amounts */}
+              <div className="text-2xl font-bold">
+                $
+                {Array.isArray(profile?.tips)
+                  ? profile.tips
+                      .reduce(
+                        (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
+                        0
+                      )
+                      .toFixed(2)
+                  : '0.00'}
+              </div>
               <p className="text-xs text-muted-foreground">Supporting amazing authors</p>
             </CardContent>
           </Card>
@@ -83,7 +106,10 @@ export default function ProfilePage() {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{profile.novelsRead}</div>
+              {/* Placeholder: Number of bookmarks */}
+              <div className="text-2xl font-bold">
+                {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
+              </div>
               <p className="text-xs text-muted-foreground">Stories discovered</p>
             </CardContent>
           </Card>
@@ -94,7 +120,10 @@ export default function ProfilePage() {
               <Heart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{profile.chaptersLoved}</div>
+              {/* Placeholder: Number of tips */}
+              <div className="text-2xl font-bold">
+                {Array.isArray(profile?.tips) ? profile.tips.length : 0}
+              </div>
               <p className="text-xs text-muted-foreground">Double-clicked with love</p>
             </CardContent>
           </Card>
@@ -107,20 +136,21 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {profile.tips.map((tip, index) => (
+              {(Array.isArray(profile?.tips) ? profile.tips : []).map((tip, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-4 border rounded-lg"
                 >
                   <div>
-                    <div className="font-medium">{tip.novelTitle}</div>
+                    {/* Placeholder: Show novelId instead of novelTitle */}
+                    <div className="font-medium">Novel ID: {tip.novelId}</div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(tip.date).toLocaleDateString()}
+                      {tip.date ? new Date(tip.date).toLocaleDateString() : ''}
                     </div>
                   </div>
-                  <Badge variant="secondary" className="flex items-center gap-1">
+                  <Badge className="flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
-                    {tip.amount.toFixed(2)}
+                    {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
                   </Badge>
                 </div>
               ))}
@@ -140,18 +170,16 @@ export default function ProfilePage() {
                   <div className="font-medium">Daily Limit</div>
                   <div className="text-sm text-muted-foreground">Maximum tips per day</div>
                 </div>
-                <Badge variant="outline">$50.00</Badge>
+                <Badge>$50.00</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">Monthly Limit</div>
                   <div className="text-sm text-muted-foreground">Maximum tips per month</div>
                 </div>
-                <Badge variant="outline">$200.00</Badge>
+                <Badge>$200.00</Badge>
               </div>
-              <Button variant="outline" size="sm">
-                Adjust Limits
-              </Button>
+              <Button>Adjust Limits</Button>
             </div>
           </CardContent>
         </Card>
