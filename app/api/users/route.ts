@@ -85,6 +85,8 @@ export async function PATCH(req: NextRequest) {
     if (spendPermission) {
       const safePermission = deepBigIntToString(spendPermission);
       console.log('[PATCH /api/users] Storing spendPermission:', safePermission);
+      console.log('[PATCH /api/users] spendPermission type:', typeof safePermission);
+      console.log('[PATCH /api/users] spendPermission keys:', Object.keys(safePermission));
       updateData.spendPermission = safePermission;
     }
     if (spendPermissionSignature) {
@@ -95,11 +97,21 @@ export async function PATCH(req: NextRequest) {
     let updatedUser = user;
     if (Object.keys(updateData).length > 0) {
       console.log('[PATCH /api/users] updateData to be saved:', updateData);
-      updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: updateData
-      });
-      console.log('[PATCH /api/users] Updated user:', updatedUser);
+      console.log('[PATCH /api/users] updateData keys:', Object.keys(updateData));
+      console.log('[PATCH /api/users] About to call prisma.user.update with:');
+      console.log('[PATCH /api/users] - where:', { id: userId });
+      console.log('[PATCH /api/users] - data:', updateData);
+
+      try {
+        updatedUser = await prisma.user.update({
+          where: { id: userId },
+          data: updateData
+        });
+        console.log('[PATCH /api/users] Updated user successful:', updatedUser);
+      } catch (updateError) {
+        console.error('[PATCH /api/users] Prisma update error details:', updateError);
+        throw updateError; // Re-throw to trigger the outer catch
+      }
     }
 
     // Optionally handle bookmarks (legacy)
