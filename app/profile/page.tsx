@@ -53,7 +53,13 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <div className="flex items-center gap-6">
           <Avatar className="h-20 w-20">
-            <AvatarImage src="/placeholder.svg" />
+            <AvatarImage
+              src={
+                typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
+                  ? profile.pfpUrl
+                  : '/placeholder.svg'
+              }
+            />
             <AvatarFallback className="text-2xl">
               {typeof profile?.farcasterUsername === 'string' &&
               profile.farcasterUsername.length > 0

@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 export async function POST(req: NextRequest) {
   console.log('[POST /api/users] Incoming request');
   try {
-    const { fid, username } = await req.json();
-    console.log('[POST /api/users] Payload:', { fid, username });
+    const { fid, username, pfpUrl } = await req.json();
+    console.log('[POST /api/users] Payload:', { fid, username, pfpUrl });
     if (!fid || !username) {
       return NextResponse.json({ error: 'fid and username are required' }, { status: 400 });
     }
@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
       user = await prisma.user.create({
         data: {
           fid: Number(fid),
-          username: username
+          username: username,
+          ...(pfpUrl ? { pfpUrl } : {})
         }
       });
       console.log('[POST /api/users] Created new user:', user);

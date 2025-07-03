@@ -42,6 +42,7 @@ export function UserProvider({ children }) {
     const username =
       (userObj && (userObj.username || userObj.displayName || userObj.name)) ||
       (clientObj && (clientObj.username || clientObj.displayName || clientObj.name));
+    const pfpUrl = (userObj && userObj.pfpUrl) || (clientObj && clientObj.pfpUrl) || '';
     console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
     if (fid && username && !user && !userLoading) {
       setUserLoading(true);
@@ -49,7 +50,7 @@ export function UserProvider({ children }) {
       fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fid, username })
+        body: JSON.stringify({ fid, username, pfpUrl })
       })
         .then(async (res) => {
           console.debug('[UserProvider] /api/users POST response:', res);
