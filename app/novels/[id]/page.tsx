@@ -176,7 +176,6 @@ export default function NovelPage() {
         <div className="mb-6">
           {/* @ts-ignore: variant is supported by ButtonProps */}
           <Button
-            variant="ghost"
             onClick={() => setIsReading(false)}
             className="flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/10"
           >
@@ -188,7 +187,7 @@ export default function NovelPage() {
           chapters={Array.isArray(chapters) ? chapters : []}
           currentChapterIndex={currentChapterIndex}
           onChapterChange={setCurrentChapterIndex}
-          coin={String(novel.coin)}
+          coin={novel.coin as `0x${string}`}
         />
       </div>
     );
@@ -296,8 +295,6 @@ export default function NovelPage() {
             <h3 className="text-white font-semibold">Synopsis</h3>
             {/* @ts-ignore: variant and size are supported by ButtonProps */}
             <Button
-              variant="ghost"
-              size="sm"
               className="text-gray-400 hover:text-white p-0"
               onClick={() => setShowSummary((prev) => !prev)}
             >
@@ -372,7 +369,6 @@ export default function NovelPage() {
           <div className="grid grid-cols-3 gap-4 w-full max-w-md">
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
-              variant="ghost"
               className={`flex flex-col items-center gap-1 py-4 ${
                 isBookmarked ? 'text-green-400' : 'text-gray-400 hover:text-white hover:bg-white/10'
               }`}
@@ -385,16 +381,12 @@ export default function NovelPage() {
               </span>
             </Button>
             {/* @ts-ignore: variant is supported by ButtonProps */}
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4"
-            >
+            <Button className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4">
               <BookOpen className="h-5 w-5" />
               <span className="text-xs">Chapters</span>
             </Button>
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
-              variant="ghost"
               onClick={() => setShowTipModal(true)}
               className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4"
             >

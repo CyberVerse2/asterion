@@ -94,8 +94,8 @@ export default function ChapterReader({
         try {
           if (!address || !walletClient || !publicClient) throw new Error('Wallet not connected');
           const tradeParameters = {
-            sell: { type: 'erc20', address: USDC_ADDRESS },
-            buy: { type: 'erc20', address: coin },
+            sell: { type: 'erc20' as const, address: USDC_ADDRESS },
+            buy: { type: 'erc20' as const, address: coin },
             amountIn: BigInt(0.18 * 10 ** 6), // 0.18 USDC (6 decimals)
             slippage: 0.05,
             sender: address
@@ -207,7 +207,6 @@ export default function ChapterReader({
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
-              variant="outline"
               onClick={goToPrevious}
               disabled={currentChapterIndex === 0}
               className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
@@ -221,7 +220,6 @@ export default function ChapterReader({
 
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
-              variant="outline"
               onClick={goToNext}
               disabled={currentChapterIndex === chapters.length - 1}
               className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
