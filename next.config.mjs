@@ -1,14 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true
   },
   images: {
-    unoptimized: true,
+    unoptimized: true
   },
-}
+  webpack(config) {
+    config.module.rules.push({
+      test: /HeartbeatWorker\.js$/,
+      use: 'null-loader'
+    });
+    return config;
+  }
+};
 
-export default nextConfig
+export default nextConfig;
