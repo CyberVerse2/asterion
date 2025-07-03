@@ -2,7 +2,7 @@
 
 import type React from 'react';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 // @ts-ignore
@@ -33,6 +33,19 @@ interface LoveAnimationState {
   x: number;
   y: number;
 }
+
+const ERC20_ABI = [
+  {
+    constant: false,
+    inputs: [
+      { name: '_to', type: 'address' },
+      { name: '_value', type: 'uint256' }
+    ],
+    name: 'transfer',
+    outputs: [{ name: '', type: 'bool' }],
+    type: 'function'
+  }
+];
 
 export default function ChapterReader({
   chapters,
@@ -99,23 +112,23 @@ export default function ChapterReader({
           console.log('Using address:', address);
           console.log('Using walletClient:', walletClient);
           console.log('coin:', coin);
-          if (!address || !walletClient || !publicClient)
-            throw new Error('Wallet not connected (hybrid context)');
-          const tradeParameters = {
-            sell: { type: 'erc20' as const, address: USDC_ADDRESS },
-            buy: { type: 'erc20' as const, address: coin as Address },
-            amountIn: BigInt(1 * 10 ** 6), // 0.2 USDC (6 decimals)
-            slippage: 0.05,
-            sender: address as Address
-          };
-          console.log('tradeParameters:', tradeParameters);
-          await tradeCoin({
-            tradeParameters,
-            walletClient,
-            account: address as unknown as Account,
-            publicClient
+          if (!address || !walletClient) throw new Error('Wallet not connected (hybrid context)');
+          const spender = process.env.NEXT_PUBLIC_SPENDER_ADDRESS;
+          if (!spender) throw new Error('Spender address not set');
+          const amount = BigInt(0.1 * 10 ** 6); // 0.1 USDC (6 decimals)
+          console.log('Sending USDC tip:', {
+            from: address,
+            to: spender,
+            amount: amount.toString()
           });
-          console.log('tradeCoin: SUCCESS');
+          const hash = await walletClient.writeContract({
+            address: USDC_ADDRESS,
+            abi: ERC20_ABI,
+            functionName: 'transfer',
+            args: [spender, amount],
+            account: address
+          });
+          console.log('USDC transfer tx hash:', hash);
           setTradeSuccess(true);
           // Only after successful trade, call the API to increment tip count
           try {
@@ -150,7 +163,7 @@ export default function ChapterReader({
         setTradePending(false);
       }
     },
-    [currentChapter.id, hasLoved, address, walletClient, publicClient, coin]
+    [currentChapter.id, hasLoved, address, walletClient]
   );
 
   const handleMouseDown = useCallback(() => {
@@ -202,6 +215,13 @@ export default function ChapterReader({
       setIsSelecting(false);
     }
   };
+
+  // Auto-connect wallet on mount if not connected
+  useEffect(() => {
+    if (!address && connectors && connectors.length > 0) {
+      connect({ connector: connectors[0] });
+    }
+  }, [address, connectors, connect]);
 
   if (!currentChapter) return null;
 
