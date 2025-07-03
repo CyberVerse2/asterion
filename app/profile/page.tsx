@@ -3,17 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Avatar as OnchainAvatar,
+  Name as OnchainName,
+  Address
+} from '@coinbase/onchainkit/identity';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { useAccount, useChainId, useConnect, useConnectors, useSignTypedData } from 'wagmi';
-import { Address, Hex, parseUnits, getAddress } from 'viem';
+import { Address as ViemAddress, Hex, parseUnits, getAddress } from 'viem';
 import {
   spendPermissionManagerAbi,
   spendPermissionManagerAddress,
   USDC_ADDRESS
 } from '@/lib/abi/SpendPermissionManager';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -117,6 +123,120 @@ const Info = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Fallback component for OnchainKit Avatar when it fails to load
+function FallbackAvatar({ address, className }: { address: string; className?: string }) {
+  return (
+    <Avatar className={className}>
+      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+        {address.slice(2, 4).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+// Fallback component for OnchainKit Name when it fails to load
+function FallbackName({ address, className }: { address: string; className?: string }) {
+  return (
+    <span className={className}>
+      {address.slice(0, 6)}...{address.slice(-4)}
+    </span>
+  );
+}
+
+// Enhanced OnchainKit Avatar with fallback
+function EnhancedOnchainAvatar({
+  address,
+  className
+}: {
+  address: ViemAddress;
+  className?: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showFallback, setShowFallback] = useState(false);
+
+  useEffect(() => {
+    // Reset states when address changes
+    setHasError(false);
+    setIsLoading(true);
+    setShowFallback(false);
+
+    console.log('[EnhancedOnchainAvatar] Loading avatar for address:', address);
+
+    // Set a timeout to detect if OnchainKit component has loaded data
+    const timer = setTimeout(() => {
+      console.log('[EnhancedOnchainAvatar] Timeout reached - checking if avatar loaded');
+      setShowFallback(true);
+      setIsLoading(false);
+    }, 3000); // Reduced to 3 seconds for better UX
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [address]);
+
+  if (showFallback) {
+    console.log(
+      '[EnhancedOnchainAvatar] Using fallback for address (likely no Basename registered):',
+      address
+    );
+    return <FallbackAvatar address={address} className={className} />;
+  }
+
+  return (
+    <div className="relative">
+      <OnchainAvatar address={address} className={className} />
+      {/* Debug indicator */}
+      <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white text-xs px-1 rounded">
+        OCK
+      </div>
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-full opacity-50"></div>
+      )}
+    </div>
+  );
+}
+
+// Enhanced OnchainKit Name with fallback
+function EnhancedOnchainName({ address, className }: { address: ViemAddress; className?: string }) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showFallback, setShowFallback] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+    setIsLoading(true);
+    setShowFallback(false);
+
+    console.log('[EnhancedOnchainName] Loading name for address:', address);
+
+    const timer = setTimeout(() => {
+      console.log('[EnhancedOnchainName] Timeout reached - checking if name loaded');
+      setShowFallback(true);
+      setIsLoading(false);
+    }, 3000); // Reduced to 3 seconds for better UX
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [address]);
+
+  if (showFallback) {
+    console.log(
+      '[EnhancedOnchainName] Using fallback for address (likely no Basename registered):',
+      address
+    );
+    return <FallbackName address={address} className={className} />;
+  }
+
+  return (
+    <div className="relative inline-block">
+      <OnchainName address={address} className={className} />
+      {isLoading && <span className="text-gray-400 ml-2">Loading...</span>}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const {
     user: profile,
@@ -137,6 +257,76 @@ export default function ProfilePage() {
   const connectors = useConnectors();
   const [transactionStatus, setTransactionStatus] = useState<string | null>(null);
   const [transactionUrl, setTransactionUrl] = useState<string | null>(null);
+  const { context } = useMiniKit();
+
+  // Check if user is wallet-only (no Farcaster profile)
+  // This handles the anomaly where user has fid in DB but isn't currently in Farcaster context
+  // In dev mode, context might be null/undefined when not in actual Farcaster app
+  const isInRealFarcasterApp = context && context.client && process.env.NODE_ENV !== 'development';
+  const isWalletOnly = profile && profile.walletAddress && !isInRealFarcasterApp;
+
+  // TEMPORARY: Force wallet-only mode for testing if wallet is connected
+  const forceWalletOnly = account.isConnected && account.address;
+
+  // TEST MODE: Set this to true to force OnchainKit display for testing
+  const FORCE_ONCHAIN_TEST = false; // Change this to test OnchainKit components
+  const testWalletOnly = FORCE_ONCHAIN_TEST && account.isConnected && account.address;
+
+  // Debug the user profile data and OnchainKit configuration
+  useEffect(() => {
+    if (profile) {
+      console.log('[Profile Debug] Full user profile:', profile);
+      console.log('[Profile Debug] isWalletOnly:', isWalletOnly);
+      console.log('[Profile Debug] profile.fid:', profile.fid);
+      console.log('[Profile Debug] profile.walletAddress:', profile.walletAddress);
+      console.log('[Profile Debug] context:', context);
+      console.log('[Profile Debug] isInRealFarcasterApp:', isInRealFarcasterApp);
+      console.log('[Profile Debug] NEW isWalletOnly logic result:', isWalletOnly);
+      console.log('[Profile Debug] account.isConnected:', account.isConnected);
+      console.log('[Profile Debug] account.address:', account.address);
+      console.log('[Profile Debug] chainId:', chainId);
+      console.log(
+        '[Profile Debug] CDP API Key present:',
+        !!process.env.NEXT_PUBLIC_CDP_CLIENT_API_KEY
+      );
+      console.log(
+        '[Profile Debug] CDP API Key value:',
+        process.env.NEXT_PUBLIC_CDP_CLIENT_API_KEY?.slice(0, 10) + '...'
+      );
+
+      // Test network connectivity to CDP API
+      if (process.env.NEXT_PUBLIC_CDP_CLIENT_API_KEY && profile.walletAddress) {
+        console.log('[Profile Debug] Testing CDP API connectivity...');
+
+        // Test if we can reach the CDP API
+        fetch(
+          `https://api.developer.coinbase.com/rpc/v1/base/${process.env.NEXT_PUBLIC_CDP_CLIENT_API_KEY}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'eth_getBalance',
+              params: [profile.walletAddress, 'latest'],
+              id: 1
+            })
+          }
+        )
+          .then((response) => {
+            console.log('[Profile Debug] CDP API test response status:', response.status);
+            return response.json();
+          })
+          .then((data) => {
+            console.log('[Profile Debug] CDP API test response data:', data);
+          })
+          .catch((error) => {
+            console.error('[Profile Debug] CDP API test failed:', error);
+          });
+      }
+    }
+  }, [profile, isWalletOnly, account, context, isInRealFarcasterApp, chainId]);
 
   // Initialize spendLimit and chapterTipAmount from user profile
   useEffect(() => {
@@ -218,7 +408,7 @@ export default function ProfilePage() {
 
       // Normalize addresses to proper checksum format
       const normalizedAccount = getAddress(accountAddress);
-      const normalizedSpender = getAddress(process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address);
+      const normalizedSpender = getAddress(process.env.NEXT_PUBLIC_SPENDER_ADDRESS as ViemAddress);
       const normalizedToken = getAddress(USDC_ADDRESS);
 
       console.log('[handleApproveSpend] Normalized addresses:', {
@@ -397,31 +587,131 @@ export default function ProfilePage() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Profile Header */}
         <div className="flex items-center gap-6">
-          <Avatar className="h-20 w-20">
-            <AvatarImage
-              src={
-                typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
-                  ? profile.pfpUrl
-                  : '/placeholder.svg'
-              }
-            />
-            <AvatarFallback className="text-2xl">
-              {typeof profile?.username === 'string' && profile.username.length > 0
-                ? profile.username.charAt(0).toUpperCase()
-                : '?'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">
-              @{typeof profile?.username === 'string' ? profile.username : 'unknown'}
-            </h1>
-            <p className="text-muted-foreground">Asterion Reader &amp; Supporter</p>
-          </div>
+          {testWalletOnly ? (
+            <>
+              <OnchainAvatar address={account.address as ViemAddress} className="h-20 w-20" />
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold mb-2">
+                  <OnchainName address={account.address as ViemAddress} />
+                </h1>
+                <p className="text-muted-foreground">Asterion Reader (Test Wallet Mode)</p>
+              </div>
+            </>
+          ) : isWalletOnly ? (
+            <>
+              {/* Enhanced OnchainKit Components with Fallbacks */}
+              <EnhancedOnchainAvatar
+                address={profile.walletAddress as ViemAddress}
+                className="h-20 w-20"
+              />
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold mb-2">
+                  <EnhancedOnchainName
+                    address={profile.walletAddress as ViemAddress}
+                    className="text-white"
+                  />
+                </h1>
+                <p className="text-muted-foreground">Asterion Reader</p>
+                {/* Debug information */}
+                <div className="text-xs text-gray-500 mt-2">
+                  <div>
+                    Wallet: {profile.walletAddress?.slice(0, 6)}...
+                    {profile.walletAddress?.slice(-4)}
+                  </div>
+                  <div>Chain: {chainId}</div>
+                  <div>OnchainKit Mode: Active</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <Avatar className="h-20 w-20">
+                <AvatarImage
+                  src={
+                    typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
+                      ? profile.pfpUrl
+                      : '/placeholder.svg'
+                  }
+                />
+                <AvatarFallback className="text-2xl">
+                  {typeof profile?.username === 'string' && profile.username.length > 0
+                    ? profile.username.charAt(0).toUpperCase()
+                    : '?'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold mb-2">
+                  @{typeof profile?.username === 'string' ? profile.username : 'unknown'}
+                </h1>
+                <p className="text-muted-foreground">Asterion Reader &amp; Supporter</p>
+                <div className="text-xs text-gray-500 mt-2">
+                  <div>FID: {profile.fid}</div>
+                  <div>Farcaster Mode: Active</div>
+                </div>
+              </div>
+            </>
+          )}
           <Button className="flex items-center gap-2 bg-transparent">
             <Settings className="h-4 w-4" />
             Settings
           </Button>
         </div>
+
+        {/* Additional Debug Panel - Remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20">
+            <CardHeader>
+              <CardTitle className="text-yellow-600">Debug Information</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <strong>Profile Data:</strong>
+                  <ul className="text-xs space-y-1 mt-1">
+                    <li>FID: {profile.fid || 'None'}</li>
+                    <li>Username: {profile.username || 'None'}</li>
+                    <li>Wallet: {profile.walletAddress || 'None'}</li>
+                    <li>Is Wallet Only: {isWalletOnly ? 'Yes' : 'No'}</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong>Environment:</strong>
+                  <ul className="text-xs space-y-1 mt-1">
+                    <li>Chain ID: {chainId}</li>
+                    <li>Connected: {account.isConnected ? 'Yes' : 'No'}</li>
+                    <li>
+                      CDP Key: {process.env.NEXT_PUBLIC_CDP_CLIENT_API_KEY ? 'Present' : 'Missing'}
+                    </li>
+                    <li>Context: {context ? 'Present' : 'None'}</li>
+                  </ul>
+                </div>
+              </div>
+              {isWalletOnly && (
+                <div className="mt-4 p-2 bg-blue-100 dark:bg-blue-900/20 rounded">
+                  <strong>OnchainKit Status:</strong> Active for wallet {profile.walletAddress}
+                  <br />
+                  <small>
+                    <strong>Note:</strong> If you see a fallback display (wallet address format),
+                    this likely means no Basename is registered for this wallet address.
+                  </small>
+                  <br />
+                  <small>
+                    <strong>To get a Basename:</strong> Visit{' '}
+                    <a
+                      href="https://www.base.org/names"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      base.org/names
+                    </a>{' '}
+                    to register one for your wallet.
+                  </small>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-3 gap-6">

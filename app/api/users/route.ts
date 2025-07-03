@@ -43,7 +43,8 @@ export async function GET(req: NextRequest) {
           },
           orderBy: {
             date: 'desc'
-          }
+          },
+          take: 5
         }
       }
     });
@@ -127,7 +128,8 @@ export async function POST(req: NextRequest) {
           },
           orderBy: {
             date: 'desc'
-          }
+          },
+          take: 5
         }
       }
     });
@@ -175,7 +177,8 @@ export async function POST(req: NextRequest) {
             },
             orderBy: {
               date: 'desc'
-            }
+            },
+            take: 5
           }
         }
       });
@@ -269,7 +272,8 @@ export async function POST(req: NextRequest) {
             },
             orderBy: {
               date: 'desc'
-            }
+            },
+            take: 5
           }
         }
       });
