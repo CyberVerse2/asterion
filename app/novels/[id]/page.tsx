@@ -1,76 +1,78 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import ChapterReader from "@/components/chapter-reader"
-import TipModal from "@/components/tip-modal"
-import { DollarSign, BookOpen, ArrowLeft, Star, Library } from "lucide-react"
-import Link from "next/link"
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import ChapterReader from '@/components/chapter-reader';
+import TipModal from '@/components/tip-modal';
+import { DollarSign, BookOpen, ArrowLeft, Star, Library } from 'lucide-react';
+import Link from 'next/link';
+import { useUser } from '@/providers/UserProvider';
 
 interface Novel {
-  id: string
-  title: string
-  author: string
-  description: string
-  coverImage?: string
-  totalTips: number
-  tipCount: number
-  loves: number
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  coverImage?: string;
+  totalTips: number;
+  tipCount: number;
+  loves: number;
   chapters: Array<{
-    id: string
-    title: string
-    content: string
-    order: number
-    loves: number
-  }>
+    id: string;
+    title: string;
+    content: string;
+    order: number;
+    loves: number;
+  }>;
   tips: Array<{
-    username: string
-    amount: number
-    date: string
-  }>
+    username: string;
+    amount: number;
+    date: string;
+  }>;
 }
 
 export default function NovelPage() {
-  const params = useParams()
-  const [novel, setNovel] = useState<Novel | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [currentChapterIndex, setCurrentChapterIndex] = useState(0)
-  const [isReading, setIsReading] = useState(false)
-  const [showTipModal, setShowTipModal] = useState(false)
+  const params = useParams();
+  const [novel, setNovel] = useState<Novel | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [isReading, setIsReading] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchNovel = async () => {
       try {
-        const response = await fetch(`/api/novels/${params.id}`)
+        const response = await fetch(`/api/novels/${params.id}`);
         if (response.ok) {
-          const data = await response.json()
-          setNovel(data)
+          const data = await response.json();
+          setNovel(data);
         }
       } catch (error) {
-        console.error("Error fetching novel:", error)
+        console.error('Error fetching novel:', error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     if (params.id) {
-      fetchNovel()
+      fetchNovel();
     }
-  }, [params.id])
+  }, [params.id]);
 
   const handleTipSuccess = () => {
     if (novel) {
       setNovel({
         ...novel,
         totalTips: novel.totalTips + 1,
-        tipCount: novel.tipCount + 1,
-      })
+        tipCount: novel.tipCount + 1
+      });
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -85,7 +87,7 @@ export default function NovelPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!novel) {
@@ -96,7 +98,7 @@ export default function NovelPage() {
           <Button className="bg-purple-600 hover:bg-purple-700">Back to Home</Button>
         </Link>
       </div>
-    )
+    );
   }
 
   if (isReading) {
@@ -118,16 +120,19 @@ export default function NovelPage() {
           onChapterChange={setCurrentChapterIndex}
         />
       </div>
-    )
+    );
   }
 
-  const rating = (4.0 + Math.random() * 1.0).toFixed(1)
-  const views = (Math.random() * 50 + 10).toFixed(1) + "M"
-  const inLibrary = (Math.random() * 20 + 5).toFixed(1) + "K"
+  const rating = (4.0 + Math.random() * 1.0).toFixed(1);
+  const views = (Math.random() * 50 + 10).toFixed(1) + 'M';
+  const inLibrary = (Math.random() * 20 + 5).toFixed(1) + 'K';
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
-      <Link href="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+      >
         <ArrowLeft className="h-4 w-4" />
         Back
       </Link>
@@ -137,7 +142,7 @@ export default function NovelPage() {
         <div className="text-center space-y-4">
           <div className="relative aspect-[3/4] w-48 mx-auto">
             <Image
-              src={novel.coverImage || "/placeholder.svg?height=600&width=450"}
+              src={novel.coverImage || '/placeholder.svg?height=600&width=450'}
               alt={novel.title}
               fill
               className="object-cover rounded-lg"
@@ -170,7 +175,9 @@ export default function NovelPage() {
         <div className="stats-card rounded-xl p-4">
           <div className="grid grid-cols-4 gap-4 text-center">
             <div>
-              <div className="text-lg font-bold text-white">{(novel.chapters.length / 1000).toFixed(2)}K</div>
+              <div className="text-lg font-bold text-white">
+                {(novel.chapters.length / 1000).toFixed(2)}K
+              </div>
               <div className="text-xs text-gray-400">CHAPTERS</div>
             </div>
             <div>
@@ -192,11 +199,16 @@ export default function NovelPage() {
         <div>
           <h3 className="text-white font-semibold mb-3">Categories</h3>
           <div className="flex flex-wrap gap-2">
-            {["Action", "Adventure", "Fantasy", "Harem", "Martial Arts", "Xuanhuan"].map((category) => (
-              <span key={category} className="category-tag px-4 py-2 rounded-full text-sm text-gray-300">
-                {category}
-              </span>
-            ))}
+            {['Action', 'Adventure', 'Fantasy', 'Harem', 'Martial Arts', 'Xuanhuan'].map(
+              (category) => (
+                <span
+                  key={category}
+                  className="category-tag px-4 py-2 rounded-full text-sm text-gray-300"
+                >
+                  {category}
+                </span>
+              )
+            )}
           </div>
         </div>
 
@@ -223,11 +235,16 @@ export default function NovelPage() {
             <CardContent>
               <div className="space-y-3">
                 {novel.tips.map((tip, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                  >
                     <span className="font-medium text-white">{tip.username}</span>
                     <div className="text-right">
                       <div className="font-medium text-purple-400">${tip.amount.toFixed(2)}</div>
-                      <div className="text-xs text-gray-400">{new Date(tip.date).toLocaleDateString()}</div>
+                      <div className="text-xs text-gray-400">
+                        {new Date(tip.date).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -279,7 +296,8 @@ export default function NovelPage() {
         novelTitle={novel.title}
         author={novel.author}
         onTipSuccess={handleTipSuccess}
+        user={user}
       />
     </div>
-  )
+  );
 }

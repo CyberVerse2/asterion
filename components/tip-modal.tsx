@@ -1,65 +1,75 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { calculateTipDistribution } from "@/lib/tip-calculator"
-import { DollarSign, Heart } from "lucide-react"
+  DialogTitle
+} from '@/components/ui/dialog';
+import { calculateTipDistribution } from '@/lib/tip-calculator';
+import { DollarSign, Heart } from 'lucide-react';
 
 interface TipModalProps {
-  isOpen: boolean
-  onClose: () => void
-  novelId: string
-  novelTitle: string
-  author: string
-  onTipSuccess: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  novelId: string;
+  novelTitle: string;
+  author: string;
+  onTipSuccess: () => void;
+  user: any;
 }
 
-export default function TipModal({ isOpen, onClose, novelId, novelTitle, author, onTipSuccess }: TipModalProps) {
-  const [amount, setAmount] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+export default function TipModal({
+  isOpen,
+  onClose,
+  novelId,
+  novelTitle,
+  author,
+  onTipSuccess,
+  user
+}: TipModalProps) {
+  const [amount, setAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const tipAmount = Number.parseFloat(amount) || 0
-  const distribution = calculateTipDistribution(tipAmount)
+  const tipAmount = Number.parseFloat(amount) || 0;
+  const distribution = calculateTipDistribution(tipAmount);
 
   const handleTip = async () => {
-    if (!amount || tipAmount <= 0) return
+    if (!amount || tipAmount <= 0) return;
+    if (!user) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await fetch("/api/tips", {
-        method: "POST",
+      const response = await fetch('/api/tips', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username: "demo-user", // This would come from Farcaster auth
+          username: user.username,
           amount: tipAmount,
           novelId,
-          userId: "demo-user-id", // This would come from user session
-        }),
-      })
+          userId: user.id
+        })
+      });
 
       if (response.ok) {
-        onTipSuccess()
-        onClose()
-        setAmount("")
+        onTipSuccess();
+        onClose();
+        setAmount('');
       }
     } catch (error) {
-      console.error("Error processing tip:", error)
+      console.error('Error processing tip:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -120,10 +130,10 @@ export default function TipModal({ isOpen, onClose, novelId, novelTitle, author,
             Cancel
           </Button>
           <Button onClick={handleTip} disabled={!amount || tipAmount <= 0 || isLoading}>
-            {isLoading ? "Processing..." : `Tip $${tipAmount.toFixed(2)}`}
+            {isLoading ? 'Processing...' : `Tip $${tipAmount.toFixed(2)}`}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
