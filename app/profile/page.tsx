@@ -239,12 +239,16 @@ export default function ProfilePage() {
               {!saving && spendLimit !== profile?.spendLimit && (
                 <div className="text-xs text-green-600">Limit updated!</div>
               )}
-              <Button onClick={() => setShowSpendPermission((v) => !v)} disabled={saving}>
-                Adjust Limit
+              <Button onClick={() => setShowSpendPermission(true)} disabled={saving}>
+                Approve Spend
               </Button>
               {showSpendPermission && (
                 <div className="mt-4">
-                  <SpendPermission spendLimit={spendLimit} />
+                  <SpendPermission
+                    spendLimit={spendLimit}
+                    saveSpendLimit={saveSpendLimit}
+                    profileSpendLimit={profile?.spendLimit}
+                  />
                 </div>
               )}
             </div>
@@ -255,7 +259,15 @@ export default function ProfilePage() {
   );
 }
 
-function SpendPermission({ spendLimit }: { spendLimit: number }) {
+function SpendPermission({
+  spendLimit,
+  saveSpendLimit,
+  profileSpendLimit
+}: {
+  spendLimit: number;
+  saveSpendLimit: (value: number) => Promise<void>;
+  profileSpendLimit?: number;
+}) {
   const [isDisabled, setIsDisabled] = useState(false);
   const [signature, setSignature] = useState<Hex>();
   const [spendPermission, setSpendPermission] = useState<any>();
@@ -332,6 +344,11 @@ function SpendPermission({ spendLimit }: { spendLimit: number }) {
       });
       setSpendPermission(spendPermission);
       setSignature(signature);
+
+      // Save spendLimit to DB if changed
+      if (spendLimit !== profileSpendLimit) {
+        await saveSpendLimit(spendLimit);
+      }
     } catch (e: any) {
       setError(e.message || 'Signature failed');
     }
@@ -345,7 +362,7 @@ function SpendPermission({ spendLimit }: { spendLimit: number }) {
         Granting permission for: <b>Spend Limit (${spendLimit})</b>
       </div>
       <Button onClick={handleSubmit} disabled={isDisabled || !!signature}>
-        {signature ? 'Permission Granted' : 'Grant Spend Permission'}
+        {signature ? 'Permission Granted' : 'Approve Spend'}
       </Button>
       {signature && (
         <div className="text-green-600 dark:text-green-400 font-medium mt-2">
