@@ -163,19 +163,33 @@ export default function ProfilePage() {
         await saveSpendLimit(spendLimit);
       }
       // Prepare spend permission with correct native types for EIP-712 signing
+      // Generate unique salt to avoid hash collisions - use timestamp + user address for uniqueness
+      const timestamp = BigInt(Math.floor(Date.now() / 1000)); // Current Unix timestamp
+      const addressNumber = BigInt(accountAddress); // Convert address to BigInt
+      const uniqueSalt = timestamp ^ (addressNumber >> BigInt(96)); // XOR timestamp with truncated address
+
+      console.log('[handleApproveSpend] Generated unique salt:', uniqueSalt.toString());
+
       const spendPermission = {
         account: accountAddress,
         spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
         token: USDC_ADDRESS,
         allowance: parseUnits(spendLimit.toString(), 6), // BigInt
-        period: BigInt(2592000), // BigInt
-        start: BigInt(0), // BigInt
-        end: BigInt(281474976710655), // BigInt
-        salt: BigInt(0), // BigInt
+        period: BigInt(2592000), // BigInt (30 days in seconds)
+        start: BigInt(0), // BigInt (immediate start)
+        end: BigInt('0xffffffffffff'), // BigInt (max uint48: 281474976710655)
+        salt: uniqueSalt, // BigInt (unique salt to prevent hash collisions)
         extraData: '0x' as Hex
       };
 
       console.log('[handleApproveSpend] spendPermission with native types:', spendPermission);
+      console.log('[handleApproveSpend] About to sign with domain:', {
+        name: 'Spend Permission Manager',
+        version: '1',
+        chainId: chainId,
+        verifyingContract: spendPermissionManagerAddress
+      });
+      console.log('[handleApproveSpend] Chain ID being used:', chainId);
 
       const signature = await signTypedDataAsync({
         domain: {
@@ -200,6 +214,9 @@ export default function ProfilePage() {
         primaryType: 'SpendPermission',
         message: spendPermission as any
       });
+
+      console.log('[handleApproveSpend] Generated signature:', signature);
+      console.log('[handleApproveSpend] Signature length:', signature.length);
       setApproved(true);
 
       // PATCH user with spendPermission and spendPermissionSignature

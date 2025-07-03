@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
       spendPermission
     );
     console.log('[collect] Received signature:', signature);
+    console.log('[collect] Signature type:', typeof signature);
+    console.log('[collect] Signature length:', signature.length);
+    console.log('[collect] Signature starts with 0x:', signature.startsWith('0x'));
 
     Object.entries(spendPermission).forEach(([k, v]) => {
       console.log(`[collect] received field: ${k}, value: ${v}, type: ${typeof v}`);
@@ -40,6 +43,8 @@ export async function POST(request: NextRequest) {
     Object.entries(contractSpendPermission).forEach(([k, v]) => {
       console.log(`[collect] contract field: ${k}, value: ${v}, type: ${typeof v}`);
     });
+
+    console.log('[collect] About to call approveWithSignature with converted spend permission');
 
     // Use the converted structure for the contract call
     const approvalTxnHash = await spenderBundlerClient.writeContract({
