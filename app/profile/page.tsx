@@ -40,6 +40,11 @@ export default function ProfilePage() {
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
   const [approveError, setApproveError] = useState<string | null>(null);
+  const { signTypedDataAsync } = useSignTypedData();
+  const account = useAccount();
+  const chainId = useChainId();
+  const { connectAsync } = useConnect();
+  const connectors = useConnectors();
 
   // Initialize spendLimit from user profile
   useEffect(() => {
@@ -66,6 +71,62 @@ export default function ProfilePage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  // Move handleApproveSpend inside the component
+  async function handleApproveSpend() {
+    setApproving(true);
+    setApproveError(null);
+    let accountAddress = account?.address;
+    try {
+      if (!accountAddress) {
+        const requestAccounts = await connectAsync({ connector: connectors[0] });
+        accountAddress = requestAccounts.accounts[0];
+      }
+      // Save spendLimit to DB if changed
+      if (spendLimit !== profile?.spendLimit) {
+        await saveSpendLimit(spendLimit);
+      }
+      // Prepare spend permission
+      const spendPermission = {
+        account: accountAddress,
+        spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
+        token: USDC_ADDRESS,
+        allowance: parseUnits(spendLimit.toString(), 6),
+        period: 2592000,
+        start: 0,
+        end: 281474976710655,
+        salt: BigInt(0),
+        extraData: '0x' as Hex
+      };
+      await signTypedDataAsync({
+        domain: {
+          name: 'Spend Permission Manager',
+          version: '1',
+          chainId: chainId,
+          verifyingContract: spendPermissionManagerAddress
+        },
+        types: {
+          SpendPermission: [
+            { name: 'account', type: 'address' },
+            { name: 'spender', type: 'address' },
+            { name: 'token', type: 'address' },
+            { name: 'allowance', type: 'uint160' },
+            { name: 'period', type: 'uint48' },
+            { name: 'start', type: 'uint48' },
+            { name: 'end', type: 'uint48' },
+            { name: 'salt', type: 'uint256' },
+            { name: 'extraData', type: 'bytes' }
+          ]
+        },
+        primaryType: 'SpendPermission',
+        message: spendPermission
+      });
+      setApproved(true);
+    } catch (e: any) {
+      setApproveError(e.message || 'Signature failed');
+    }
+    setApproving(false);
   }
 
   if (isLoading) {
@@ -261,60 +322,4 @@ export default function ProfilePage() {
       </div>
     </div>
   );
-}
-
-// Approve Spend logic (single-step)
-async function handleApproveSpend() {
-  setApproving(true);
-  setApproveError(null);
-  let accountAddress = account?.address;
-  try {
-    if (!accountAddress) {
-      const requestAccounts = await connectAsync({ connector: connectors[0] });
-      accountAddress = requestAccounts.accounts[0];
-    }
-    // Save spendLimit to DB if changed
-    if (spendLimit !== profile?.spendLimit) {
-      await saveSpendLimit(spendLimit);
-    }
-    // Prepare spend permission
-    const spendPermission = {
-      account: accountAddress,
-      spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
-      token: USDC_ADDRESS,
-      allowance: parseUnits(spendLimit.toString(), 6),
-      period: 2592000,
-      start: 0,
-      end: 281474976710655,
-      salt: BigInt(0),
-      extraData: '0x' as Hex
-    };
-    await signTypedDataAsync({
-      domain: {
-        name: 'Spend Permission Manager',
-        version: '1',
-        chainId: chainId,
-        verifyingContract: spendPermissionManagerAddress
-      },
-      types: {
-        SpendPermission: [
-          { name: 'account', type: 'address' },
-          { name: 'spender', type: 'address' },
-          { name: 'token', type: 'address' },
-          { name: 'allowance', type: 'uint160' },
-          { name: 'period', type: 'uint48' },
-          { name: 'start', type: 'uint48' },
-          { name: 'end', type: 'uint48' },
-          { name: 'salt', type: 'uint256' },
-          { name: 'extraData', type: 'bytes' }
-        ]
-      },
-      primaryType: 'SpendPermission',
-      message: spendPermission
-    });
-    setApproved(true);
-  } catch (e: any) {
-    setApproveError(e.message || 'Signature failed');
-  }
-  setApproving(false);
 }
