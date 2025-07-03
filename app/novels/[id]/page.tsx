@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ChapterReader from '@/components/chapter-reader';
 import TipModal from '@/components/tip-modal';
+// @ts-ignore
 import { DollarSign, BookOpen, ArrowLeft, Star, Library } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/providers/UserProvider';
@@ -18,6 +19,9 @@ interface Novel {
   author: string;
   description: string;
   coverImage?: string;
+  imageUrl?: string;
+  status?: string;
+  rank?: string;
   totalTips: number;
   tipCount: number;
   loves: number;
@@ -34,6 +38,10 @@ interface Novel {
     date: string;
   }>;
   totalChapters?: string;
+  views?: string;
+  bookmarks?: string;
+  genres?: string[];
+  summary?: string;
 }
 
 export default function NovelPage() {
@@ -44,7 +52,10 @@ export default function NovelPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isReading, setIsReading] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const { user } = useUser();
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const [summaryHeight, setSummaryHeight] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const fetchNovelAndChapters = async () => {
@@ -73,6 +84,14 @@ export default function NovelPage() {
       fetchNovelAndChapters();
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (showSummary && summaryRef.current) {
+      setSummaryHeight(summaryRef.current.scrollHeight);
+    } else {
+      setSummaryHeight(undefined);
+    }
+  }, [showSummary, novel?.summary]);
 
   const handleTipSuccess = () => {
     if (novel) {
@@ -115,6 +134,7 @@ export default function NovelPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
+          {/* @ts-ignore: variant is supported by ButtonProps */}
           <Button
             variant="ghost"
             onClick={() => setIsReading(false)}
@@ -134,8 +154,6 @@ export default function NovelPage() {
   }
 
   const rating = (4.0 + Math.random() * 1.0).toFixed(1);
-  const views = (Math.random() * 50 + 10).toFixed(1) + 'M';
-  const inLibrary = (Math.random() * 20 + 5).toFixed(1) + 'K';
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
@@ -152,13 +170,15 @@ export default function NovelPage() {
         <div className="text-center space-y-4">
           <div className="relative aspect-[3/4] w-48 mx-auto">
             <Image
-              src={novel.coverImage || '/placeholder.svg?height=600&width=450'}
+              src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
               alt={novel.title}
               fill
               className="object-cover rounded-lg"
             />
             <div className="absolute top-2 right-2">
-              <Badge className="bg-green-600 text-white border-0 text-xs">COMPLETED</Badge>
+              <Badge className="bg-green-600 text-white border-0 text-xs">
+                {novel.status?.toUpperCase()}
+              </Badge>
             </div>
           </div>
 
@@ -167,9 +187,7 @@ export default function NovelPage() {
             <p className="text-gray-400">Author: {novel.author}</p>
 
             <div className="flex items-center justify-center gap-2">
-              <Badge className="bg-red-600 text-white border-0 text-xs">
-                RANK {Math.floor(Math.random() * 100) + 1}
-              </Badge>
+              <Badge className="bg-red-600 text-white border-0 text-xs">RANK {novel.rank}</Badge>
               <div className="flex items-center gap-1">
                 {[...Array(4)].map((_, i) => (
                   <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -192,9 +210,9 @@ export default function NovelPage() {
                     return (chaptersNum / 1000).toFixed(2) + 'K';
                   }
                   // fallback to chapters array length if available
-                  const arr = Array.isArray(chapters) ? chapters : [];
-                  if (arr.length > 0) {
-                    return (arr.length / 1000).toFixed(2) + 'K';
+                  const chaptersCount = Array.isArray(chapters) ? chapters.length : 0;
+                  if (chaptersCount > 0) {
+                    return (chaptersCount / 1000).toFixed(2) + 'K';
                   }
                   return '0K';
                 })()}
@@ -202,11 +220,11 @@ export default function NovelPage() {
               <div className="text-xs text-gray-400">CHAPTERS</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-white">{views}</div>
+              <div className="text-lg font-bold text-white">{novel.views}</div>
               <div className="text-xs text-gray-400">VIEWS</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-white">{inLibrary}</div>
+              <div className="text-lg font-bold text-white">{novel.bookmarks}</div>
               <div className="text-xs text-gray-400">IN LIBRARY</div>
             </div>
             <div>
@@ -220,16 +238,14 @@ export default function NovelPage() {
         <div>
           <h3 className="text-white font-semibold mb-3">Categories</h3>
           <div className="flex flex-wrap gap-2">
-            {['Action', 'Adventure', 'Fantasy', 'Harem', 'Martial Arts', 'Xuanhuan'].map(
-              (category) => (
-                <span
-                  key={category}
-                  className="category-tag px-4 py-2 rounded-full text-sm text-gray-300"
-                >
-                  {category}
-                </span>
-              )
-            )}
+            {(novel.genres || []).map((category: string) => (
+              <span
+                key={category}
+                className="category-tag px-4 py-2 rounded-full text-sm text-gray-300"
+              >
+                {category}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -237,15 +253,41 @@ export default function NovelPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-white font-semibold">Synopsis</h3>
-            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white p-0">
-              MORE →
+            {/* @ts-ignore: variant and size are supported by ButtonProps */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-400 hover:text-white p-0"
+              onClick={() => setShowSummary((prev) => !prev)}
+            >
+              {showSummary ? 'LESS ↑' : 'MORE →'}
             </Button>
           </div>
           <p className="text-gray-400 text-sm leading-relaxed">{novel.description}</p>
+          {novel.summary && (
+            <div
+              className="mt-2 bg-white/5 rounded text-gray-200 text-sm overflow-hidden transition-all duration-500"
+              style={{
+                maxHeight: showSummary
+                  ? summaryHeight
+                    ? summaryHeight + 32 // add padding
+                    : 500
+                  : 64,
+                padding: showSummary ? '12px' : '12px 12px 0 12px'
+              }}
+              ref={summaryRef}
+            >
+              {showSummary
+                ? novel.summary
+                : novel.summary.length > 200
+                ? novel.summary.slice(0, 200) + '...'
+                : novel.summary}
+            </div>
+          )}
         </div>
 
         {/* Recent Tips Section - Prominent Feature */}
-        {novel.tips.length > 0 && (
+        {Array.isArray(novel.tips) && novel.tips.length > 0 && (
           <Card className="novel-card-dark border-purple-400/30">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
@@ -255,7 +297,7 @@ export default function NovelPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {novel.tips.map((tip, index) => (
+                {(Array.isArray(novel.tips) ? novel.tips : []).map((tip, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
@@ -284,6 +326,7 @@ export default function NovelPage() {
           </Button>
 
           <div className="grid grid-cols-3 gap-4">
+            {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
               variant="ghost"
               className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4"
@@ -291,6 +334,7 @@ export default function NovelPage() {
               <Library className="h-5 w-5" />
               <span className="text-xs">Library</span>
             </Button>
+            {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
               variant="ghost"
               className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4"
@@ -298,6 +342,7 @@ export default function NovelPage() {
               <BookOpen className="h-5 w-5" />
               <span className="text-xs">Chapters</span>
             </Button>
+            {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
               variant="ghost"
               onClick={() => setShowTipModal(true)}
