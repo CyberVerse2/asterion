@@ -41,16 +41,16 @@ Asterion is a Farcaster mini app for reading and tipping web novels. We have a b
 
 - [x] Extract Farcaster user info from MiniKit context
 - [x] Call /api/users endpoint with fid and username
-- [ ] Store/use user data in app state
-- [ ] Add error handling and debug output
+- [x] Store/use user data in app state
+- [x] Add error handling and debug output
 - [ ] Test with new and existing users
 
 # Executor's Feedback or Assistance Requests
 
-- When Farcaster user info is available, the app now POSTs to `/api/users` with `fid` and `username`.
-- The returned user object is stored in React state (`user`).
-- Errors are logged and shown in the console, and debug output is provided for both success and failure.
-- Please verify that the user is created/fetched and appears in the console. If so, I will proceed to the next step: using the user data in the app (e.g., for tipping, profile, etc).
+- User state is now managed globally via UserProvider and useUser hook.
+- Profile page and tip modal now use the real user object from DB, not mock data.
+- All user-dependent features (profile, tipping, etc.) are now wired to the real DB-backed user.
+- Please test with new and existing Farcaster users to confirm everything works as expected. Let me know if you see any issues or want further integration.
 
 # Lessons
 
