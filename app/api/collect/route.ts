@@ -5,13 +5,14 @@ import {
   spendPermissionManagerAddress
 } from '@/lib/abi/SpendPermissionManager';
 
-// Utility to deeply convert stringified BigInts and numbers to native BigInt
-function deepToBigInt(obj: any): any {
+// Utility to convert string numbers to BigInt while preserving BigInt values
+function stringToBigInt(obj: any): any {
   if (typeof obj === 'string' && obj.match(/^\d+$/)) return BigInt(obj);
+  if (typeof obj === 'bigint') return obj; // Keep existing BigInt
   if (typeof obj === 'number') return BigInt(obj);
-  if (Array.isArray(obj)) return obj.map(deepToBigInt);
+  if (Array.isArray(obj)) return obj.map(stringToBigInt);
   if (obj && typeof obj === 'object') {
-    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, deepToBigInt(v)]));
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, stringToBigInt(v)]));
   }
   return obj;
 }
@@ -23,38 +24,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     let { spendPermission, signature } = body;
 
-    // Convert stringified BigInts and numbers to native BigInt
-    spendPermission = deepToBigInt(spendPermission);
-    console.log('[collect] Reconstructed spendPermission:', spendPermission);
+    console.log('[collect] Raw received spendPermission:', spendPermission);
+    console.log('[collect] Raw signature:', signature);
+
+    // Convert only stringified numbers to BigInt, preserve original structure
+    spendPermission = stringToBigInt(spendPermission);
+
+    console.log('[collect] Final spendPermission for contract:', spendPermission);
     Object.entries(spendPermission).forEach(([k, v]) => {
-      console.log(`[collect] spendPermission field: ${k}, value: ${v}, type: ${typeof v}`);
-    });
-    console.log('[collect] Signature:', signature);
-
-    // Ensure all numeric fields are explicitly BigInt for the contract call
-    const contractSpendPermission = {
-      account: spendPermission.account,
-      spender: spendPermission.spender,
-      token: spendPermission.token,
-      allowance: BigInt(spendPermission.allowance),
-      period: BigInt(spendPermission.period),
-      start: BigInt(spendPermission.start),
-      end: BigInt(spendPermission.end),
-      salt: BigInt(spendPermission.salt),
-      extraData: spendPermission.extraData
-    };
-
-    console.log('[collect] Contract spendPermission before call:');
-    Object.entries(contractSpendPermission).forEach(([k, v]) => {
-      console.log(`[collect] contract field: ${k}, value: ${v}, type: ${typeof v}`);
+      console.log(`[collect] field: ${k}, value: ${v}, type: ${typeof v}`);
     });
 
-    // Approve spend permission onchain
+    // Use the spendPermission exactly as reconstructed for the contract call
     const approvalTxnHash = await spenderBundlerClient.writeContract({
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'approveWithSignature',
-      args: [contractSpendPermission, signature]
+      args: [spendPermission, signature]
     });
 
     const approvalReceipt = await publicClient.waitForTransactionReceipt({
@@ -68,7 +54,7 @@ export async function POST(request: NextRequest) {
       address: spendPermissionManagerAddress,
       abi: spendPermissionManagerAbi,
       functionName: 'spend',
-      args: [contractSpendPermission, BigInt(1)] // Use BigInt for spend amount too
+      args: [spendPermission, BigInt(1)] // Spend 1 USDC wei (0.000001 USDC)
     });
 
     const spendReceipt = await publicClient.waitForTransactionReceipt({
