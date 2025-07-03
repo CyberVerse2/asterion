@@ -96,7 +96,7 @@ export default function ChapterReader({
           const tradeParameters = {
             sell: { type: 'erc20', address: USDC_ADDRESS },
             buy: { type: 'erc20', address: coin },
-            amountIn: BigInt(0.1 * 10 ** 6), // 0.1 USDC (6 decimals)
+            amountIn: BigInt(0.18 * 10 ** 6), // 0.18 USDC (6 decimals)
             slippage: 0.05,
             sender: address
           };
