@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  fid        Int      @unique // Farcaster ID
+  username   String   @unique
+  tips       Tip[]
+  bookmarks  String[] // Array of Novel IDs (as strings)
+  novels     String[] // Array of Novel IDs (as strings, for authored novels)
+  supporters Supporter[]
+  createdAt  DateTime? @map("createdAt")
+  updatedAt  DateTime? @map("updatedAt")
+}
+
+model Tip {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  novel     Novel?   @relation(fields: [novelId], references: [id])
+  novelId   String?
+  amount    Float
+  date      DateTime @default(now())
+}
+
+model Supporter {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  novel      Novel?   @relation(fields: [novelId], references: [id])
+  novelId    String?
+  totalTipped Float
+}
+
+model Novel {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  title         String    @unique
+  novelUrl      String? 
+  author        String?
+  rank          String?
+  totalChapters String?
+  views         String?
+  bookmarks     String?
+  status        String?
+  genres        String[]
+  summary       String?
+  chaptersUrl   String?
+  imageUrl      String?
+  chapters      Chapter[]
+  lastScraped   DateTime? @default(now())
+  createdAt     DateTime? @map("createdAt")
+  updatedAt     DateTime? @map("updatedAt")
+  tips          Tip[]
+  supporters    Supporter[]
+}
+
+model Chapter {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  novel         Novel?   @relation(fields: [novelId], references: [id])
+  novelId       String?  // Reference to Novel
+  chapterNumber Int
+  url           String   @unique
+  title         String
+  content       String
+  createdAt     DateTime? @map("createdAt")
+  updatedAt     DateTime? @map("updatedAt")
+
+  @@index([novelId, chapterNumber], name: "novel_chapterNumber_idx")
+}

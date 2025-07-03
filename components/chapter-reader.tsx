@@ -171,7 +171,6 @@ export default function ChapterReader({ chapters, currentChapterIndex, onChapter
               className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous Chapter
             </Button>
 
             <div className="text-sm text-gray-400 text-center max-w-xs">
@@ -184,7 +183,6 @@ export default function ChapterReader({ chapters, currentChapterIndex, onChapter
               disabled={currentChapterIndex === chapters.length - 1}
               className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
             >
-              Next Chapter
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
