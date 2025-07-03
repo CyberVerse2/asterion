@@ -11,6 +11,51 @@ function deepBigIntToString(obj: any): any {
   return obj;
 }
 
+export async function GET(req: NextRequest) {
+  console.log('[GET /api/users] Incoming request');
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get('userId');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
+
+    // Fetch user with tips included
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tips: {
+          include: {
+            novel: {
+              select: {
+                id: true,
+                title: true
+              }
+            }
+          },
+          orderBy: {
+            date: 'desc'
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    console.log('[GET /api/users] Found user with tips:', user);
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error('[GET /api/users] Error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   console.log('[POST /api/users] Incoming request');
   try {
@@ -20,21 +65,56 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'fid and username are required' }, { status: 400 });
     }
 
-    // Try to find the user by fid or username
+    // Try to find the user by fid or username with tips included
     let user = await prisma.user.findFirst({
       where: {
         OR: [{ fid: Number(fid) }, { username: username }]
+      },
+      include: {
+        tips: {
+          include: {
+            novel: {
+              select: {
+                id: true,
+                title: true
+              }
+            }
+          },
+          orderBy: {
+            date: 'desc'
+          }
+        }
       }
     });
     console.log('[POST /api/users] Found user:', user);
 
-    // If not found, create the user
+    // If not found, create the user and fetch with tips
     if (!user) {
-      user = await prisma.user.create({
+      const newUser = await prisma.user.create({
         data: {
           fid: Number(fid),
           username: username,
           ...(pfpUrl ? { pfpUrl } : {})
+        }
+      });
+
+      // Fetch the created user with tips included
+      user = await prisma.user.findUnique({
+        where: { id: newUser.id },
+        include: {
+          tips: {
+            include: {
+              novel: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              }
+            },
+            orderBy: {
+              date: 'desc'
+            }
+          }
         }
       });
       console.log('[POST /api/users] Created new user:', user);

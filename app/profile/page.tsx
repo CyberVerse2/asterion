@@ -27,6 +27,20 @@ interface UserProfile {
   }>;
 }
 
+// Extended tip type that includes novel relation for profile display
+interface TipWithNovel {
+  id: string;
+  username: string;
+  amount: number;
+  novelId: string;
+  userId: string;
+  date: Date;
+  novel?: {
+    id: string;
+    title: string;
+  };
+}
+
 // Inline SVG icon components
 const DollarSign = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -389,7 +403,7 @@ export default function ProfilePage() {
               <div className="text-2xl font-bold">
                 $
                 {Array.isArray(profile?.tips)
-                  ? profile.tips
+                  ? (profile.tips as TipWithNovel[])
                       .reduce(
                         (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
                         0
@@ -425,7 +439,7 @@ export default function ProfilePage() {
             <CardContent>
               {/* Placeholder: Number of tips */}
               <div className="text-2xl font-bold">
-                {Array.isArray(profile?.tips) ? profile.tips.length : 0}
+                {Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]).length : 0}
               </div>
               <p className="text-xs text-muted-foreground">Double-clicked with love</p>
             </CardContent>
@@ -439,24 +453,32 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(Array.isArray(profile?.tips) ? profile.tips : []).map((tip, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div>
-                    {/* Placeholder: Show novelId instead of novelTitle */}
-                    <div className="font-medium">Novel ID: {tip.novelId}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {tip.date ? new Date(tip.date).toLocaleDateString() : ''}
+              {(Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]) : []).map(
+                (tip, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div>
+                      <div className="font-medium">
+                        {tip.novel?.title || `Novel ID: ${tip.novelId}`}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {tip.date ? new Date(tip.date).toLocaleDateString() : 'Unknown date'}
+                      </div>
                     </div>
+                    <Badge className="flex items-center gap-1">
+                      <DollarSign className="h-3 w-3" />
+                      {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
+                    </Badge>
                   </div>
-                  <Badge className="flex items-center gap-1">
-                    <DollarSign className="h-3 w-3" />
-                    {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
-                  </Badge>
+                )
+              )}
+              {(!Array.isArray(profile?.tips) || profile.tips.length === 0) && (
+                <div className="text-center text-muted-foreground py-8">
+                  No tips yet. Start reading and loving chapters to support authors!
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

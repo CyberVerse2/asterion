@@ -5,7 +5,8 @@ import { useMiniKit } from '@coinbase/onchainkit/minikit';
 const UserContext = createContext({
   user: null,
   userLoading: false,
-  userError: null
+  userError: null,
+  refreshUser: () => {}
 });
 
 export function UserProvider({ children }) {
@@ -25,6 +26,31 @@ export function UserProvider({ children }) {
   };
   const effectiveContext =
     process.env.NODE_ENV === 'development' && (!context || !context.client) ? devContext : context;
+
+  // Function to refresh user data (fetch fresh data from API)
+  const refreshUser = async () => {
+    if (!user || !user.id) return;
+
+    console.log('[UserProvider] Refreshing user data for user ID:', user.id);
+    setUserLoading(true);
+    setUserError(null);
+
+    try {
+      const response = await fetch(`/api/users?userId=${user.id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to refresh user data');
+      }
+      const refreshedUser = await response.json();
+      setUser(refreshedUser);
+      console.log('[UserProvider] User data refreshed:', refreshedUser);
+    } catch (error) {
+      console.error('[UserProvider] Error refreshing user:', error);
+      setUserError(error.message);
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
   useEffect(() => {
     console.debug('[UserProvider] Farcaster context:', effectiveContext);
@@ -74,7 +100,9 @@ export function UserProvider({ children }) {
   }, [effectiveContext, user, userLoading]);
 
   return (
-    <UserContext.Provider value={{ user, userLoading, userError }}>{children}</UserContext.Provider>
+    <UserContext.Provider value={{ user, userLoading, userError, refreshUser }}>
+      {children}
+    </UserContext.Provider>
   );
 }
 

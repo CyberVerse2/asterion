@@ -143,6 +143,15 @@ export default function NovelPage() {
     }
   };
 
+  const handleChapterTipped = (chapterId: string, newTipCount: number) => {
+    // Update the chapters state with new tip count
+    setChapters((prevChapters) =>
+      prevChapters.map((chapter) =>
+        chapter.id === chapterId ? { ...chapter, tipCount: newTipCount } : chapter
+      )
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -187,6 +196,7 @@ export default function NovelPage() {
           chapters={Array.isArray(chapters) ? chapters : []}
           currentChapterIndex={currentChapterIndex}
           onChapterChange={setCurrentChapterIndex}
+          onChapterTipped={handleChapterTipped}
         />
       </div>
     );

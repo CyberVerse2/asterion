@@ -25,6 +25,7 @@ interface ChapterReaderProps {
   chapters: Chapter[];
   currentChapterIndex: number;
   onChapterChange: (index: number) => void;
+  onChapterTipped?: (chapterId: string, newTipCount: number) => void;
 }
 
 interface LoveAnimationState {
@@ -49,9 +50,10 @@ const ERC20_ABI = [
 export default function ChapterReader({
   chapters,
   currentChapterIndex,
-  onChapterChange
+  onChapterChange,
+  onChapterTipped
 }: ChapterReaderProps) {
-  const { user }: { user: any } = useUser();
+  const { user, refreshUser }: { user: any; refreshUser: () => void } = useUser();
   const [tipCount, setTipCount] = useState(chapters[currentChapterIndex]?.tipCount || 0);
   const [hasLoved, setHasLoved] = useState(false);
   const [loveAnimations, setLoveAnimations] = useState<LoveAnimationState[]>([]);
@@ -82,6 +84,16 @@ export default function ChapterReader({
   const walletClient = farcasterSigner || wagmiWalletClient;
 
   const currentChapter = chapters[currentChapterIndex];
+
+  // Update tipCount when chapter changes
+  useEffect(() => {
+    if (currentChapter) {
+      setTipCount(currentChapter.tipCount || 0);
+      setHasLoved(false); // Reset love state for new chapter
+      setTradeSuccess(false);
+      setTradeError(null);
+    }
+  }, [currentChapter]);
 
   const handleLove = useCallback(
     async (event?: React.MouseEvent) => {
@@ -120,6 +132,16 @@ export default function ChapterReader({
             setTipCount(data.tipCount);
             setHasLoved(true);
             setTradeSuccess(true);
+
+            // Refresh user data to update tipping history
+            if (refreshUser) {
+              await refreshUser();
+            }
+
+            // Notify parent component about the tip
+            if (onChapterTipped) {
+              onChapterTipped(currentChapter.id, data.tipCount);
+            }
           } else if (data.error === 'User has not granted spend permission') {
             setTradeError(
               'Please approve spend permission in your profile before loving chapters.'
@@ -134,7 +156,7 @@ export default function ChapterReader({
         setTradePending(false);
       }
     },
-    [currentChapter.id, hasLoved, user]
+    [currentChapter.id, hasLoved, user, refreshUser, onChapterTipped]
   );
 
   const handleMouseDown = useCallback(() => {
