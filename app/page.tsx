@@ -3,14 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { Suspense } from 'react';
-import { mockNovels } from '@/lib/mock-data';
 import LoadingSkeleton from '@/components/loading-skeleton';
 import NovelGrid from '@/components/novel-grid';
 import { useUser } from '@/providers/UserProvider';
-
-function getPopularNovels() {
-  return mockNovels.sort((a, b) => b.totalTips - a.totalTips);
-}
 
 export default function HomePage() {
   const { setFrameReady, isFrameReady } = useMiniKit();

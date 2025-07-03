@@ -4,8 +4,10 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
+  console.log('[POST /api/users] Incoming request');
   try {
     const { fid, username } = await req.json();
+    console.log('[POST /api/users] Payload:', { fid, username });
     if (!fid || !username) {
       return NextResponse.json({ error: 'fid and username are required' }, { status: 400 });
     }
@@ -16,6 +18,7 @@ export async function POST(req: NextRequest) {
         OR: [{ fid: Number(fid) }, { username: username }]
       }
     });
+    console.log('[POST /api/users] Found user:', user);
 
     // If not found, create the user
     if (!user) {
@@ -25,10 +28,14 @@ export async function POST(req: NextRequest) {
           username: username
         }
       });
+      console.log('[POST /api/users] Created new user:', user);
     }
 
-    return NextResponse.json(user);
+    const response = NextResponse.json(user);
+    console.log('[POST /api/users] Response:', user);
+    return response;
   } catch (error) {
+    console.error('[POST /api/users] Error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -37,14 +44,17 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  console.log('[PATCH /api/users] Incoming request');
   try {
     const { userId, novelId } = await req.json();
+    console.log('[PATCH /api/users] Payload:', { userId, novelId });
     if (!userId || !novelId) {
       return NextResponse.json({ error: 'userId and novelId are required' }, { status: 400 });
     }
 
     // Find the user
     const user = await prisma.user.findUnique({ where: { id: userId } });
+    console.log('[PATCH /api/users] Found user:', user);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -59,9 +69,13 @@ export async function PATCH(req: NextRequest) {
       where: { id: userId },
       data: { bookmarks }
     });
+    console.log('[PATCH /api/users] Updated user:', updatedUser);
 
-    return NextResponse.json(updatedUser);
+    const response = NextResponse.json(updatedUser);
+    console.log('[PATCH /api/users] Response:', updatedUser);
+    return response;
   } catch (error) {
+    console.error('[PATCH /api/users] Error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
