@@ -290,8 +290,8 @@ export default function ProfilePage() {
                       min={1}
                       max={100000}
                       value={spendLimit}
-                      onChange={(e) => saveSpendLimit(Number(e.target.value))}
-                      className="border rounded px-2 py-1 w-24 text-right"
+                      onChange={(e) => setSpendLimit(Number(e.target.value))}
+                      className="border rounded px-2 py-1 w-24 text-right text-black"
                       aria-label="Spend Limit in USDC"
                       disabled={saving}
                     />
