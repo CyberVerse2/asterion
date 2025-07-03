@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 // @ts-ignore
 import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import LoveAnimation from './love-animation';
+import { tradeCoin } from '@zoralabs/coins-sdk';
+import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
+import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
 
 interface Chapter {
   id: string;
@@ -21,6 +24,7 @@ interface ChapterReaderProps {
   chapters: Chapter[];
   currentChapterIndex: number;
   onChapterChange: (index: number) => void;
+  coin: string;
 }
 
 interface LoveAnimationState {
@@ -32,7 +36,8 @@ interface LoveAnimationState {
 export default function ChapterReader({
   chapters,
   currentChapterIndex,
-  onChapterChange
+  onChapterChange,
+  coin
 }: ChapterReaderProps) {
   const [loves, setLoves] = useState(chapters[currentChapterIndex]?.loves || 0);
   const [hasLoved, setHasLoved] = useState(false);
@@ -41,6 +46,12 @@ export default function ChapterReader({
   const animationIdRef = useRef(0);
   const lastClickTimeRef = useRef(0);
   const clickTimeoutRef = useRef<NodeJS.Timeout>();
+  const [tradePending, setTradePending] = useState(false);
+  const [tradeError, setTradeError] = useState<string | null>(null);
+  const [tradeSuccess, setTradeSuccess] = useState(false);
+  const { address } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   const currentChapter = chapters[currentChapterIndex];
 
@@ -76,9 +87,33 @@ export default function ChapterReader({
         } catch (error) {
           console.error('Error loving chapter:', error);
         }
+        // After POST, trigger the tradeCoin flow
+        setTradePending(true);
+        setTradeError(null);
+        setTradeSuccess(false);
+        try {
+          if (!address || !walletClient || !publicClient) throw new Error('Wallet not connected');
+          const tradeParameters = {
+            sell: { type: 'erc20', address: USDC_ADDRESS },
+            buy: { type: 'erc20', address: coin },
+            amountIn: BigInt(0.1 * 10 ** 6), // 0.1 USDC (6 decimals)
+            slippage: 0.05,
+            sender: address
+          };
+          await tradeCoin({
+            tradeParameters,
+            walletClient,
+            account: address,
+            publicClient
+          });
+          setTradeSuccess(true);
+        } catch (err: any) {
+          setTradeError(err.message || 'Trade failed');
+        }
+        setTradePending(false);
       }
     },
-    [currentChapter.id, hasLoved]
+    [currentChapter.id, hasLoved, address, walletClient, publicClient, coin]
   );
 
   const handleMouseDown = useCallback(() => {
@@ -163,6 +198,11 @@ export default function ChapterReader({
             // Only use dangerouslySetInnerHTML if you trust the HTML source
             dangerouslySetInnerHTML={{ __html: currentChapter.content }}
           />
+
+          {/* Trade feedback */}
+          {tradePending && <div className="text-blue-400 mt-2">Buying coin (0.1 USDC)...</div>}
+          {tradeSuccess && <div className="text-green-400 mt-2">Coin purchased successfully!</div>}
+          {tradeError && <div className="text-red-400 mt-2">{tradeError}</div>}
 
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
             {/* @ts-ignore: variant is supported by ButtonProps */}

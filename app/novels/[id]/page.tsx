@@ -42,6 +42,7 @@ interface Novel {
   bookmarks?: string;
   genres?: string[];
   summary?: string;
+  coin: string;
 }
 
 export default function NovelPage() {
@@ -187,6 +188,7 @@ export default function NovelPage() {
           chapters={Array.isArray(chapters) ? chapters : []}
           currentChapterIndex={currentChapterIndex}
           onChapterChange={setCurrentChapterIndex}
+          coin={String(novel.coin)}
         />
       </div>
     );
