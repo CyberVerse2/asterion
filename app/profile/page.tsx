@@ -168,9 +168,9 @@ export default function ProfilePage() {
         spender: process.env.NEXT_PUBLIC_SPENDER_ADDRESS as Address,
         token: USDC_ADDRESS,
         allowance: parseUnits(spendLimit.toString(), 6),
-        period: 2592000,
-        start: 0,
-        end: 281474976710655,
+        period: BigInt(2592000),
+        start: BigInt(0),
+        end: BigInt(281474976710655),
         salt: BigInt(0),
         extraData: '0x' as Hex
       };
@@ -195,7 +195,7 @@ export default function ProfilePage() {
           ]
         },
         primaryType: 'SpendPermission',
-        message: spendPermission
+        message: spendPermission as any
       });
       setApproved(true);
 
