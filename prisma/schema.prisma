@@ -72,6 +72,7 @@ model Chapter {
   url           String   @unique
   title         String
   content       String
+  tipCount      Int      @default(0)
   createdAt     DateTime? @map("createdAt")
   updatedAt     DateTime? @map("updatedAt")
 

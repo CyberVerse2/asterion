@@ -18,7 +18,7 @@ interface Chapter {
   title: string;
   content: string;
   order: number;
-  loves: number;
+  tipCount: number;
 }
 
 interface ChapterReaderProps {
@@ -40,7 +40,7 @@ export default function ChapterReader({
   onChapterChange,
   coin
 }: ChapterReaderProps) {
-  const [loves, setLoves] = useState(chapters[currentChapterIndex]?.loves || 0);
+  const [tipCount, setTipCount] = useState(chapters[currentChapterIndex]?.tipCount || 0);
   const [hasLoved, setHasLoved] = useState(false);
   const [loveAnimations, setLoveAnimations] = useState<LoveAnimationState[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -71,21 +71,8 @@ export default function ChapterReader({
         };
         setLoveAnimations((prev) => [...prev, newAnimation]);
       }
-      // Update love count if not already loved
+      // Update tip count only if not already tipped
       if (!hasLoved) {
-        try {
-          const response = await fetch(`/api/chapters/${currentChapter.id}/love`, {
-            method: 'POST'
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setLoves(data.loves);
-            setHasLoved(true);
-          }
-        } catch (error) {
-          console.error('Error loving chapter:', error);
-        }
-        // After POST, trigger the tradeCoin flow
         setTradePending(true);
         setTradeError(null);
         setTradeSuccess(false);
@@ -103,15 +90,23 @@ export default function ChapterReader({
             walletClient,
             account: address as unknown as Account,
             publicClient
-          }).then(() => {
-            console.log('Trade successful');
-            setTradeSuccess(true);
-
-          }).catch((err: any) => {
-            setTradeError(err.message || 'Trade failed');
-          }).finally(() => {
-            setTradePending(false);
           });
+          setTradeSuccess(true);
+          // Only after successful trade, call the API to increment tip count
+          try {
+            const response = await fetch(`/api/chapters/${currentChapter.id}/love`, {
+              method: 'POST'
+            });
+            if (response.ok) {
+              const data = await response.json();
+              setTipCount(data.tipCount);
+              setHasLoved(true);
+            } else {
+              setTradeError('Failed to update tip count in backend');
+            }
+          } catch (apiError) {
+            setTradeError('Failed to update tip count in backend');
+          }
         } catch (err: any) {
           setTradeError(err.message || 'Trade failed');
         }
@@ -189,7 +184,7 @@ export default function ChapterReader({
               >
                 <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
               </button>
-              <span>{loves}</span>
+              <span>{tipCount}</span>
             </div>
           </div>
           <div className="text-sm text-gray-400">
