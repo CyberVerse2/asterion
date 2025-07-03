@@ -11,6 +11,7 @@ import LoveAnimation from './love-animation';
 import { tradeCoin } from '@zoralabs/coins-sdk';
 import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
 import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
+import { Address, Account } from 'viem';
 
 interface Chapter {
   id: string;
@@ -55,30 +56,27 @@ export default function ChapterReader({
 
   const currentChapter = chapters[currentChapterIndex];
 
-  const handleDoubleClick = useCallback(
-    async (event: React.MouseEvent) => {
-      event.preventDefault();
-
-      // Get click coordinates relative to viewport
-      const x = event.clientX;
-      const y = event.clientY;
-
-      // Create new love animation
-      const newAnimation: LoveAnimationState = {
-        id: animationIdRef.current++,
-        x,
-        y
-      };
-
-      setLoveAnimations((prev) => [...prev, newAnimation]);
-
+  const handleLove = useCallback(
+    async (event?: React.MouseEvent) => {
+      if (event) {
+        event.preventDefault();
+        // Get click coordinates relative to viewport
+        const x = event.clientX;
+        const y = event.clientY;
+        // Create new love animation
+        const newAnimation: LoveAnimationState = {
+          id: animationIdRef.current++,
+          x,
+          y
+        };
+        setLoveAnimations((prev) => [...prev, newAnimation]);
+      }
       // Update love count if not already loved
       if (!hasLoved) {
         try {
           const response = await fetch(`/api/chapters/${currentChapter.id}/love`, {
             method: 'POST'
           });
-
           if (response.ok) {
             const data = await response.json();
             setLoves(data.loves);
@@ -95,15 +93,15 @@ export default function ChapterReader({
           if (!address || !walletClient || !publicClient) throw new Error('Wallet not connected');
           const tradeParameters = {
             sell: { type: 'erc20' as const, address: USDC_ADDRESS },
-            buy: { type: 'erc20' as const, address: coin },
+            buy: { type: 'erc20' as const, address: coin as Address },
             amountIn: BigInt(0.18 * 10 ** 6), // 0.18 USDC (6 decimals)
             slippage: 0.05,
-            sender: address
+            sender: address as Address
           };
           await tradeCoin({
             tradeParameters,
             walletClient,
-            account: address,
+            account: address as unknown as Account,
             publicClient
           });
           setTradeSuccess(true);
@@ -175,7 +173,15 @@ export default function ChapterReader({
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl text-white">{currentChapter.title}</CardTitle>
             <div className="flex items-center gap-2 text-gray-400">
-              <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
+              <button
+                type="button"
+                onClick={handleLove}
+                disabled={hasLoved}
+                className="focus:outline-none"
+                aria-label="Love this chapter"
+              >
+                <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
+              </button>
               <span>{loves}</span>
             </div>
           </div>
@@ -188,7 +194,7 @@ export default function ChapterReader({
             className={`prose prose-lg max-w-none leading-relaxed text-gray-300 chapter-content ${
               isSelecting ? 'selecting' : ''
             }`}
-            onDoubleClick={handleDoubleClick}
+            onDoubleClick={handleLove}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             style={{
