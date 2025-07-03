@@ -29,7 +29,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
         <CardHeader className="p-0">
           <div className="relative aspect-[3/4] w-full">
             <Image
-              src={novel.coverImage || '/placeholder.svg?height=400&width=300'}
+              src={novel.imageUrl || '/placeholder.svg?height=400&width=300'}
               alt={novel.title}
               fill
               className="object-cover rounded-t-lg"

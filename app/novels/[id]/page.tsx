@@ -53,9 +53,16 @@ export default function NovelPage() {
   const [isReading, setIsReading] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const { user } = useUser();
+  const { user }: { user: any } = useUser();
   const summaryRef = useRef<HTMLDivElement>(null);
   const [summaryHeight, setSummaryHeight] = useState<number | undefined>(undefined);
+  const [bookmarking, setBookmarking] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(() => {
+    if (user && user.bookmarks && Array.isArray(user.bookmarks) && novel) {
+      return user.bookmarks.includes(novel.id);
+    }
+    return false;
+  });
 
   useEffect(() => {
     const fetchNovelAndChapters = async () => {
@@ -93,6 +100,12 @@ export default function NovelPage() {
     }
   }, [showSummary, novel?.summary]);
 
+  useEffect(() => {
+    if (user && user.bookmarks && Array.isArray(user.bookmarks) && novel) {
+      setIsBookmarked(user.bookmarks.includes(novel.id));
+    }
+  }, [user, novel && novel.id]);
+
   const handleTipSuccess = () => {
     if (novel) {
       setNovel({
@@ -100,6 +113,30 @@ export default function NovelPage() {
         totalTips: novel.totalTips + 1,
         tipCount: novel.tipCount + 1
       });
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!user || !user.id || !novel) return alert('You must be logged in to bookmark novels.');
+    setBookmarking(true);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, novelId: novel.id })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to bookmark');
+      }
+      const updatedUser = await res.json();
+      setIsBookmarked(true);
+      // Optionally update user context here if needed
+      alert('Bookmarked!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to bookmark');
+    } finally {
+      setBookmarking(false);
     }
   };
 
@@ -317,22 +354,31 @@ export default function NovelPage() {
         )}
 
         {/* Action Buttons */}
-        <div className="space-y-3">
+        <div className="space-y-3 pb-32">
           <Button
             onClick={() => setIsReading(true)}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-medium"
           >
             READ NOW (FIRST TIME)
           </Button>
+        </div>
 
-          <div className="grid grid-cols-3 gap-4">
+        {/* Sticky Action Bar */}
+        <div className="sticky bottom-0 left-0 w-full z-20 backdrop-blur border-t border-white/10 shadow-2xl px-4 py-3 flex justify-center">
+          <div className="grid grid-cols-3 gap-4 w-full max-w-md">
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
               variant="ghost"
-              className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 py-4"
+              className={`flex flex-col items-center gap-1 py-4 ${
+                isBookmarked ? 'text-green-400' : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+              onClick={handleBookmark}
+              disabled={isBookmarked || bookmarking}
             >
               <Library className="h-5 w-5" />
-              <span className="text-xs">Library</span>
+              <span className="text-xs">
+                {isBookmarked ? 'Bookmarked' : bookmarking ? 'Bookmarking...' : 'Library'}
+              </span>
             </Button>
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
