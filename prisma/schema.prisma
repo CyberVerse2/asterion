@@ -60,6 +60,7 @@ model Novel {
   summary       String?
   chaptersUrl   String?
   imageUrl      String?
+  rating        Float     @default(0.0) // Average rating of the novel
   chapters      Chapter[] @relation("NovelChapters")
   lastScraped   DateTime? @default(now())
   createdAt     DateTime? @map("createdAt")

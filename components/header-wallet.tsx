@@ -18,24 +18,12 @@ export default function HeaderWallet() {
   const { user } = useUser() as { user: User | null };
   const { context } = useMiniKit();
 
-  // Dev-mode context mock for local testing (same as UserProvider and profile page)
-  const devContext = {
-    client: {
-      fid: 123456,
-      username: 'devuser',
-      displayName: 'Dev User',
-      name: 'Dev User'
-    }
-  };
-  const effectiveContext =
-    process.env.NODE_ENV === 'development' && (!context || !context.client) ? devContext : context;
-
-  // Check if user has Farcaster context (same logic as UserProvider and profile page)
+  // Check if user has Farcaster context
   const hasFarcasterContext =
-    effectiveContext &&
-    (((effectiveContext as any).user && (effectiveContext as any).user.fid) ||
-      ((effectiveContext as any).client &&
-        ((effectiveContext as any).client.fid || (effectiveContext as any).client.clientFid)));
+    context &&
+    (((context as any).user && (context as any).user.fid) ||
+      ((context as any).client &&
+        ((context as any).client.fid || (context as any).client.clientFid)));
 
   // Show Farcaster profile for users in Farcaster context
   if (hasFarcasterContext && user) {

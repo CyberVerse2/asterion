@@ -178,24 +178,12 @@ export default function ProfilePage() {
   const [transactionUrl, setTransactionUrl] = useState<string | null>(null);
   const { context } = useMiniKit();
 
-  // Dev-mode context mock for local testing (same as UserProvider)
-  const devContext = {
-    client: {
-      fid: 123456,
-      username: 'devuser',
-      displayName: 'Dev User',
-      name: 'Dev User'
-    }
-  };
-  const effectiveContext =
-    process.env.NODE_ENV === 'development' && (!context || !context.client) ? devContext : context;
-
-  // Check if user has Farcaster context (same logic as UserProvider)
+  // Check if user has Farcaster context
   const hasFarcasterContext =
-    effectiveContext &&
-    (((effectiveContext as any).user && (effectiveContext as any).user.fid) ||
-      ((effectiveContext as any).client &&
-        ((effectiveContext as any).client.fid || (effectiveContext as any).client.clientFid)));
+    context &&
+    (((context as any).user && (context as any).user.fid) ||
+      ((context as any).client &&
+        ((context as any).client.fid || (context as any).client.clientFid)));
 
   // Use OnchainKit components only for wallet-only users (no Farcaster context)
   const isWalletOnly = profile && profile.walletAddress && !hasFarcasterContext;

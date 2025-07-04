@@ -17,18 +17,6 @@ export function UserProvider({ children }) {
   const [userLoading, setUserLoading] = useState(false);
   const [userError, setUserError] = useState(null);
 
-  // Dev-mode context mock for local testing
-  const devContext = {
-    client: {
-      fid: 123456,
-      username: 'devuser',
-      displayName: 'Dev User',
-      name: 'Dev User'
-    }
-  };
-  const effectiveContext =
-    process.env.NODE_ENV === 'development' && (!context || !context.client) ? devContext : context;
-
   // Function to refresh user data (fetch fresh data from API)
   const refreshUser = async () => {
     if (!user || !user.id) return;
@@ -87,18 +75,18 @@ export function UserProvider({ children }) {
 
   // Effect for Farcaster context (priority)
   useEffect(() => {
-    console.debug('[UserProvider] Farcaster context:', effectiveContext);
-    if (!effectiveContext) {
+    console.debug('[UserProvider] Farcaster context:', context);
+    if (!context) {
       console.warn(
-        '[UserProvider] effectiveContext is null or undefined. Skipping Farcaster user extraction.'
+        '[UserProvider] context is null or undefined. Skipping Farcaster user extraction.'
       );
       return;
     }
 
-    const userObj = effectiveContext.user;
-    const clientObj = effectiveContext.client;
-    console.debug('[UserProvider] effectiveContext.user:', userObj);
-    console.debug('[UserProvider] effectiveContext.client:', clientObj);
+    const userObj = context.user;
+    const clientObj = context.client;
+    console.debug('[UserProvider] context.user:', userObj);
+    console.debug('[UserProvider] context.client:', clientObj);
 
     const fid = (userObj && userObj.fid) || (clientObj && (clientObj.fid || clientObj.clientFid));
     const username =
@@ -117,7 +105,7 @@ export function UserProvider({ children }) {
       }
       createOrFetchUser(payload);
     }
-  }, [effectiveContext, user, userLoading, walletAddress]);
+  }, [context, user, userLoading, walletAddress]);
 
   // Effect for wallet-only users (fallback when no Farcaster context)
   useEffect(() => {
@@ -131,10 +119,9 @@ export function UserProvider({ children }) {
 
     // Check if we have Farcaster context - if yes, skip wallet-only flow
     const hasFarcasterContext =
-      effectiveContext &&
-      ((effectiveContext.user && effectiveContext.user.fid) ||
-        (effectiveContext.client &&
-          (effectiveContext.client.fid || effectiveContext.client.clientFid)));
+      context &&
+      ((context.user && context.user.fid) ||
+        (context.client && (context.client.fid || context.client.clientFid)));
 
     if (hasFarcasterContext) {
       console.log('[UserProvider] Farcaster context available, skipping wallet-only flow');
@@ -146,7 +133,7 @@ export function UserProvider({ children }) {
       walletAddress
     );
     createOrFetchUser({ walletAddress });
-  }, [isConnected, walletAddress, user, userLoading, effectiveContext]);
+  }, [isConnected, walletAddress, user, userLoading, context]);
 
   return (
     <UserContext.Provider value={{ user, userLoading, userError, refreshUser }}>

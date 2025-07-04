@@ -24,6 +24,7 @@ interface Novel {
   totalTips: number;
   tipCount: number;
   loves: number;
+  rating: number;
   chapters: Array<{
     id: string;
     title: string;
@@ -224,8 +225,6 @@ export default function NovelPage() {
     );
   }
 
-  const rating = (4.0 + Math.random() * 1.0).toFixed(1);
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
       <Link
@@ -265,7 +264,7 @@ export default function NovelPage() {
                 ))}
                 <Star className="h-4 w-4 fill-yellow-400/50 text-yellow-400" />
               </div>
-              <span className="text-sm text-gray-400">({rating})</span>
+              <span className="text-sm text-gray-400">({novel.rating.toFixed(1)})</span>
             </div>
           </div>
         </div>

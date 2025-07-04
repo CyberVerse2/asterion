@@ -266,16 +266,26 @@ Currently, both wallet-only and Farcaster users use an EIP-712 signature-based s
 # Project Status Board
 
 - [x] Detect Farcaster user in spend permission UI
-- [ ] Implement ERC-20 approve flow for Farcaster users
-- [ ] Retain EIP-712 flow for wallet-only users
-- [ ] Unify UI/UX for both flows
-- [ ] Display current allowance for Farcaster users
-- [ ] Test both flows and handle errors
+- [x] Implement ERC-20 approve flow for Farcaster users
+- [x] Retain EIP-712 flow for wallet-only users
+- [x] Unify UI/UX for both flows
+- [x] Display current allowance for Farcaster users
+- [x] Test both flows and handle errors
+- [x] Add rating field to Novel model and update UI
 
 # Executor's Feedback or Assistance Requests
 
 **Progress Update:**
 
-- The spend permission UI in the profile page now reliably detects Farcaster users using the same logic as UserProvider/profile.
-- The UI conditionally branches: Farcaster users will use the ERC-20 approve flow (placeholder for now), wallet-only users retain the EIP-712 signature flow.
-- Next step: Implement the ERC-20 approve logic for Farcaster users.
+- ✅ ERC-20 approve flow for Farcaster users is complete and working
+- ✅ Database saving works for both user types after spend permission
+- ✅ Tipping works for both Farcaster (ERC-20) and wallet-only (EIP-712) users
+- ✅ Added rating field to Novel model in Prisma schema
+- ✅ Updated Novel interface and UI to display actual rating from database
+- ✅ Database schema updated successfully with `npx prisma db push`
+
+**Current Status:**
+
+- The ERC-20 approve feature is fully implemented and tested
+- Novel pages now display the actual rating from the database instead of random values
+- Ready for any additional features or improvements
