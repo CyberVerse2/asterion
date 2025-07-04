@@ -215,90 +215,67 @@ The app now needs to support wallet-only users (those who connect via Coinbase S
 - [x] Limit tipping history to 5 most recent entries in API and profile display
 - [x] Test wallet user profile display with Basename support
 
+# NEW FEATURE: Use ERC-20 Approve for Farcaster Users
+
+## Background and Motivation
+
+Currently, both wallet-only and Farcaster users use an EIP-712 signature-based spend permission flow. For Farcaster users, we want to switch to the standard ERC-20 `approve` function, which is a direct on-chain transaction, for granting USDC spend permissions. Wallet-only users will continue to use the EIP-712 flow.
+
+## Key Challenges and Analysis
+
+- **User Detection:** Must reliably distinguish Farcaster users from wallet-only users in the UI and logic.
+- **UI Consistency:** The UI should look the same for both user types, but the underlying logic for the "Approve Spend" button must differ.
+- **On-chain Transaction:** Farcaster users must sign an on-chain transaction for `approve`, which may require gas and wallet interaction.
+- **Allowance Management:** Need to ensure the app checks and displays the current allowance for USDC for Farcaster users.
+- **Error Handling:** Must handle transaction failures, user rejection, and display appropriate feedback.
+- **Testing:** Both flows must be tested to ensure no regression for wallet-only users.
+
+## High-level Task Breakdown
+
+1. **Detect Farcaster User in Spend Permission UI**
+
+   - Use the same logic as UserProvider/profile to determine if the user is a Farcaster user.
+   - **Success Criteria:** UI logic can reliably distinguish Farcaster vs wallet-only users.
+
+2. **Implement ERC-20 Approve Flow for Farcaster Users**
+
+   - When a Farcaster user clicks "Approve Spend", trigger an on-chain transaction to call `approve(spender, amount)` on the USDC contract.
+   - Use wagmi's `useContractWrite` or ethers.js for the transaction.
+   - **Success Criteria:** Farcaster users can successfully approve USDC spend via standard ERC-20 approve.
+
+3. **Retain EIP-712 Flow for Wallet-only Users**
+
+   - Keep the existing EIP-712 signature-based spend permission for wallet-only users.
+   - **Success Criteria:** Wallet-only users experience no change in their flow.
+
+4. **Unify UI/UX for Both Flows**
+
+   - The "Approve Spend" button and spend limit input should look the same for both user types.
+   - Show appropriate loading, success, and error states for each flow.
+   - **Success Criteria:** Users cannot tell the difference in UI, only in wallet interaction.
+
+5. **Display Current Allowance for Farcaster Users**
+
+   - Query and display the current USDC allowance for the spender contract for Farcaster users.
+   - **Success Criteria:** Farcaster users see their current allowance in the UI.
+
+6. **Testing and Error Handling**
+   - Test both flows (Farcaster and wallet-only) for all edge cases: success, rejection, failure, and allowance updates.
+   - **Success Criteria:** All flows work as expected, errors are handled gracefully, and no regression for wallet-only users.
+
+# Project Status Board
+
+- [x] Detect Farcaster user in spend permission UI
+- [ ] Implement ERC-20 approve flow for Farcaster users
+- [ ] Retain EIP-712 flow for wallet-only users
+- [ ] Unify UI/UX for both flows
+- [ ] Display current allowance for Farcaster users
+- [ ] Test both flows and handle errors
+
 # Executor's Feedback or Assistance Requests
 
-**BASENAME AND TIPPING HISTORY IMPLEMENTATION - ROOT CAUSE FOUND AND RESOLVED:**
+**Progress Update:**
 
-**🎯 ISSUE SUCCESSFULLY DIAGNOSED:**
-
-The enhanced debugging revealed the exact root cause of the OnchainKit display issue:
-
-**Console Log Analysis:**
-
-```
-✅ CDP API test response status: 200 (API connectivity working)
-✅ Component loaded successfully (OnchainKit mounting correctly)
-❌ Timeout - switching to fallback (No Basename data to display)
-```
-
-**🔍 ROOT CAUSE IDENTIFIED:**
-
-The wallet address `0x8Fb7D89A66bdeEa9a26Fb7c3Ae98DE39a0847b5D` **does not have a Basename registered**. This is why:
-
-1. **OnchainKit components mount successfully** - They load and render properly
-2. **CDP API connectivity works** - The API key and network requests are functional
-3. **No data to display** - Since there's no Basename, the components show nothing
-4. **Fallback activates** - After 3 seconds, fallback components take over
-
-**🔧 COMPREHENSIVE SOLUTION IMPLEMENTED:**
-
-### 1. Enhanced Component Logic
-
-- **Proper Timeout Detection**: 3-second timeout optimized for better UX
-- **Clear State Management**: Simplified fallback logic for cleaner behavior
-- **Informative Logging**: Clear console messages explaining component behavior
-
-### 2. User-Friendly Fallback Display
-
-- **Beautiful Gradient Avatar**: Shows wallet address initials with attractive styling
-- **Formatted Wallet Address**: Clean display of truncated wallet address
-- **Seamless UX**: Fallback looks intentional, not like an error state
-
-### 3. Educational Debug Information
-
-- **Clear Explanation**: Debug panel explains why fallback is showing
-- **Action Steps**: Direct link to register a Basename at base.org/names
-- **User Guidance**: Helps users understand how to get a Basename
-
-**✅ FINAL IMPLEMENTATION STATUS:**
-
-### Features Successfully Implemented:
-
-1. **✅ Tipping History Limit**: Correctly limited to 5 most recent entries
-2. **✅ Wallet-Only User Detection**: Properly identifies users outside Farcaster context
-3. **✅ OnchainKit Integration**: Components load and function correctly
-4. **✅ Fallback System**: Graceful handling when no Basename is registered
-5. **✅ Enhanced Debugging**: Comprehensive diagnostics for troubleshooting
-
-### User Experience:
-
-- **For users WITH Basename**: OnchainKit components display Basename and avatar
-- **For users WITHOUT Basename**: Beautiful fallback with formatted wallet address
-- **For developers**: Clear debugging information and guidance
-
-**🎯 BEHAVIOR VERIFICATION:**
-
-The system now correctly:
-
-1. **Detects wallet-only context** ✓
-2. **Loads OnchainKit components** ✓
-3. **Handles missing Basename gracefully** ✓
-4. **Provides user-friendly fallbacks** ✓
-5. **Offers clear guidance for registration** ✓
-
-**💡 USER ACTION REQUIRED:**
-
-If the user wants to see their actual Basename and avatar instead of the fallback:
-
-1. **Visit [base.org/names](https://www.base.org/names)**
-2. **Register a Basename for wallet `0x8Fb7D89A66bdeEa9a26Fb7c3Ae98DE39a0847b5D`**
-3. **Return to the profile page** - OnchainKit will then display the registered Basename
-
-**🚀 IMPLEMENTATION COMPLETE:**
-
-Both requested features are now fully functional:
-
-- ✅ **Basename Integration**: Working with proper fallbacks for unregistered wallets
-- ✅ **Tipping History Limit**: Successfully limited to 5 recent entries
-
-The system provides an excellent user experience regardless of whether the user has a Basename registered or not.
+- The spend permission UI in the profile page now reliably detects Farcaster users using the same logic as UserProvider/profile.
+- The UI conditionally branches: Farcaster users will use the ERC-20 approve flow (placeholder for now), wallet-only users retain the EIP-712 signature flow.
+- Next step: Implement the ERC-20 approve logic for Farcaster users.

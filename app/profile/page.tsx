@@ -12,7 +12,16 @@ import { Wallet } from '@coinbase/onchainkit/wallet';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
 import { useState, useEffect, useRef } from 'react';
-import { useAccount, useChainId, useConnect, useConnectors, useSignTypedData } from 'wagmi';
+import {
+  useAccount,
+  useChainId,
+  useConnect,
+  useConnectors,
+  useSignTypedData,
+  useAccount as useWagmiAccount,
+  useWriteContract,
+  useWaitForTransactionReceipt
+} from 'wagmi';
 import { Address as ViemAddress, Hex, parseUnits, getAddress } from 'viem';
 import {
   spendPermissionManagerAbi,
@@ -51,6 +60,30 @@ interface TipWithNovel {
     title: string;
   };
 }
+
+// Minimal ERC-20 ABI for approve and allowance
+const ERC20_ABI = [
+  {
+    constant: false,
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' }
+    ],
+    name: 'approve',
+    outputs: [{ name: '', type: 'bool' }],
+    type: 'function'
+  },
+  {
+    constant: true,
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' }
+    ],
+    name: 'allowance',
+    outputs: [{ name: '', type: 'uint256' }],
+    type: 'function'
+  }
+];
 
 // Inline SVG icon components
 const DollarSign = (props: React.SVGProps<SVGSVGElement>) => (
@@ -400,6 +433,22 @@ export default function ProfilePage() {
     setApproving(false);
   }
 
+  // For ERC-20 approve (Farcaster users)
+  const spenderAddress = process.env.NEXT_PUBLIC_SPENDER_ADDRESS || '';
+  const usdcAddress = USDC_ADDRESS;
+  const approveAmount = parseUnits(spendLimit.toString(), 6);
+  const {
+    writeContract,
+    data: approveTxHash,
+    isPending: isApprovePending,
+    error: approveErrorObj,
+    isError: isApproveError
+  } = useWriteContract();
+  const { isLoading: isApproveTxLoading, isSuccess: isApproveTxSuccess } =
+    useWaitForTransactionReceipt({
+      hash: approveTxHash
+    });
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -655,40 +704,43 @@ export default function ProfilePage() {
                   chapterTipAmount !== profile?.chapterTipAmount) && (
                   <div className="text-xs text-green-600">Settings updated!</div>
                 )}
-              <Button onClick={handleApproveSpend} disabled={saving || approving}>
-                {approving ? 'Approving...' : approved ? 'Permission Granted' : 'Approve Spend'}
-              </Button>
-              {approved && (
-                <div className="text-green-600 dark:text-green-400 font-medium mt-2">
-                  Spend Permission Signed!
-                </div>
+              {/* Spend Permission Button - conditional on user type */}
+              {hasFarcasterContext ? (
+                // Farcaster user: ERC-20 approve flow
+                <Button
+                  onClick={() =>
+                    writeContract &&
+                    writeContract({
+                      address: usdcAddress,
+                      abi: ERC20_ABI,
+                      functionName: 'approve',
+                      args: [spenderAddress, approveAmount]
+                    })
+                  }
+                  disabled={saving || isApprovePending || isApproveTxLoading || !writeContract}
+                >
+                  {isApprovePending || isApproveTxLoading
+                    ? 'Approving...'
+                    : isApproveTxSuccess
+                    ? 'Permission Granted'
+                    : 'Approve Spend'}
+                </Button>
+              ) : (
+                // Wallet-only user: EIP-712 signature flow (existing logic)
+                <Button onClick={handleApproveSpend} disabled={saving || approving}>
+                  {approving ? 'Approving...' : approved ? 'Permission Granted' : 'Approve Spend'}
+                </Button>
               )}
-              {approveError && (
+              {/* Show error for Farcaster approve */}
+              {hasFarcasterContext && isApproveError && (
                 <div className="text-red-600 dark:text-red-400 font-medium mt-2">
-                  {approveError}
+                  {approveErrorObj?.message || 'ERC-20 approval failed'}
                 </div>
               )}
-              {transactionStatus === 'pending' && (
-                <div className="text-blue-600 dark:text-blue-400 font-medium mt-2">
-                  Onchain approval pending...
-                </div>
-              )}
-              {transactionStatus === 'success' && transactionUrl && (
+              {/* Show success for Farcaster approve */}
+              {hasFarcasterContext && isApproveTxSuccess && (
                 <div className="text-green-600 dark:text-green-400 font-medium mt-2">
-                  Onchain approval successful!{' '}
-                  <a
-                    href={transactionUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    View on BaseScan
-                  </a>
-                </div>
-              )}
-              {transactionStatus === 'failure' && (
-                <div className="text-red-600 dark:text-red-400 font-medium mt-2">
-                  Onchain approval failed.
+                  Spend Permission Approved!
                 </div>
               )}
             </div>
