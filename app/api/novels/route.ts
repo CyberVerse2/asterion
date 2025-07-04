@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const novels = await prisma.novel.findMany({
-      take: 5,
+      take: 10,
       include: {
         tips: true // Include tips to calculate totalTips
       }
