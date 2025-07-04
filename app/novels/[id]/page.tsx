@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +45,7 @@ interface Novel {
 
 export default function NovelPage() {
   const params = useParams();
+  const router = useRouter();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<any[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
@@ -62,6 +63,7 @@ export default function NovelPage() {
     }
     return false;
   });
+  const [showChaptersList, setShowChaptersList] = useState(false);
 
   const randomReviews = useMemo(() => Math.floor(Math.random() * 991) + 10, []);
 
@@ -148,6 +150,28 @@ export default function NovelPage() {
         chapter.id === chapterId ? { ...chapter, tipCount: newTipCount } : chapter
       )
     );
+  };
+
+  // Fetch chapters if not loaded when expanding the list
+  const handleShowChapters = async () => {
+    if (!showChaptersList && chapters.length === 0 && novel) {
+      setChaptersLoading(true);
+      try {
+        const chaptersRes = await fetch(`/api/chapters?novelId=${novel.id}`);
+        if (chaptersRes.ok) {
+          const chaptersData = await chaptersRes.json();
+          setChapters(chaptersData);
+        } else {
+          setChapters([]);
+        }
+      } catch (error) {
+        setChapters([]);
+        console.error('Error fetching chapters:', error);
+      } finally {
+        setChaptersLoading(false);
+      }
+    }
+    setShowChaptersList((prev) => !prev);
   };
 
   if (isLoading) {
@@ -374,7 +398,7 @@ export default function NovelPage() {
         </div>
 
         {/* Sticky Action Bar */}
-        <div className="sticky bottom-0 left-0 w-full z-20 backdrop-blur border-t border-white/10 shadow-2xl px-4 py-3 flex justify-center">
+        <div className="sticky bottom-0 left-0 w-full z-20 backdrop-blur border-t border-white/10 shadow-2xl px-4 py-3 flex flex-col items-center">
           <div className="grid grid-cols-2 gap-4 w-full max-w-md">
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button
@@ -390,7 +414,10 @@ export default function NovelPage() {
               </span>
             </Button>
             {/* @ts-ignore: variant is supported by ButtonProps */}
-            <Button className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 bg-transparent border-white/20 py-4">
+            <Button
+              className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 bg-transparent border-white/20 py-4"
+              onClick={() => router.push(`/novels/${params.id}/chapters`)}
+            >
               <BookOpen className="h-5 w-5" />
               <span className="text-xs">Chapters</span>
             </Button>
