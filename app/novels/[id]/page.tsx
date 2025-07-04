@@ -387,20 +387,22 @@ export default function NovelPage() {
         )}
 
         {/* Action Buttons */}
-        <div className="space-y-3 pb-32">
-          <Button
-            onClick={handleReadNow}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-medium"
-            disabled={chaptersLoading}
-          >
-            {chaptersLoading ? 'Loading...' : 'READ NOW (FIRST TIME)'}
-          </Button>
-        </div>
+        <div className="space-y-3 pb-32">{/* Remove the READ NOW button from here */}</div>
 
         {/* Sticky Action Bar */}
         <div className="sticky bottom-0 left-0 w-full z-20 backdrop-blur border-t border-white/10 shadow-2xl px-4 py-3 flex flex-col items-center">
-          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-            {/* @ts-ignore: variant is supported by ButtonProps */}
+          <div className="grid grid-cols-3 gap-4 w-full max-w-md">
+            {/* READ NOW Button */}
+            <Button
+              className="flex flex-row items-center gap-1 text-white bg-purple-600 hover:bg-purple-700 border-purple-600 py-4"
+              onClick={handleReadNow}
+              disabled={chaptersLoading}
+            >
+              <BookOpen className="h-5 w-5 mr-1" />
+              <span className="text-xs">{chaptersLoading ? 'Loading...' : 'READ NOW'}</span>
+            </Button>
+
+            {/* Library Button */}
             <Button
               className={`flex flex-col items-center gap-1 py-4 bg-transparent border-white/20 ${
                 isBookmarked ? 'text-green-400' : 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -413,7 +415,8 @@ export default function NovelPage() {
                 {isBookmarked ? 'Bookmarked' : bookmarking ? 'Bookmarking...' : 'Library'}
               </span>
             </Button>
-            {/* @ts-ignore: variant is supported by ButtonProps */}
+
+            {/* Chapters Button */}
             <Button
               className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 bg-transparent border-white/20 py-4"
               onClick={() => router.push(`/novels/${params.id}/chapters`)}
