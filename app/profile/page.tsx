@@ -449,6 +449,17 @@ export default function ProfilePage() {
       hash: approveTxHash
     });
 
+  // Save spendLimit to DB after ERC-20 approve for Farcaster users
+  useEffect(() => {
+    if (hasFarcasterContext && isApproveTxSuccess && profile?.id) {
+      fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: profile.id, spendLimit })
+      });
+    }
+  }, [hasFarcasterContext, isApproveTxSuccess, profile?.id, spendLimit]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
