@@ -802,3 +802,45 @@ The reading progress tracking feature is now **production-ready** with:
 ### 🎯 **Next Steps**
 
 Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** or address any other requirements.
+
+### 🔧 **Profile Image Navigation & Farcaster Username Fixes - COMPLETED**
+
+**Issue 1**: Profile image wasn't clickable to navigate to profile page
+
+- **Solution**: Wrapped Farcaster user avatar in Link component with hover effects
+- **Files Modified**: `components/header-wallet.tsx`
+- **Changes Made**:
+  - Added `Link` wrapper around `UIAvatar` component
+  - Added `cursor-pointer hover:opacity-80 transition-opacity` classes
+  - Profile image now navigates to `/profile` when clicked
+- **Result**: ✅ Profile image now clickable and navigates to profile page
+
+**Issue 2**: App generating usernames instead of using actual Farcaster usernames
+
+- **Analysis**: API logic was correct - only generates usernames for wallet-only users
+- **Root Cause**: UserProvider username extraction wasn't prioritizing actual Farcaster username
+- **Solution**:
+  - Improved username extraction priority: `username` > `displayName` > `name`
+  - Added better debugging logs to track available properties in context
+  - Fixed TypeScript casting issues for OnchainKit type definitions
+- **Files Modified**: `providers/UserProvider.tsx`
+- **Changes Made**:
+  ```typescript
+  // Prioritize actual Farcaster username over display name
+  const username =
+    (userObj && (userObj as any).username) || // First try actual username
+    (clientObj && (clientObj as any).username) ||
+    (userObj && (userObj as any).displayName) || // Then display name
+    (clientObj && (clientObj as any).displayName) ||
+    (userObj && (userObj as any).name) || // Finally name
+    (clientObj && (clientObj as any).name);
+  ```
+- **Result**: ✅ Now properly uses actual Farcaster usernames when available
+
+**TypeScript Compilation Fixes**:
+
+- Fixed linter errors related to OnchainKit type definitions
+- Added proper type casting for Farcaster-specific properties
+- All TypeScript errors resolved
+
+**Status**: ✅ Both issues resolved. Profile navigation working and Farcaster usernames properly extracted.

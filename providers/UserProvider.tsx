@@ -104,15 +104,28 @@ export function UserProvider({ children }: UserProviderProps) {
     const fid =
       (userObj && (userObj as any).fid) ||
       (clientObj && ((clientObj as any).fid || (clientObj as any).clientFid));
+
+    // Prioritize actual Farcaster username over display name
     const username =
-      (userObj &&
-        ((userObj as any).username || (userObj as any).displayName || (userObj as any).name)) ||
-      (clientObj &&
-        ((clientObj as any).username || (clientObj as any).displayName || (clientObj as any).name));
+      (userObj && (userObj as any).username) || // First try actual username
+      (clientObj && (clientObj as any).username) ||
+      (userObj && (userObj as any).displayName) || // Then display name
+      (clientObj && (clientObj as any).displayName) ||
+      (userObj && (userObj as any).name) || // Finally name
+      (clientObj && (clientObj as any).name);
+
     const pfpUrl =
       (userObj && (userObj as any).pfpUrl) || (clientObj && (clientObj as any).pfpUrl) || '';
 
     console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
+    console.debug(
+      '[UserProvider] Available userObj properties:',
+      userObj ? Object.keys(userObj) : 'none'
+    );
+    console.debug(
+      '[UserProvider] Available clientObj properties:',
+      clientObj ? Object.keys(clientObj) : 'none'
+    );
 
     if (fid && username && !user && !userLoading) {
       // Farcaster user found - create/fetch (wallet address will be added later if needed)
