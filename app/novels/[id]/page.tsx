@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ChapterReader from '@/components/chapter-reader';
 // @ts-ignore
-import { DollarSign, BookOpen, ArrowLeft, Star, Library } from 'lucide-react';
+import { DollarSign, BookOpen, ArrowLeft, Star, Library, Eye, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/providers/UserProvider';
 
@@ -67,6 +67,7 @@ export default function NovelPage() {
   const [showChaptersList, setShowChaptersList] = useState(false);
 
   const randomReviews = useMemo(() => Math.floor(Math.random() * 991) + 10, []);
+  const stableRating = useMemo(() => (4.0 + Math.random() * 1.0).toFixed(1), []);
 
   useEffect(() => {
     const fetchNovel = async () => {
@@ -177,14 +178,14 @@ export default function NovelPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-md">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-700 rounded mb-4 w-1/3"></div>
-          <div className="aspect-[3/4] bg-gray-700 rounded-lg mb-6"></div>
+          <div className="h-8 bg-gray-700/50 rounded mb-4 w-1/3"></div>
+          <div className="aspect-[3/4] bg-gray-700/50 rounded-lg mb-6 w-full mx-auto"></div>
           <div className="space-y-4">
-            <div className="h-6 bg-gray-700 rounded"></div>
-            <div className="h-4 bg-gray-700 rounded w-2/3"></div>
-            <div className="h-20 bg-gray-700 rounded"></div>
+            <div className="h-6 bg-gray-700/50 rounded"></div>
+            <div className="h-4 bg-gray-700/50 rounded w-2/3 mx-auto"></div>
+            <div className="h-20 bg-gray-700/50 rounded"></div>
           </div>
         </div>
       </div>
@@ -196,7 +197,9 @@ export default function NovelPage() {
       <div className="container mx-auto px-4 py-8 text-center">
         <h1 className="text-2xl font-bold mb-4 text-white">Novel not found</h1>
         <Link href="/">
-          <Button className="bg-purple-600 hover:bg-purple-700">Back to Home</Button>
+          <Button className="bg-purple-600 hover:bg-purple-700 transition-colors">
+            Back to Home
+          </Button>
         </Link>
       </div>
     );
@@ -206,12 +209,11 @@ export default function NovelPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          {/* @ts-ignore: variant is supported by ButtonProps */}
           <Button
             onClick={() => setIsReading(false)}
-            className="flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10"
+            className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-105"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
             Back to Novel
           </Button>
         </div>
@@ -229,134 +231,153 @@ export default function NovelPage() {
     <div className="container mx-auto px-4 py-8 max-w-md">
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+        className="group inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-all duration-300 hover:scale-105"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back
+        <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+        <span className="font-medium">Back</span>
       </Link>
 
       <div className="space-y-6">
-        {/* Novel Cover and Basic Info */}
-        <div className="text-center space-y-4">
-          <div className="relative aspect-[3/4] w-48 mx-auto">
-            <Image
-              src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
-              alt={novel.title}
-              fill
-              className="object-cover rounded-lg"
-            />
-            <div className="absolute top-2 right-2">
-              <Badge className="bg-green-600 text-white border-0 text-xs">
+        {/* Novel Cover with Overlay Content - Seamless blend */}
+        <div className="relative aspect-[3/4] w-full overflow-hidden group -mx-4">
+          <Image
+            src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
+            alt={novel.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+
+          {/* Bottom overlay with enhanced gradient - seamless blend */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent px-8 py-6 transition-all duration-300 group-hover:from-black group-hover:via-black/80">
+            {/* Status and Rank badges */}
+            <div className="flex items-center gap-2 mb-3">
+              <Badge className="bg-red-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
+                RANK {novel.rank}
+              </Badge>
+              <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
                 {novel.status?.toUpperCase()}
               </Badge>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-white">{novel.title}</h1>
-            <p className="text-gray-400">Author: {novel.author}</p>
+            {/* Title and Author */}
+            <div className="mb-3">
+              <h1 className="font-bold text-2xl mb-1 text-white group-hover:text-purple-200 transition-colors duration-300">
+                {novel.title}
+              </h1>
+              <p className="text-sm text-gray-400 mb-2">by {novel.author}</p>
+            </div>
 
-            <div className="flex items-center justify-center gap-2">
-              <Badge className="bg-red-600 text-white border-0 text-xs">RANK {novel.rank}</Badge>
-              <div className="flex items-center gap-1">
+            {/* Rating */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center">
                 {[...Array(4)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <Star
+                    key={i}
+                    className="h-4 w-4 fill-yellow-400 text-yellow-400 transition-all duration-300 group-hover:fill-yellow-300 group-hover:text-yellow-300"
+                  />
                 ))}
-                <Star className="h-4 w-4 fill-yellow-400/50 text-yellow-400" />
+                <Star className="h-4 w-4 fill-yellow-400/50 text-yellow-400 transition-all duration-300 group-hover:fill-yellow-300/50 group-hover:text-yellow-300" />
               </div>
-              <span className="text-sm text-gray-400">({novel.rating.toFixed(1)})</span>
+              <span className="text-sm text-gray-300">({stableRating})</span>
+            </div>
+
+            {/* Summary */}
+            <p className="text-sm text-gray-300 line-clamp-3 mb-2 group-hover:text-gray-200 transition-colors duration-300">
+              {novel.description}
+            </p>
+
+            {/* Stats with better spacing - Same as Novel Card */}
+            <div className="flex flex-row gap-6 mt-2 pt-2 border-t border-white/10">
+              <div className="flex items-center gap-1">
+                <BookOpen className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
+                <span className="text-base font-medium text-white">
+                  {(() => {
+                    const chaptersNum = Number(novel.totalChapters);
+                    if (!isNaN(chaptersNum) && chaptersNum > 0) {
+                      return chaptersNum > 1000
+                        ? (chaptersNum / 1000).toFixed(1) + 'K'
+                        : chaptersNum;
+                    }
+                    const chaptersCount = Array.isArray(chapters) ? chapters.length : 0;
+                    if (chaptersCount > 0) {
+                      return chaptersCount > 1000
+                        ? (chaptersCount / 1000).toFixed(1) + 'K'
+                        : chaptersCount;
+                    }
+                    return '0';
+                  })()}
+                </span>
+                {/* <span className="text-xs text-gray-400">chapters</span> */}
+              </div>
+              <div className="flex items-center gap-1">
+                <Eye className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
+                <span className="text-base font-medium text-white">{novel.views || '0'}</span>
+                {/* <span className="text-xs text-gray-400">views</span> */}
+              </div>
+              <div className="flex items-center gap-1">
+                <Library className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
+                <span className="text-base font-medium text-white">{novel.bookmarks || '0'}</span>
+                {/* <span className="text-xs text-gray-400">in library</span> */}
+              </div>
+              <div className="flex items-center gap-1">
+                <MessageCircle className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
+                <span className="text-base font-medium text-white">{randomReviews}</span>
+                {/* <span className="text-xs text-gray-400">reviews</span> */}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="stats-card rounded-xl p-4">
-          <div className="grid grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-lg font-bold text-white">
-                {(() => {
-                  const chaptersNum = Number(novel.totalChapters);
-                  if (!isNaN(chaptersNum) && chaptersNum > 0) {
-                    return (chaptersNum / 1000).toFixed(2) + 'K';
-                  }
-                  // fallback to chapters array length if available
-                  const chaptersCount = Array.isArray(chapters) ? chapters.length : 0;
-                  if (chaptersCount > 0) {
-                    return (chaptersCount / 1000).toFixed(2) + 'K';
-                  }
-                  return '0K';
-                })()}
-              </div>
-              <div className="text-xs text-gray-400">CHAPTERS</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white">{novel.views}</div>
-              <div className="text-xs text-gray-400">VIEWS</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white">{novel.bookmarks}</div>
-              <div className="text-xs text-gray-400">IN LIBRARY</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white">{randomReviews}</div>
-              <div className="text-xs text-gray-400">REVIEWS</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Categories */}
+        {/* Enhanced Categories with Glass Morphism */}
         <div>
-          <h3 className="text-white font-semibold mb-3">Categories</h3>
+          <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
           <div className="flex flex-wrap gap-2">
             {(novel.genres || []).map((category: string) => (
-              <span
+              <Badge
                 key={category}
-                className="category-tag px-4 py-2 rounded-full text-sm text-gray-300"
+                className="bg-white/10 backdrop-blur-md text-white border-0 text-sm px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer"
               >
                 {category}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
 
-        {/* Synopsis */}
+        {/* Enhanced Synopsis with Glass Morphism */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-semibold">Synopsis</h3>
-            {/* @ts-ignore: variant and size are supported by ButtonProps */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-semibold text-lg">Synopsis</h3>
             <Button
-              className="bg-transparent text-gray-400 hover:text-white p-0"
+              className="bg-transparent text-gray-400 hover:text-white hover:bg-white/10 p-2 transition-all duration-200"
               onClick={() => setShowSummary((prev) => !prev)}
             >
               {showSummary ? 'LESS ↑' : 'MORE →'}
             </Button>
           </div>
-          <p className="text-gray-400 text-sm leading-relaxed">{novel.description}</p>
-          {novel.summary && (
-            <div
-              className="mt-2 bg-white/5 rounded text-gray-200 text-sm overflow-hidden transition-all duration-500"
-              style={{
-                maxHeight: showSummary
-                  ? summaryHeight
-                    ? summaryHeight + 32 // add padding
-                    : 500
-                  : 64,
-                padding: showSummary ? '12px' : '12px 12px 0 12px'
-              }}
-              ref={summaryRef}
-            >
-              {showSummary
-                ? novel.summary
-                : novel.summary.length > 200
-                ? novel.summary.slice(0, 200) + '...'
-                : novel.summary}
-            </div>
-          )}
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+            <p className="text-gray-300 text-base leading-relaxed">{novel.description}</p>
+            {novel.summary && (
+              <div
+                className="overflow-hidden transition-all duration-500 ease-in-out"
+                style={{
+                  maxHeight: showSummary ? (summaryHeight ? summaryHeight + 32 : 500) : 0,
+                  marginTop: showSummary ? '16px' : '0'
+                }}
+              >
+                <div
+                  ref={summaryRef}
+                  className="text-gray-200 text-base leading-relaxed pt-4 border-t border-white/10"
+                >
+                  {novel.summary}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Recent Tips Section - Prominent Feature */}
+        {/* Enhanced Top Supporters with Glass Morphism */}
         {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
-          <Card className="novel-card-dark border-purple-400/30">
+          <Card className="novel-card-dark border-purple-400/30 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-purple-400" />
@@ -365,64 +386,68 @@ export default function NovelPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {(Array.isArray(novel.supporters) ? novel.supporters : []).map(
-                  (supporter, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-                    >
-                      <span className="font-medium text-white">{supporter.username}</span>
-                      <div className="text-right">
-                        <div className="font-medium text-purple-400">
-                          ${supporter.totalTipped.toFixed(2)}
-                        </div>
+                {novel.supporters.map((supporter, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer"
+                  >
+                    <span className="font-medium text-white">{supporter.username}</span>
+                    <div className="text-right">
+                      <div className="font-medium text-purple-400">
+                        ${supporter.totalTipped.toFixed(2)}
                       </div>
                     </div>
-                  )
-                )}
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Action Buttons */}
-        <div className="space-y-3 pb-32">{/* Remove the READ NOW button from here */}</div>
+        {/* Spacer for sticky bar */}
+        <div className="pb-24"></div>
 
-        {/* Sticky Action Bar */}
-        <div className="sticky bottom-0 left-0 w-full z-20 backdrop-blur border-t border-white/10 shadow-2xl px-4 py-3 flex flex-col items-center">
-          <div className="grid grid-cols-3 gap-4 w-full max-w-md">
-            {/* READ NOW Button */}
-            <Button
-              className="flex flex-row items-center gap-1 text-white bg-purple-600 hover:bg-purple-700 border-purple-600 py-4"
-              onClick={handleReadNow}
-              disabled={chaptersLoading}
-            >
-              <BookOpen className="h-5 w-5 mr-1" />
-              <span className="text-xs">{chaptersLoading ? 'Loading...' : 'READ NOW'}</span>
-            </Button>
+        {/* Enhanced Sticky Action Bar with Glass Morphism */}
+        <div className="fixed bottom-0 left-0 w-full z-20 bg-black/90 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-4">
+          <div className="max-w-md mx-auto">
+            <div className="grid grid-cols-3 gap-3">
+              {/* READ NOW Button */}
+              <Button
+                className="flex items-center justify-center gap-2 text-white bg-purple-600 hover:bg-purple-700 border-purple-600 py-4 transition-all duration-200 hover:scale-105 shadow-lg"
+                onClick={handleReadNow}
+                disabled={chaptersLoading}
+              >
+                <BookOpen className="h-5 w-5" />
+                <span className="text-sm font-medium">
+                  {chaptersLoading ? 'Loading...' : 'READ NOW'}
+                </span>
+              </Button>
 
-            {/* Library Button */}
-            <Button
-              className={`flex flex-col items-center gap-1 py-4 bg-transparent border-white/20 ${
-                isBookmarked ? 'text-green-400' : 'text-gray-400 hover:text-white hover:bg-white/10'
-              }`}
-              onClick={handleBookmark}
-              disabled={isBookmarked || bookmarking}
-            >
-              <Library className="h-5 w-5" />
-              <span className="text-xs">
-                {isBookmarked ? 'Bookmarked' : bookmarking ? 'Bookmarking...' : 'Library'}
-              </span>
-            </Button>
+              {/* Library Button */}
+              <Button
+                className={`flex items-center justify-center gap-2 py-4 transition-all duration-200 hover:scale-105 shadow-lg ${
+                  isBookmarked
+                    ? 'bg-green-600/20 border-green-400 text-green-400'
+                    : 'bg-white/10 border-white/20 text-gray-400 hover:text-white hover:bg-white/20'
+                }`}
+                onClick={handleBookmark}
+                disabled={isBookmarked || bookmarking}
+              >
+                <Library className="h-5 w-5" />
+                <span className="text-sm font-medium">
+                  {isBookmarked ? 'Saved' : bookmarking ? 'Saving...' : 'Library'}
+                </span>
+              </Button>
 
-            {/* Chapters Button */}
-            <Button
-              className="flex flex-col items-center gap-1 text-gray-400 hover:text-white hover:bg-white/10 bg-transparent border-white/20 py-4"
-              onClick={() => router.push(`/novels/${params.id}/chapters`)}
-            >
-              <BookOpen className="h-5 w-5" />
-              <span className="text-xs">Chapters</span>
-            </Button>
+              {/* Chapters Button */}
+              <Button
+                className="flex items-center justify-center gap-2 text-gray-400 hover:text-white hover:bg-white/20 bg-white/10 border-white/20 py-4 transition-all duration-200 hover:scale-105 shadow-lg"
+                onClick={() => router.push(`/novels/${params.id}/chapters`)}
+              >
+                <BookOpen className="h-5 w-5" />
+                <span className="text-sm font-medium">Chapters</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
