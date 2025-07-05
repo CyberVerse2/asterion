@@ -30,6 +30,7 @@ import {
 } from '@/lib/abi/SpendPermissionManager';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useRouter } from 'next/navigation';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -156,8 +157,23 @@ const Info = (props: React.SVGProps<SVGSVGElement>) => (
     <line x1="12" y1="8" x2="12.01" y2="8" />
   </svg>
 );
+const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M19 12H5" />
+    <path d="M12 19l-7-7 7-7" />
+  </svg>
+);
 
 export default function ProfilePage() {
+  const router = useRouter();
   const {
     user: profile,
     userLoading: isLoading,
@@ -450,13 +466,37 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="max-w-2xl sm:max-w-4xl mx-auto space-y-4 sm:space-y-6">
+          {/* Enhanced Skeleton Loading */}
+          <div className="animate-pulse">
+            {/* Mobile header skeleton */}
+            <div className="flex items-center gap-3 mb-4 sm:hidden">
+              <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+              <div className="h-6 bg-gray-200 rounded w-20"></div>
+            </div>
+
+            {/* Profile header skeleton */}
+            <div className="flex items-center gap-3 sm:gap-6 mb-6">
+              <div className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 bg-gray-200 rounded-full flex-shrink-0"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-6 bg-gray-200 rounded w-32"></div>
+                <div className="h-4 bg-gray-200 rounded w-16"></div>
+              </div>
+            </div>
+
+            {/* Stats cards skeleton */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-6">
+              <div className="h-24 sm:h-32 bg-gray-200 rounded-lg"></div>
+              <div className="h-24 sm:h-32 bg-gray-200 rounded-lg"></div>
+              <div className="h-24 sm:h-32 bg-gray-200 rounded-lg col-span-2 sm:col-span-1"></div>
+            </div>
+
+            {/* Content skeleton */}
+            <div className="space-y-4">
+              <div className="h-48 bg-gray-200 rounded-lg"></div>
+              <div className="h-64 bg-gray-200 rounded-lg"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -464,285 +504,432 @@ export default function ProfilePage() {
   }
 
   if (userError) {
-    return <div className="container mx-auto px-4 py-8 text-red-500">Error: {userError}</div>;
+    return (
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="max-w-2xl sm:max-w-4xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="text-red-600 text-lg font-medium mb-2">Something went wrong</div>
+            <div className="text-red-500 text-sm mb-4">{userError}</div>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!profile) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8 profile-page">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Profile Header */}
-        <div className="flex items-center md:gap-6">
-          {isWalletOnly ? (
-            <>
-              <div className="h-16 w-16 md:h-20 md:w-20">
-                <Wallet>
-                  <Identity address={profile.walletAddress as ViemAddress}>
-                    <OnchainAvatar className="h-16 w-16 md:h-20 md:w-20" />
-                  </Identity>
-                </Wallet>
-              </div>
-              <div className="flex-col min-w-0">
-                <div className="text-xl font-bold">
-                  <Wallet>
-                    <Identity address={profile.walletAddress as ViemAddress}>
-                      <OnchainName />
-                    </Identity>
-                  </Wallet>
-                </div>
-                <div className="text-sm text-muted-foreground px-8 py-1 ">Asterion Reader</div>
-              </div>
-            </>
-          ) : (
-            <>
-              <Avatar className="h-16 w-16 md:h-20 md:w-20">
-                <AvatarImage
-                  src={
-                    typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
-                      ? profile.pfpUrl
-                      : '/placeholder.svg'
-                  }
-                />
-                <AvatarFallback className="text-xl md:text-2xl">
-                  {typeof profile?.username === 'string' && profile.username.length > 0
-                    ? profile.username.charAt(0).toUpperCase()
-                    : '?'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 md:hidden">
-                <div className="text-xl font-bold mb-1">
-                  @{typeof profile?.username === 'string' ? profile.username : 'unknown'}
-                </div>
-                <div className="text-sm text-muted-foreground pr-4">
-                  Asterion Reader & Supporter
-                </div>
-              </div>
-            </>
-          )}
-          <Button className="hidden md:flex items-center gap-2 bg-transparent">
-            <Settings className="h-4 w-4" />
-            Settings
-          </Button>
-        </div>
+    <div className="min-h-screen">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="max-w-2xl sm:max-w-4xl mx-auto space-y-4 sm:space-y-6">
+          {/* Mobile Back Button */}
+          <div className="flex items-center gap-3 sm:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="p-2 h-10 w-10 hover:bg-white/80 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-lg font-semibold">Profile</h1>
+          </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Tipped</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                $
-                {Array.isArray(profile?.tips)
-                  ? (profile.tips as TipWithNovel[])
-                      .reduce(
-                        (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
-                        0
-                      )
-                      .toFixed(2)
-                  : '0.00'}
-              </div>
-              <p className="text-xs text-muted-foreground">Supporting amazing authors</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Novels Bookmarked</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Stories you&apos;ve saved to your library
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Chapters Loved</CardTitle>
-              <Heart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]).length : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Double-clicked with love</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tipping History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Tipping History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]) : []).map(
-                (tip, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div>
-                      <div className="font-medium">
-                        {tip.novel?.title || `Novel ID: ${tip.novelId}`}
+          {/* Enhanced Profile Header with Background */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 rounded-2xl opacity-50"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-6 border border-white/10 shadow-sm">
+              <div className="flex items-center gap-3 sm:gap-6">
+                {isWalletOnly ? (
+                  <>
+                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.walletAddress}`}
+                        alt="Profile Avatar"
+                      />
+                      <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
+                        {typeof profile?.username === 'string' && profile.username.length > 0
+                          ? profile.username.charAt(0).toUpperCase()
+                          : '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-lg sm:text-xl font-bold truncate text-white">
+                        {typeof profile?.username === 'string' ? profile.username : 'unknown'}
                       </div>
-                      {tip.chapter ? (
-                        <div className="text-sm font-medium text-purple-400">
-                          {tip.chapter.title}
+                      <div className="text-sm text-gray-400">Reader</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
+                      <AvatarImage
+                        src={
+                          typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
+                            ? profile.pfpUrl
+                            : '/placeholder.svg'
+                        }
+                      />
+                      <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
+                        {typeof profile?.username === 'string' && profile.username.length > 0
+                          ? profile.username.charAt(0).toUpperCase()
+                          : '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-lg sm:text-xl font-bold mb-1 truncate text-white">
+                        {typeof profile?.username === 'string' ? profile.username : 'unknown'}
+                      </div>
+                      <div className="text-sm text-gray-400">Reader</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-6">
+            <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-green-400/30">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-green-400">
+                  Tipped
+                </CardTitle>
+                <div className="p-2 bg-green-500/20 rounded-full">
+                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg sm:text-2xl font-bold text-green-400">
+                  $
+                  {Array.isArray(profile?.tips)
+                    ? (profile.tips as TipWithNovel[])
+                        .reduce(
+                          (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
+                          0
+                        )
+                        .toFixed(2)
+                    : '0.00'}
+                </div>
+                <div className="text-xs text-green-300 mt-1">Supporting authors</div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-blue-400/30">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-blue-400">
+                  Saved
+                </CardTitle>
+                <div className="p-2 bg-blue-500/20 rounded-full">
+                  <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg sm:text-2xl font-bold text-blue-400">
+                  {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
+                </div>
+                <div className="text-xs text-blue-300 mt-1">Stories bookmarked</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Visual Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <div className="bg-black/40 backdrop-blur-sm px-4 text-sm text-gray-400">
+                Activity
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Tipping History */}
+          <Card className="novel-card-dark border-white/10">
+            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-white">
+                Recent Tips
+                <Badge
+                  variant="secondary"
+                  className="ml-auto bg-purple-500/20 text-purple-300 border-purple-400/30"
+                >
+                  {Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]).length : 0}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-white/10">
+                {(Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]) : []).map(
+                  (tip, index) => (
+                    <div
+                      key={index}
+                      className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0 mr-3">
+                          <div className="font-medium text-sm sm:text-base truncate text-white">
+                            {tip.novel?.title || `Novel ID: ${tip.novelId}`}
+                          </div>
+                          {tip.chapter && (
+                            <div className="text-xs sm:text-sm font-medium text-purple-400 truncate">
+                              {tip.chapter.title}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-400 mt-1">
+                            {tip.date ? new Date(tip.date).toLocaleDateString() : 'Unknown date'}
+                          </div>
                         </div>
-                      ) : (
-                        <div className="text-sm text-gray-500">
-                          Chapter information not available
-                        </div>
-                      )}
-                      <div className="text-sm text-muted-foreground">
-                        {tip.date ? new Date(tip.date).toLocaleDateString() : 'Unknown date'}
+                        <Badge className="flex items-center gap-1 flex-shrink-0 bg-green-500/20 text-green-300 border-green-400/30">
+                          <DollarSign className="h-3 w-3" />
+                          <span className="text-xs">
+                            {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
+                          </span>
+                        </Badge>
                       </div>
                     </div>
-                    <Badge className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
-                    </Badge>
+                  )
+                )}
+                {(!Array.isArray(profile?.tips) || profile.tips.length === 0) && (
+                  <div className="text-center text-gray-400 py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-white/5 rounded-full flex items-center justify-center">
+                      <Heart className="h-8 w-8 text-gray-500" />
+                    </div>
+                    <p className="text-sm sm:text-base font-medium">No tips yet</p>
+                    <p className="text-xs text-gray-500 mt-1">Start reading to support authors!</p>
                   </div>
-                )
-              )}
-              {(!Array.isArray(profile?.tips) || profile.tips.length === 0) && (
-                <div className="text-center text-muted-foreground py-8">
-                  No tips yet. Start reading and loving chapters to support authors!
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Spend Limits Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Spend Settings
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    These settings control how much USDC the app can spend on your behalf. You can
-                    adjust them anytime.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Overall Spend Limit */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Overall Spend Limit</div>
-                  <div className="text-sm text-muted-foreground">Maximum total USDC allowed</div>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground text-sm">$</span>
+          {/* Visual Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <div className="bg-black/40 backdrop-blur-sm px-4 text-sm text-gray-400">
+                Settings
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Spend Settings */}
+          <Card className="novel-card-dark border-white/10">
+            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-white">
+                Spend Settings
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-gray-400 cursor-pointer hover:text-blue-400 transition-colors" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Control how much USDC the app can spend on your behalf</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              {/* Spend Limit Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-white">Spend Limit</h3>
+                    <p className="text-xs text-gray-400">Maximum total USDC</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400">$</span>
                     <input
                       type="number"
+                      inputMode="decimal"
                       min={1}
                       max={100000}
                       value={spendLimit}
                       onChange={(e) => setSpendLimit(Number(e.target.value))}
-                      className="border rounded px-2 py-1 w-24 text-right text-black"
-                      aria-label="Spend Limit in USDC"
+                      className="border border-white/20 rounded-lg px-3 py-2 w-20 text-center text-white bg-black/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                       disabled={saving}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground">USDC</span>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {[10, 25, 50, 100].map((amount) => (
+                    <Button
+                      key={amount}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSpendLimit(amount)}
+                      className={`text-xs px-3 py-1 ${
+                        spendLimit === amount
+                          ? 'bg-purple-500/20 border-purple-400/50 text-purple-300'
+                          : 'bg-black/20 border-white/10 text-gray-300 hover:bg-purple-500/10'
+                      }`}
+                      disabled={saving}
+                    >
+                      ${amount}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
-              {/* Chapter Tip Amount */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Chapter Tip Amount</div>
-                  <div className="text-sm text-muted-foreground">USDC per chapter when loving</div>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground text-sm">$</span>
+              {/* Tip Amount Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-white">Tip Amount</h3>
+                    <p className="text-xs text-gray-400">Per chapter tip</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400">$</span>
                     <input
                       type="number"
+                      inputMode="decimal"
                       min={0.01}
                       max={10}
                       step={0.01}
                       value={chapterTipAmount}
                       onChange={(e) => setChapterTipAmount(Number(e.target.value))}
-                      className="border rounded px-2 py-1 w-24 text-right text-black"
-                      aria-label="Chapter Tip Amount in USDC"
+                      className="border border-white/20 rounded-lg px-3 py-2 w-20 text-center text-white bg-black/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                       disabled={saving}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground">USDC</span>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {[0.01, 0.05, 0.1, 0.25].map((amount) => (
+                    <Button
+                      key={amount}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setChapterTipAmount(amount)}
+                      className={`text-xs px-3 py-1 ${
+                        chapterTipAmount === amount
+                          ? 'bg-purple-500/20 border-purple-400/50 text-purple-300'
+                          : 'bg-black/20 border-white/10 text-gray-300 hover:bg-purple-500/10'
+                      }`}
+                      disabled={saving}
+                    >
+                      ${amount.toFixed(2)}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
+              {/* Status Messages */}
               {saving && (
-                <div className="text-xs text-blue-500 animate-pulse">Saving settings...</div>
+                <div className="flex items-center gap-3 text-sm text-blue-400 bg-blue-500/10 border border-blue-400/20 p-3 rounded-lg">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-400 border-t-transparent"></div>
+                  <span>Saving changes...</span>
+                </div>
               )}
+
               {!saving &&
                 (spendLimit !== profile?.spendLimit ||
                   chapterTipAmount !== profile?.chapterTipAmount) && (
-                  <div className="text-xs text-green-600">Settings updated!</div>
+                  <div className="flex items-center gap-3 text-sm text-green-400 bg-green-500/10 border border-green-400/20 p-3 rounded-lg">
+                    <div className="h-4 w-4 rounded-full bg-green-400 flex items-center justify-center">
+                      <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
+                        <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
+                      </svg>
+                    </div>
+                    <span>Settings updated successfully!</span>
+                  </div>
                 )}
-              {/* Spend Permission Button - conditional on user type */}
-              {hasFarcasterContext ? (
-                // Farcaster user: ERC-20 approve flow
-                <Button
-                  onClick={() =>
-                    writeContract &&
-                    writeContract({
-                      address: usdcAddress,
-                      abi: ERC20_ABI,
-                      functionName: 'approve',
-                      args: [spenderAddress, approveAmount]
-                    })
-                  }
-                  disabled={saving || isApprovePending || isApproveTxLoading || !writeContract}
-                >
-                  {isApprovePending || isApproveTxLoading
-                    ? 'Approving...'
-                    : isApproveTxSuccess
-                    ? 'Permission Granted'
-                    : 'Approve Spend'}
-                </Button>
-              ) : (
-                // Wallet-only user: EIP-712 signature flow (existing logic)
-                <Button onClick={handleApproveSpend} disabled={saving || approving}>
-                  {approving ? 'Approving...' : approved ? 'Permission Granted' : 'Approve Spend'}
-                </Button>
-              )}
-              {/* Show error for Farcaster approve */}
+
+              {/* Action Button */}
+              <div className="pt-4 border-t border-white/10">
+                {hasFarcasterContext ? (
+                  <Button
+                    onClick={() =>
+                      writeContract &&
+                      writeContract({
+                        address: usdcAddress,
+                        abi: ERC20_ABI,
+                        functionName: 'approve',
+                        args: [spenderAddress, approveAmount]
+                      })
+                    }
+                    disabled={saving || isApprovePending || isApproveTxLoading || !writeContract}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-200"
+                  >
+                    {isApprovePending || isApproveTxLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        <span>Approving...</span>
+                      </div>
+                    ) : isApproveTxSuccess ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
+                          <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                            <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
+                          </svg>
+                        </div>
+                        <span>Permission Granted</span>
+                      </div>
+                    ) : (
+                      'Approve Spend Permission'
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleApproveSpend}
+                    disabled={saving || approving}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-200"
+                  >
+                    {approving ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        <span>Approving...</span>
+                      </div>
+                    ) : approved ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
+                          <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                            <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
+                          </svg>
+                        </div>
+                        <span>Permission Granted</span>
+                      </div>
+                    ) : (
+                      'Approve Spend Permission'
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {/* Error Messages */}
               {hasFarcasterContext && isApproveError && (
-                <div className="text-red-600 dark:text-red-400 font-medium mt-2">
-                  {approveErrorObj?.message || 'ERC-20 approval failed'}
+                <div className="flex items-center gap-3 text-sm text-red-400 bg-red-500/10 border border-red-400/20 p-3 rounded-lg">
+                  <div className="h-4 w-4 rounded-full bg-red-400 flex items-center justify-center">
+                    <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
+                      <path d="M7.5 1L6.5 0 4 2.5 1.5 0 0.5 1 3 3.5 0.5 6 1.5 7 4 4.5 6.5 7 7.5 6 5 3.5z" />
+                    </svg>
+                  </div>
+                  <span>{approveErrorObj?.message || 'Approval failed'}</span>
                 </div>
               )}
-              {/* Show success for Farcaster approve */}
+
               {hasFarcasterContext && isApproveTxSuccess && (
-                <div className="text-green-600 dark:text-green-400 font-medium mt-2">
-                  Spend Permission Approved!
+                <div className="flex items-center gap-3 text-sm text-green-400 bg-green-500/10 border border-green-400/20 p-3 rounded-lg">
+                  <div className="h-4 w-4 rounded-full bg-green-400 flex items-center justify-center">
+                    <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
+                      <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
+                    </svg>
+                  </div>
+                  <span>Permission approved successfully!</span>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

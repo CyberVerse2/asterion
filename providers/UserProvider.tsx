@@ -90,8 +90,8 @@ export function UserProvider({ children }) {
 
     const fid = (userObj && userObj.fid) || (clientObj && (clientObj.fid || clientObj.clientFid));
     const username =
-      (userObj && (userObj.username || userObj.displayName || userObj.name)) ||
-      (clientObj && (clientObj.username || clientObj.displayName || clientObj.name));
+      (userObj && (userObj.displayName || userObj.name || userObj.username)) ||
+      (clientObj && (clientObj.displayName || clientObj.name || clientObj.username));
     const pfpUrl = (userObj && userObj.pfpUrl) || (clientObj && clientObj.pfpUrl) || '';
 
     console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
