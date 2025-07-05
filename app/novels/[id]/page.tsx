@@ -79,6 +79,8 @@ export default function NovelPage() {
     return false;
   });
   const [showChaptersList, setShowChaptersList] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const randomReviews = useMemo(() => Math.floor(Math.random() * 991) + 10, []);
   const stableRating = useMemo(() => (4.0 + Math.random() * 1.0).toFixed(1), []);
@@ -160,6 +162,36 @@ export default function NovelPage() {
   const handleChaptersNavigation = useCallback(() => {
     router.push(`/novels/${params.id}/chapters`);
   }, [router, params.id]);
+
+  // Toast notification handler
+  const showToastNotification = useCallback((message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  }, []);
+
+  // Enhanced share handler with toast feedback
+  const handleShare = useCallback(async () => {
+    if (!novel) return;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: novel.title,
+          text: `Check out "${novel.title}" by ${novel.author}`,
+          url: window.location.href
+        });
+        showToastNotification('Shared successfully!');
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        showToastNotification('Link copied to clipboard!');
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name !== 'AbortError') {
+        showToastNotification('Failed to share');
+      }
+    }
+  }, [novel, showToastNotification]);
 
   useEffect(() => {
     if (showSummary && summaryRef.current) {
@@ -307,7 +339,7 @@ export default function NovelPage() {
         </div>
 
         {/* Stats Section - Outside the image */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
           <div className="grid grid-cols-4 gap-4">
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
@@ -410,48 +442,107 @@ export default function NovelPage() {
         <div className="pb-24"></div>
 
         {/* Enhanced Sticky Action Bar with Glass Morphism */}
-        <div className="fixed bottom-0 left-0 w-full z-20 bg-black/90 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-4">
+        <div className="fixed bottom-0 left-0 w-full z-20 bg-black/95 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-3 sm:py-4">
           <div className="max-w-md mx-auto">
-            <div className="grid grid-cols-3 gap-3">
+            {/* Single Row Layout */}
+            <div className="grid grid-cols-4 gap-3">
               {/* READ NOW Button */}
               <Button
-                className="flex items-center justify-center gap-2 text-white bg-purple-600 hover:bg-purple-700 border-purple-600 py-4 transition-all duration-200 hover:scale-105 shadow-lg"
+                className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:via-purple-600 hover:to-indigo-700 text-white border-0 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-purple-500/25 group touch-manipulation"
                 onClick={handleReadNow}
                 disabled={chaptersLoading}
               >
-                <BookOpen className="h-5 w-5" />
-                <span className="text-sm font-medium">
-                  {chaptersLoading ? 'Loading...' : 'READ NOW'}
-                </span>
+                {/* Animated background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-transparent to-indigo-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Progress indicator background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-transparent w-0 group-hover:w-full transition-all duration-500" />
+
+                <div className="relative flex flex-col items-center justify-center gap-1">
+                  {/* <BookOpen className="h-8 w-8 sm:h-10 sm:w-10 transition-transform duration-300 group-hover:scale-110" /> */}
+                  <span className="text-xs sm:text-sm font-bold">
+                    {chaptersLoading ? 'Loading...' : 'READ NOW'}
+                  </span>
+                </div>
               </Button>
 
               {/* Library Button */}
               <Button
-                className={`flex items-center justify-center gap-2 py-4 transition-all duration-200 hover:scale-105 shadow-lg ${
+                className={`relative overflow-hidden py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation ${
                   isBookmarked
-                    ? 'bg-green-600/20 border-green-400 text-green-400'
-                    : 'bg-white/10 border-white/20 text-gray-400 hover:text-white hover:bg-white/20'
+                    ? 'bg-green-600/20 border-green-400/50 text-green-400 hover:bg-green-600/30'
+                    : 'bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30'
                 }`}
                 onClick={handleBookmark}
                 disabled={isBookmarked || bookmarking}
               >
-                <Library className="h-5 w-5" />
-                <span className="text-sm font-medium">
-                  {isBookmarked ? 'Saved' : bookmarking ? 'Saving...' : 'Library'}
-                </span>
+                <div className="flex flex-col items-center justify-center gap-1">
+                  <Library
+                    className={`h-8 w-8 sm:h-10 sm:w-10 transition-all duration-300 ${
+                      isBookmarked ? 'text-green-400' : 'group-hover:scale-110'
+                    }`}
+                  />
+                  <span className="text-xs sm:text-sm font-medium">
+                    {/* {isBookmarked ? 'In Library' : bookmarking ? 'Saving...' : 'Library'} */}
+                  </span>
+                </div>
               </Button>
 
               {/* Chapters Button */}
               <Button
-                className="flex items-center justify-center gap-2 text-gray-400 hover:text-white hover:bg-white/20 bg-white/10 border-white/20 py-4 transition-all duration-200 hover:scale-105 shadow-lg"
+                className="relative overflow-hidden bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation"
                 onClick={handleChaptersNavigation}
               >
-                <BookOpen className="h-5 w-5" />
-                <span className="text-sm font-medium">Chapters</span>
+                <div className="flex flex-col items-center justify-center gap-1">
+                  <BookOpen className="h-8 w-8 sm:h-10 sm:w-10 transition-transform duration-300 group-hover:scale-110" />
+                  {/* <span className="text-xs sm:text-sm font-medium">Chapters</span> */}
+                </div>
+              </Button>
+
+              {/* Share Button */}
+              <Button
+                className="relative overflow-hidden bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation"
+                onClick={handleShare}
+              >
+                <div className="flex flex-col items-center justify-center gap-1">
+                  <svg
+                    className="h-8 w-8 sm:h-10 sm:w-10 transition-transform duration-300 group-hover:scale-110"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                    />
+                  </svg>
+                  {/* <span className="text-xs sm:text-sm font-medium">Share</span> */}
+                </div>
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Toast Notification */}
+        {showToast && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
+            <div className="bg-green-600/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg border border-green-500/20">
+              <div className="flex items-center gap-2">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span className="text-sm font-medium">{toastMessage}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
