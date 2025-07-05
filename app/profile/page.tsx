@@ -530,12 +530,12 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="max-w-2xl sm:max-w-4xl mx-auto space-y-4 sm:space-y-6">
           {/* Mobile Back Button */}
-          <div className="flex items-center gap-3 sm:hidden">
+          <div className="flex items-center gap-2 sm:hidden">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.back()}
-              className="p-2 h-10 w-10 hover:bg-white/80 transition-colors"
+              className="p-0.5 h-6 w-6 hover:bg-white/80 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -543,55 +543,53 @@ export default function ProfilePage() {
           </div>
 
           {/* Enhanced Profile Header with Background */}
-          <div className="relative">
+          <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-3 border border-white/10 shadow-sm">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 rounded-2xl opacity-50"></div>
-            <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-6 border border-white/10 shadow-sm">
-              <div className="flex items-center gap-3 sm:gap-6">
-                {isWalletOnly ? (
-                  <>
-                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
-                      <AvatarImage
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.walletAddress}`}
-                        alt="Profile Avatar"
-                      />
-                      <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
-                        {typeof profile?.username === 'string' && profile.username.length > 0
-                          ? profile.username.charAt(0).toUpperCase()
-                          : '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-lg sm:text-xl font-bold truncate text-white">
-                        {typeof profile?.username === 'string' ? profile.username : 'unknown'}
-                      </div>
-                      <div className="text-sm text-gray-400">Reader</div>
+            <div className="relative flex items-center gap-2 sm:gap-4">
+              {isWalletOnly ? (
+                <>
+                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
+                    <AvatarImage
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.walletAddress}`}
+                      alt="Profile Avatar"
+                    />
+                    <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
+                      {typeof profile?.username === 'string' && profile.username.length > 0
+                        ? profile.username.charAt(0).toUpperCase()
+                        : '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-lg sm:text-xl font-bold truncate text-white">
+                      {typeof profile?.username === 'string' ? profile.username : 'unknown'}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
-                      <AvatarImage
-                        src={
-                          typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
-                            ? profile.pfpUrl
-                            : '/placeholder.svg'
-                        }
-                      />
-                      <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
-                        {typeof profile?.username === 'string' && profile.username.length > 0
-                          ? profile.username.charAt(0).toUpperCase()
-                          : '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-lg sm:text-xl font-bold mb-1 truncate text-white">
-                        {typeof profile?.username === 'string' ? profile.username : 'unknown'}
-                      </div>
-                      <div className="text-sm text-gray-400">Reader</div>
+                    <div className="text-sm text-gray-400">Reader</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
+                    <AvatarImage
+                      src={
+                        typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
+                          ? profile.pfpUrl
+                          : '/placeholder.svg'
+                      }
+                    />
+                    <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
+                      {typeof profile?.username === 'string' && profile.username.length > 0
+                        ? profile.username.charAt(0).toUpperCase()
+                        : '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-lg sm:text-xl font-bold mb-1 truncate text-white">
+                      {typeof profile?.username === 'string' ? profile.username : 'unknown'}
                     </div>
-                  </>
-                )}
-              </div>
+                    <div className="text-sm text-gray-400">Reader</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
