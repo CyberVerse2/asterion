@@ -239,16 +239,16 @@ export default function NovelPage() {
 
       <div className="space-y-6">
         {/* Novel Cover with Overlay Content - Seamless blend */}
-        <div className="relative aspect-[3/4] w-full overflow-hidden group -mx-4">
+        <div className="relative aspect-[4/3] w-full overflow-hidden group">
           <Image
             src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
             alt={novel.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
           />
 
           {/* Bottom overlay with enhanced gradient - seamless blend */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent px-8 py-6 transition-all duration-300 group-hover:from-black group-hover:via-black/80">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent px-4 py-1 transition-all duration-300 group-hover:from-black group-hover:via-black/80">
             {/* Status and Rank badges */}
             <div className="flex items-center gap-2 mb-3">
               <Badge className="bg-red-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
@@ -282,64 +282,102 @@ export default function NovelPage() {
             </div>
 
             {/* Summary */}
-            <p className="text-sm text-gray-300 line-clamp-3 mb-2 group-hover:text-gray-200 transition-colors duration-300">
+            <p
+              className="text-gray-300 text-base leading-relaxed"
+              style={
+                showSummary
+                  ? {}
+                  : {
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }
+              }
+            >
               {novel.description}
             </p>
+          </div>
+        </div>
 
-            {/* Stats with better spacing - Same as Novel Card */}
-            <div className="flex flex-row gap-6 mt-2 pt-2 border-t border-white/10">
-              <div className="flex items-center gap-1">
-                <BookOpen className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
+        {/* Stats Section - Outside the image */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+          <div className="grid grid-cols-4 gap-4">
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-purple-400" />
                 <span className="text-base font-medium text-white">
                   {(() => {
                     const chaptersNum = Number(novel.totalChapters);
                     if (!isNaN(chaptersNum) && chaptersNum > 0) {
                       return chaptersNum > 1000
                         ? (chaptersNum / 1000).toFixed(1) + 'K'
-                        : chaptersNum;
+                        : chaptersNum.toLocaleString();
                     }
                     const chaptersCount = Array.isArray(chapters) ? chapters.length : 0;
                     if (chaptersCount > 0) {
                       return chaptersCount > 1000
                         ? (chaptersCount / 1000).toFixed(1) + 'K'
-                        : chaptersCount;
+                        : chaptersCount.toLocaleString();
                     }
                     return '0';
                   })()}
                 </span>
-                {/* <span className="text-xs text-gray-400">chapters</span> */}
               </div>
-              <div className="flex items-center gap-1">
-                <Eye className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
-                <span className="text-base font-medium text-white">{novel.views || '0'}</span>
-                {/* <span className="text-xs text-gray-400">views</span> */}
-              </div>
-              <div className="flex items-center gap-1">
-                <Library className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
-                <span className="text-base font-medium text-white">{novel.bookmarks || '0'}</span>
-                {/* <span className="text-xs text-gray-400">in library</span> */}
-              </div>
-              <div className="flex items-center gap-1">
-                <MessageCircle className="h-5 w-5 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
-                <span className="text-base font-medium text-white">{randomReviews}</span>
-                {/* <span className="text-xs text-gray-400">reviews</span> */}
-              </div>
+              <span className="text-xs text-gray-400">Chapters</span>
             </div>
-          </div>
-        </div>
-
-        {/* Enhanced Categories with Glass Morphism */}
-        <div>
-          <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
-          <div className="flex flex-wrap gap-2">
-            {(novel.genres || []).map((category: string) => (
-              <Badge
-                key={category}
-                className="bg-white/10 backdrop-blur-md text-white border-0 text-sm px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer"
-              >
-                {category}
-              </Badge>
-            ))}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-blue-400" />
+                <span className="text-base font-medium text-white">
+                  {(() => {
+                    const views = novel.views || '0';
+                    const viewsNum = parseInt(views.replace(/[^0-9]/g, ''));
+                    if (viewsNum > 1000000) {
+                      return (viewsNum / 1000000).toFixed(1) + 'M';
+                    } else if (viewsNum > 1000) {
+                      return (viewsNum / 1000).toFixed(1) + 'K';
+                    }
+                    return viewsNum.toLocaleString();
+                  })()}
+                </span>
+              </div>
+              <span className="text-xs text-gray-400">Views</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <Library className="h-5 w-5 text-green-400" />
+                <span className="text-base font-medium text-white">
+                  {(() => {
+                    const bookmarks = novel.bookmarks || '0';
+                    const bookmarksNum = parseInt(bookmarks.replace(/[^0-9]/g, ''));
+                    if (bookmarksNum > 1000000) {
+                      return (bookmarksNum / 1000000).toFixed(1) + 'M';
+                    } else if (bookmarksNum > 1000) {
+                      return (bookmarksNum / 1000).toFixed(1) + 'K';
+                    }
+                    return bookmarksNum.toLocaleString();
+                  })()}
+                </span>
+              </div>
+              <span className="text-xs text-gray-400">Library</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-orange-400" />
+                <span className="text-base font-medium text-white">
+                  {(() => {
+                    if (randomReviews > 1000000) {
+                      return (randomReviews / 1000000).toFixed(1) + 'M';
+                    } else if (randomReviews > 1000) {
+                      return (randomReviews / 1000).toFixed(1) + 'K';
+                    }
+                    return randomReviews.toLocaleString();
+                  })()}
+                </span>
+              </div>
+              <span className="text-xs text-gray-400">Reviews</span>
+            </div>
           </div>
         </div>
 
@@ -354,24 +392,29 @@ export default function NovelPage() {
               {showSummary ? 'LESS ↑' : 'MORE →'}
             </Button>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-            <p className="text-gray-300 text-base leading-relaxed">{novel.description}</p>
-            {novel.summary && (
-              <div
-                className="overflow-hidden transition-all duration-500 ease-in-out"
-                style={{
-                  maxHeight: showSummary ? (summaryHeight ? summaryHeight + 32 : 500) : 0,
-                  marginTop: showSummary ? '16px' : '0'
-                }}
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+            <div
+              className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                showSummary ? 'max-h-[500px]' : 'max-h-[4.5rem]'
+              }`}
+            >
+              <p className="text-gray-300 text-sm leading-relaxed">{novel.summary}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Categories with Glass Morphism */}
+        <div>
+          <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
+          <div className="flex flex-wrap gap-2">
+            {(novel.genres || []).map((category: string) => (
+              <Badge
+                key={category}
+                className="bg-white/10 backdrop-blur-md text-white border-0 text-xs px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer"
               >
-                <div
-                  ref={summaryRef}
-                  className="text-gray-200 text-base leading-relaxed pt-4 border-t border-white/10"
-                >
-                  {novel.summary}
-                </div>
-              </div>
-            )}
+                {category}
+              </Badge>
+            ))}
           </div>
         </div>
 
