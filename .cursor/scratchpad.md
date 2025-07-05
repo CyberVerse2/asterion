@@ -743,6 +743,7 @@ The reading progress tracking feature is now **production-ready** with:
 ### 🎯 **Task 36 Accomplishments:**
 
 1. **✅ SpendPermissionRequired Modal Component** - `components/spend-permission-required.tsx`
+
    - Full-featured modal for permission requirements and status display
    - Dynamic status detection with appropriate messaging for each state
    - Visual status indicators with color-coded badges (Valid, Expired, Not Started, Required)
@@ -785,6 +786,7 @@ The reading progress tracking feature is now **production-ready** with:
 **Request:** Permission to proceed with Task 37 - implementing the permission guard hook that will manage state and orchestrate the UI components.
 
 **Implementation Plan for Task 37:**
+
 1. Create `useSpendPermissionGuard` hook for state management
 2. Implement permission checking logic with caching
 3. Add modal state management and user interaction handling

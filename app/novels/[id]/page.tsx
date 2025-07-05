@@ -12,6 +12,8 @@ import Link from 'next/link';
 import { useUser } from '@/providers/UserProvider';
 import { useNovel, useChapters } from '@/hooks/useNovels';
 import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
+import { useSpendPermissionGuard } from '@/hooks/use-spend-permission-guard';
+import SpendPermissionRequired from '@/components/spend-permission-required';
 
 interface Novel {
   id: string;
@@ -60,6 +62,7 @@ const formatNumber = (num: number | string): string => {
 export default function NovelPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useUser();
   const novelId = params.id as string;
 
   // Use SWR hooks for data fetching
@@ -67,12 +70,14 @@ export default function NovelPage() {
   const { chapters, isLoading: chaptersLoading, mutate: mutateChapters } = useChapters(novelId);
 
   // Fetch user's reading progress for this novel
-  const { user }: { user: any } = useUser();
   const {
     readingProgress,
     isLoading: progressLoading,
     mutate: mutateReadingProgress
   } = useNovelReadingProgress(user?.id || null, novelId);
+
+  // Spend permission guard hook
+  const { isModalOpen, checkPermissionAndProceed, closeModal } = useSpendPermissionGuard();
 
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -214,21 +219,27 @@ export default function NovelPage() {
   const handleReadNow = useCallback(() => {
     if (!novel) return;
 
-    // If user has reading progress, navigate to specific chapter
-    if (continueReadingInfo) {
-      router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}`);
-      return;
-    }
+    // Check spend permission before proceeding with reading
+    const proceedWithReading = () => {
+      // If user has reading progress, navigate to specific chapter
+      if (continueReadingInfo) {
+        router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}`);
+        return;
+      }
 
-    // If no reading progress, navigate to the first chapter
-    if (chapters && chapters.length > 0) {
-      const firstChapter = chapters[0];
-      router.push(`/novels/${novelId}/chapters/${firstChapter.id}`);
-      return;
-    }
+      // If no reading progress, navigate to the first chapter
+      if (chapters && chapters.length > 0) {
+        const firstChapter = chapters[0];
+        router.push(`/novels/${novelId}/chapters/${firstChapter.id}`);
+        return;
+      }
 
-    // Do nothing if no chapters available - button should be disabled
-  }, [novel, continueReadingInfo, router, novelId, chapters]);
+      // Do nothing if no chapters available - button should be disabled
+    };
+
+    // Use the permission guard to check and proceed
+    checkPermissionAndProceed(user, proceedWithReading);
+  }, [novel, continueReadingInfo, router, novelId, chapters, user, checkPermissionAndProceed]);
 
   const handleChapterTipped = useCallback(
     (chapterId: string, newTipCount: number) => {
@@ -635,6 +646,17 @@ export default function NovelPage() {
           </div>
         )}
       </div>
+
+      {/* Spend Permission Modal */}
+      <SpendPermissionRequired
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        user={user}
+        onApproveClick={() => {
+          closeModal();
+          router.push('/profile#spend-permission');
+        }}
+      />
     </div>
   );
 }
