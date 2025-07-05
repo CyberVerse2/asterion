@@ -32,6 +32,7 @@ interface Novel {
     content: string;
     order: number;
     loves: number;
+    chapterNumber: number;
   }>;
   supporters: Array<{
     username: string;
@@ -147,6 +148,7 @@ export default function NovelPage() {
         return {
           chapterId: nextChapter.id,
           chapterTitle: nextChapter.title,
+          chapterNumber: nextChapter.chapterNumber,
           chapterIndex: currentChapterIndex + 1,
           isNewChapter: true
         };
@@ -158,6 +160,7 @@ export default function NovelPage() {
     return {
       chapterId: lastReadChapter.id,
       chapterTitle: lastReadChapter.title,
+      chapterNumber: lastReadChapter.chapterNumber,
       chapterIndex: chapterIndex,
       isNewChapter: false,
       progress: lastReadProgress
@@ -296,14 +299,11 @@ export default function NovelPage() {
     }
 
     if (continueReadingInfo) {
-      const truncatedTitle =
-        continueReadingInfo.chapterTitle.length > 20
-          ? continueReadingInfo.chapterTitle.substring(0, 20) + '...'
-          : continueReadingInfo.chapterTitle;
+      const chapterLabel = `Chapter ${continueReadingInfo.chapterNumber}`;
 
       return continueReadingInfo.isNewChapter
-        ? `Next: ${truncatedTitle}`
-        : `Continue: ${truncatedTitle}`;
+        ? `Next: ${chapterLabel}`
+        : `Continue: ${chapterLabel}`;
     }
 
     return 'READ NOW';

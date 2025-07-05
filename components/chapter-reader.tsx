@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 // @ts-ignore
-import { Heart, ChevronLeft, ChevronRight, BookOpen, Clock } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight, BookOpen, Clock, List } from 'lucide-react';
 import LoveAnimation from './love-animation';
 import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
 import { useAccount, useWalletClient, usePublicClient, useConnect, useConnectors } from 'wagmi';
@@ -68,6 +68,9 @@ export default function ChapterReader({
   const [tradePending, setTradePending] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
   const [tradeSuccess, setTradeSuccess] = useState(false);
+
+  // Chapter list modal state
+  const [isChapterListOpen, setIsChapterListOpen] = useState(false);
 
   // Reading progress state
   const [currentLine, setCurrentLine] = useState(0);
@@ -339,15 +342,47 @@ export default function ChapterReader({
     setLoveAnimations((prev) => prev.filter((animation) => animation.id !== id));
   }, []);
 
-  const goToPrevious = () => {
+  const goToPrevious = async () => {
     if (currentChapterIndex > 0) {
+      // Save current reading progress before navigating
+      if (user?.id && currentChapter?.id && currentLine > 0 && totalLines > 0) {
+        console.log('📖 Saving progress before navigating to previous chapter');
+        try {
+          await saveProgress({
+            userId: user.id,
+            chapterId: currentChapter.id,
+            currentLine: currentLine,
+            totalLines: totalLines,
+            scrollPosition: window.scrollY
+          });
+          console.log('✅ Progress saved before navigation');
+        } catch (error) {
+          console.error('❌ Error saving progress before navigation:', error);
+        }
+      }
       onChapterChange(currentChapterIndex - 1);
       setHasLoved(false);
     }
   };
 
-  const goToNext = () => {
+  const goToNext = async () => {
     if (currentChapterIndex < chapters.length - 1) {
+      // Save current reading progress before navigating
+      if (user?.id && currentChapter?.id && currentLine > 0 && totalLines > 0) {
+        console.log('📖 Saving progress before navigating to next chapter');
+        try {
+          await saveProgress({
+            userId: user.id,
+            chapterId: currentChapter.id,
+            currentLine: currentLine,
+            totalLines: totalLines,
+            scrollPosition: window.scrollY
+          });
+          console.log('✅ Progress saved before navigation');
+        } catch (error) {
+          console.error('❌ Error saving progress before navigation:', error);
+        }
+      }
       onChapterChange(currentChapterIndex + 1);
       setHasLoved(false);
       // Scroll to top when going to next chapter
@@ -464,11 +499,14 @@ export default function ChapterReader({
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="text-sm text-gray-400 text-center max-w-xs">
-              <div className="love-hint">
-                Click the ❤️ to love this chapter & tip author ({tipAmountDisplay} USDC)
-              </div>
-            </div>
+            {/* Chapter List Button */}
+            <Button
+              onClick={() => setIsChapterListOpen(true)}
+              className="flex items-center gap-2 bg-purple-600/20 border-purple-500/30 text-purple-300 hover:text-white hover:bg-purple-600/30 transition-all duration-200"
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">Chapters</span>
+            </Button>
 
             {/* @ts-ignore: variant is supported by ButtonProps */}
             <Button

@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Clock, Heart } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Clock, Heart, List } from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import {
   useReadingProgress,
@@ -14,6 +14,7 @@ import {
   getLastReadTimestamp
 } from '@/hooks/useReadingProgress';
 import LoveAnimation from '@/components/love-animation';
+import ChapterListModal from '@/components/chapter-list-modal';
 
 interface Chapter {
   id: string;
@@ -54,6 +55,9 @@ export default function IndividualChapterPage() {
     null
   );
   const [nextChapter, setNextChapter] = useState<{ id: string; title: string } | null>(null);
+
+  // Chapter list modal state
+  const [isChapterListOpen, setIsChapterListOpen] = useState(false);
 
   // Reading progress state
   const [currentLine, setCurrentLine] = useState(0);
@@ -606,7 +610,7 @@ export default function IndividualChapterPage() {
   // Love/tip handler
   const handleLove = useCallback(
     async (event?: React.MouseEvent) => {
-      if (!chapter || !user) return;
+      if (!chapter || !user || hasLoved || tradePending) return;
 
       if (event) {
         event.preventDefault();
@@ -620,38 +624,45 @@ export default function IndividualChapterPage() {
         setLoveAnimations((prev) => [...prev, newAnimation]);
       }
 
-      if (!hasLoved) {
-        setHasLoved(true);
-        setTradePending(true);
-        setTradeError(null);
-        setTradeSuccess(false);
+      // Immediate visual feedback
+      setHasLoved(true);
+      setTipCount((prev) => prev + 1);
 
-        try {
-          if (!(user as any)?.id) throw new Error('User not logged in');
+      // Then execute backend logic
+      setTradePending(true);
+      setTradeError(null);
+      setTradeSuccess(false);
 
-          const response = await fetch('/api/tip-chapter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chapterId: chapter.id, userId: (user as any).id })
-          });
+      try {
+        if (!(user as any)?.id) throw new Error('User not logged in');
 
-          const data = await response.json();
-          if (response.ok && data.status === 'success') {
-            setTipCount(data.tipCount);
-            setTradeSuccess(true);
-          } else {
-            setHasLoved(false);
-            setTradeError(data.error || 'Auto-tip failed. Please try again.');
-          }
-        } catch (err: any) {
+        const response = await fetch('/api/tip-chapter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chapterId: chapter.id, userId: (user as any).id })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.status === 'success') {
+          // Update with actual count from server (in case of discrepancy)
+          setTipCount(data.tipCount);
+          setTradeSuccess(true);
+        } else {
+          // Revert on failure
           setHasLoved(false);
-          setTradeError(err.message || 'Auto-tip failed');
+          setTipCount((prev) => prev - 1);
+          setTradeError(data.error || 'Auto-tip failed. Please try again.');
         }
-
-        setTradePending(false);
+      } catch (err: any) {
+        // Revert on error
+        setHasLoved(false);
+        setTipCount((prev) => prev - 1);
+        setTradeError(err.message || 'Auto-tip failed');
       }
+
+      setTradePending(false);
     },
-    [chapter?.id, hasLoved, user]
+    [chapter?.id, hasLoved, tradePending, user]
   );
 
   const removeLoveAnimation = useCallback((id: number) => {
@@ -659,14 +670,24 @@ export default function IndividualChapterPage() {
   }, []);
 
   // Navigation handlers
-  const goToPrevious = () => {
+  const goToPrevious = async () => {
     if (previousChapter) {
+      // Save current reading progress before navigating
+      if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
+        console.log('📖 Saving progress before navigating to previous chapter');
+        await saveImmediately(currentLine, totalLines);
+      }
       router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
     }
   };
 
-  const goToNext = () => {
+  const goToNext = async () => {
     if (nextChapter) {
+      // Save current reading progress before navigating
+      if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
+        console.log('📖 Saving progress before navigating to next chapter');
+        await saveImmediately(currentLine, totalLines);
+      }
       router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
     }
   };
@@ -803,89 +824,85 @@ export default function IndividualChapterPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Back Button */}
-      <div className="mb-6">
-        <Button
-          onClick={goBackToNovel}
-          className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-          Back to Novel
-        </Button>
+    <div className="container mx-auto py-2 max-w-4xl">
+      {/* Pinned Progress Bar - Minimal and always visible */}
+      <div className="fixed top-16 left-0 right-0 z-[60] bg-black/60 backdrop-blur-sm">
+        <div className="h-1 bg-gray-800/50">
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-300 ease-out"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
       </div>
 
-      {/* Reading Progress Indicator */}
-      {readingProgress && (
-        <Card className="mb-6 bg-white/5 backdrop-blur-sm border-white/10">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-purple-400" />
-                <span className="text-sm text-gray-300">Reading Progress</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Clock className="h-3 w-3" />
-                <span>{getLastReadTimestamp(readingProgress)}</span>
+      {/* Add top padding to account for pinned bar */}
+      <div className="pt-2">
+        {/* Back Button */}
+        <div className="mb-3 px-2">
+          <Button
+            onClick={goBackToNovel}
+            className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+            Back to Novel
+          </Button>
+        </div>
+
+        {/* Chapter Content */}
+        <Card className="bg-white/5 backdrop-blur-sm border-white/10 mx-0.5">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl text-white mb-2">{chapter.title}</CardTitle>
+                {chapter.novelRel && (
+                  <p className="text-gray-400 text-sm">
+                    {chapter.novelRel.title} by {chapter.novelRel.author}
+                  </p>
+                )}
               </div>
             </div>
-            <Progress value={progressPercentage} className="mb-2" />
-            <div className="flex justify-between text-xs text-gray-400">
-              <span>{formatReadingProgress(readingProgress)}</span>
-              <span>
-                Line {currentLine + 1} of {totalLines}
-              </span>
+          </CardHeader>
+          <CardContent>
+            <div
+              ref={contentRef}
+              className="prose prose-lg max-w-none leading-relaxed text-gray-300"
+              style={{ lineHeight: '1.8' }}
+              dangerouslySetInnerHTML={{ __html: chapter.content }}
+            />
+            {tradeError && <div className="text-red-400 mt-4">{tradeError}</div>}
+
+            {/* Navigation */}
+            <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
+              <Button
+                onClick={goToPrevious}
+                disabled={!previousChapter}
+                className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {previousChapter ? 'Previous' : 'First Chapter'}
+              </Button>
+
+              {/* Chapter List Button */}
+              <Button
+                onClick={() => setIsChapterListOpen(true)}
+                className="flex items-center gap-2 bg-purple-600/20 border-purple-500/30 text-purple-300 hover:text-white hover:bg-purple-600/30 transition-all duration-200"
+              >
+                <List className="h-4 w-4" />
+                <span className="hidden sm:inline">Chapters</span>
+              </Button>
+
+              <Button
+                onClick={goToNext}
+                disabled={!nextChapter}
+                className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
+              >
+                {nextChapter ? 'Next' : 'Last Chapter'}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Chapter Content */}
-      <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl text-white mb-2">{chapter.title}</CardTitle>
-              {chapter.novelRel && (
-                <p className="text-gray-400 text-sm">
-                  {chapter.novelRel.title} by {chapter.novelRel.author}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="text-sm text-gray-400">Chapter {chapter.chapterNumber}</div>
-        </CardHeader>
-        <CardContent>
-          <div
-            ref={contentRef}
-            className="prose prose-lg max-w-none leading-relaxed text-gray-300"
-            style={{ lineHeight: '1.8' }}
-            dangerouslySetInnerHTML={{ __html: chapter.content }}
-          />
-          {tradeError && <div className="text-red-400 mt-4">{tradeError}</div>}
-
-          {/* Navigation */}
-          <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
-            <Button
-              onClick={goToPrevious}
-              disabled={!previousChapter}
-              className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              {previousChapter ? 'Previous' : 'First Chapter'}
-            </Button>
-
-            <Button
-              onClick={goToNext}
-              disabled={!nextChapter}
-              className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
-            >
-              {nextChapter ? 'Next' : 'Last Chapter'}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Love Animations */}
       {loveAnimations.map((animation) => (
@@ -925,26 +942,13 @@ export default function IndividualChapterPage() {
         </span>
       </div>
 
-      {/* TEST BUTTON FOR TIMEOUT DIAGNOSIS */}
-      <Button
-        onClick={() => {
-          if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-          }
-          saveTimeoutRef.current = setTimeout(() => {
-            console.log('🟢 [TEST BUTTON] Save timeout callback fired!');
-            saveTimeoutRef.current = null;
-          }, 2000);
-          console.log(
-            '⏳ [TEST BUTTON] Save timeout set for 2 seconds from now, ID:',
-            saveTimeoutRef.current
-          );
-        }}
-        className="mt-4 bg-yellow-600 hover:bg-yellow-700"
-      >
-        Test Save Timeout
-      </Button>
-      {/* END TEST BUTTON */}
+      {/* Chapter List Modal */}
+      <ChapterListModal
+        isOpen={isChapterListOpen}
+        onClose={() => setIsChapterListOpen(false)}
+        novelId={novelId}
+        currentChapterId={chapterId}
+      />
     </div>
   );
 }
