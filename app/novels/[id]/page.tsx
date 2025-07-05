@@ -262,18 +262,18 @@ export default function NovelPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-md">
-      <Link
-        href="/"
-        className="group inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-all duration-300 hover:scale-105"
-      >
-        <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-        <span className="font-medium">Back</span>
-      </Link>
-
+    <div className="container mx-auto max-w-md">
       <div className="space-y-6">
-        {/* Novel Cover with Overlay Content - Seamless blend */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden group">
+        {/* Novel Cover with Overlay Content - Full screen on mobile */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden group sm:mx-4 sm:mt-4 sm:rounded-lg">
+          {/* Back Button Overlay */}
+          <Link
+            href="/"
+            className="absolute top-4 left-4 z-10 group/back inline-flex items-center justify-center w-8 h-8 bg-black/50 backdrop-blur-sm rounded-full text-gray-300 hover:text-white hover:bg-black/70 transition-all duration-300 hover:scale-105"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover/back:-translate-x-0.5" />
+          </Link>
+
           <Image
             src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
             alt={novel.title}
@@ -318,125 +318,114 @@ export default function NovelPage() {
               </div>
               <span className="text-sm text-gray-300">({stableRating})</span>
             </div>
-
-            {/* Summary */}
-            <p
-              className="text-gray-300 text-base leading-relaxed"
-              style={
-                showSummary
-                  ? {}
-                  : {
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }
-              }
-            >
-              {novel.description}
-            </p>
           </div>
         </div>
 
-        {/* Stats Section - Outside the image */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
-          <div className="grid grid-cols-4 gap-4">
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-purple-400" />
-                <span className="text-base font-medium text-white">{formattedStats.chapters}</span>
-              </div>
-              <span className="text-xs text-gray-400">Chapters</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <Eye className="h-5 w-5 text-blue-400" />
-                <span className="text-base font-medium text-white">{formattedStats.views}</span>
-              </div>
-              <span className="text-xs text-gray-400">Views</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <Library className="h-5 w-5 text-green-400" />
-                <span className="text-base font-medium text-white">{formattedStats.bookmarks}</span>
-              </div>
-              <span className="text-xs text-gray-400">Library</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-orange-400" />
-                <span className="text-base font-medium text-white">{formattedStats.reviews}</span>
-              </div>
-              <span className="text-xs text-gray-400">Reviews</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Synopsis with Glass Morphism */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-semibold text-lg">Synopsis</h3>
-            <Button
-              className="bg-transparent text-gray-400 hover:text-white hover:bg-white/10 p-2 transition-all duration-200"
-              onClick={toggleSummary}
-            >
-              {showSummary ? 'LESS ↑' : 'MORE →'}
-            </Button>
-          </div>
+        <div className="px-4 space-y-6">
+          {/* Stats Section - Outside the image */}
           <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
-            <div
-              className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                showSummary ? 'max-h-[500px]' : 'max-h-[4.5rem]'
-              }`}
-            >
-              <p className="text-gray-300 text-sm leading-relaxed">{novel.summary}</p>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-purple-400" />
+                  <span className="text-base font-medium text-white">
+                    {formattedStats.chapters}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-400">Chapters</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-blue-400" />
+                  <span className="text-base font-medium text-white">{formattedStats.views}</span>
+                </div>
+                <span className="text-xs text-gray-400">Views</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <Library className="h-5 w-5 text-green-400" />
+                  <span className="text-base font-medium text-white">
+                    {formattedStats.bookmarks}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-400">Library</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-orange-400" />
+                  <span className="text-base font-medium text-white">{formattedStats.reviews}</span>
+                </div>
+                <span className="text-xs text-gray-400">Reviews</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Enhanced Categories with Glass Morphism */}
-        <div>
-          <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
-          <div className="flex flex-wrap gap-2">
-            {(novel.genres || []).map((category: string) => (
-              <Badge
-                key={category}
-                className="bg-white/10 backdrop-blur-md text-white border-0 text-xs px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer font-normal"
+          {/* Enhanced Synopsis with Glass Morphism */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-semibold text-lg">Synopsis</h3>
+              <Button
+                className="bg-transparent text-gray-400 hover:text-white hover:bg-white/10 p-2 transition-all duration-200"
+                onClick={toggleSummary}
               >
-                {category}
-              </Badge>
-            ))}
+                {showSummary ? 'LESS ↑' : 'MORE →'}
+              </Button>
+            </div>
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+              <div
+                className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                  showSummary ? 'max-h-[500px]' : 'max-h-[4.5rem]'
+                }`}
+              >
+                <p className="text-gray-300 text-sm leading-relaxed">{novel.summary}</p>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Enhanced Top Supporters with Glass Morphism */}
-        {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
-          <Card className="novel-card-dark border-purple-400/30 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-purple-400" />
-                Top Supporters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {novel.supporters.map((supporter: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer"
-                  >
-                    <span className="font-medium text-white">{supporter.username}</span>
-                    <div className="text-right">
-                      <div className="font-medium text-purple-400">
-                        ${supporter.totalTipped.toFixed(2)}
+          {/* Enhanced Categories with Glass Morphism */}
+          <div>
+            <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
+            <div className="flex flex-wrap gap-2">
+              {(novel.genres || []).map((category: string) => (
+                <Badge
+                  key={category}
+                  className="bg-white/10 backdrop-blur-md text-white border-0 text-xs px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer font-normal"
+                >
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Enhanced Top Supporters with Glass Morphism */}
+          {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
+            <Card className="novel-card-dark border-purple-400/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-purple-400" />
+                  Top Supporters
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {novel.supporters.map((supporter: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer"
+                    >
+                      <span className="font-medium text-white">{supporter.username}</span>
+                      <div className="text-right">
+                        <div className="font-medium text-purple-400">
+                          ${supporter.totalTipped.toFixed(2)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {/* Spacer for sticky bar */}
         <div className="pb-24"></div>
@@ -452,12 +441,6 @@ export default function NovelPage() {
                 onClick={handleReadNow}
                 disabled={chaptersLoading}
               >
-                {/* Animated background gradient */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-transparent to-indigo-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                {/* Progress indicator background */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-transparent w-0 group-hover:w-full transition-all duration-500" />
-
                 <div className="relative flex flex-col items-center justify-center gap-1">
                   {/* <BookOpen className="h-8 w-8 sm:h-10 sm:w-10 transition-transform duration-300 group-hover:scale-110" /> */}
                   <span className="text-xs sm:text-sm font-bold">
@@ -477,11 +460,28 @@ export default function NovelPage() {
                 disabled={isBookmarked || bookmarking}
               >
                 <div className="flex flex-col items-center justify-center gap-1">
-                  <Library
-                    className={`h-8 w-8 sm:h-10 sm:w-10 transition-all duration-300 ${
-                      isBookmarked ? 'text-green-400' : 'group-hover:scale-110'
-                    }`}
-                  />
+                  {isBookmarked ? (
+                    <svg
+                      className="h-10 w-10 sm:h-14 sm:w-14 transition-all duration-300 text-green-400 fill-current"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
+                      />
+                    </svg>
+                  )}
                   <span className="text-xs sm:text-sm font-medium">
                     {/* {isBookmarked ? 'In Library' : bookmarking ? 'Saving...' : 'Library'} */}
                   </span>
@@ -494,7 +494,7 @@ export default function NovelPage() {
                 onClick={handleChaptersNavigation}
               >
                 <div className="flex flex-col items-center justify-center gap-1">
-                  <BookOpen className="h-8 w-8 sm:h-10 sm:w-10 transition-transform duration-300 group-hover:scale-110" />
+                  <BookOpen className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110" />
                   {/* <span className="text-xs sm:text-sm font-medium">Chapters</span> */}
                 </div>
               </Button>
@@ -506,7 +506,7 @@ export default function NovelPage() {
               >
                 <div className="flex flex-col items-center justify-center gap-1">
                   <svg
-                    className="h-8 w-8 sm:h-10 sm:w-10 transition-transform duration-300 group-hover:scale-110"
+                    className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
