@@ -869,7 +869,7 @@ Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** o
    - **Farcaster Users**: Now reliably use `handleFarcasterApproval` (ERC20 approve)
    - **Wallet-Only Users**: Use `handleApproveSpend` (Coinbase spend permissions)
 
-3. **Added Debug Logging**: Comprehensive logging to track user type detection
+3. **Added Debug Logging**: Comprehensive logging to track user type determination
 
    ```typescript
    console.log('[Profile] Final user type determination:', {
@@ -901,3 +901,63 @@ Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** o
 4. Click button and verify it calls ERC20 approve, not Coinbase spend permissions
 
 **Status**: ✅ **CRITICAL ISSUE RESOLVED** - Farcaster users now correctly use ERC20 approve
+
+### 🔧 **Multiple User Creation in Wallet Context Fix - COMPLETED**
+
+**Issue**: The app was generating multiple users when in wallet context, causing duplicate user records
+
+**Root Cause Analysis**:
+
+- The wallet-only user effect had a race condition between Farcaster context loading and wallet connection
+- The effect was running multiple times as the context changed, causing duplicate user creation attempts
+- The `context` was in the dependency array, causing the effect to re-run whenever context updated
+
+**Solution Implemented**:
+
+1. **Added Farcaster Context Check State**: Added `farcasterContextChecked` state to track when context has been fully evaluated
+
+   ```typescript
+   const [farcasterContextChecked, setFarcasterContextChecked] = useState(false);
+   ```
+
+2. **Updated Farcaster Effect**: Modified the Farcaster context effect to mark when context has been checked
+
+   ```typescript
+   // Always mark that we've checked Farcaster context (even if null)
+   if (!farcasterContextChecked) {
+     setFarcasterContextChecked(true);
+   }
+   ```
+
+3. **Fixed Wallet-Only Effect**: Updated the wallet-only user effect to only run after Farcaster context has been checked
+
+   ```typescript
+   // Only proceed if Farcaster context has been checked (to avoid race conditions)
+   if (!isConnected || !walletAddress || user || userLoading || !farcasterContextChecked) {
+     return;
+   }
+   ```
+
+4. **Proper Dependency Management**: Added `farcasterContextChecked` and `context` to the wallet-only effect dependencies
+
+**Files Modified**:
+
+- `providers/UserProvider.tsx` - Fixed race condition and multiple user creation
+
+**Expected Behavior**:
+
+- ✅ Wallet-only users will only be created once per session
+- ✅ No more duplicate user records in wallet context
+- ✅ Proper separation between Farcaster and wallet-only user flows
+- ✅ Race condition between context loading and wallet connection resolved
+
+**Debug Output to Expect**:
+
+```
+[UserProvider] Farcaster context: null
+[UserProvider] context is null or undefined. Skipping Farcaster user extraction.
+[UserProvider] No Farcaster context, creating wallet-only user for address: 0x...
+[UserProvider] Creating/fetching user with payload: {walletAddress: "0x..."}
+```
+
+**Status**: ✅ **CRITICAL ISSUE RESOLVED** - Multiple user creation in wallet context fixed

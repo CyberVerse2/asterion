@@ -28,6 +28,7 @@ export function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
+  const [farcasterContextChecked, setFarcasterContextChecked] = useState(false);
 
   // Function to refresh user data (fetch fresh data from API)
   const refreshUser = async () => {
@@ -88,6 +89,12 @@ export function UserProvider({ children }: UserProviderProps) {
   // Effect for Farcaster context (priority)
   useEffect(() => {
     console.debug('[UserProvider] Farcaster context:', context);
+
+    // Always mark that we've checked Farcaster context (even if null)
+    if (!farcasterContextChecked) {
+      setFarcasterContextChecked(true);
+    }
+
     if (!context) {
       console.warn(
         '[UserProvider] context is null or undefined. Skipping Farcaster user extraction.'
@@ -133,7 +140,7 @@ export function UserProvider({ children }: UserProviderProps) {
       console.log('[UserProvider] Creating/fetching Farcaster user:', payload);
       createOrFetchUser(payload);
     }
-  }, [context, user, userLoading]);
+  }, [context, user, userLoading, farcasterContextChecked]);
 
   // Separate effect to update existing Farcaster user with wallet address when it becomes available
   useEffect(() => {
@@ -167,8 +174,9 @@ export function UserProvider({ children }: UserProviderProps) {
     // Only proceed if:
     // 1. Wallet is connected
     // 2. No user is currently loaded/loading
-    // 3. No Farcaster context available (so this is a wallet-only user)
-    if (!isConnected || !walletAddress || user || userLoading) {
+    // 3. Farcaster context has been checked (to avoid race conditions)
+    // 4. No Farcaster context available (so this is a wallet-only user)
+    if (!isConnected || !walletAddress || user || userLoading || !farcasterContextChecked) {
       return;
     }
 
@@ -188,7 +196,7 @@ export function UserProvider({ children }: UserProviderProps) {
       walletAddress
     );
     createOrFetchUser({ walletAddress });
-  }, [isConnected, walletAddress, user, userLoading, context]);
+  }, [isConnected, walletAddress, user, userLoading, farcasterContextChecked, context]);
 
   return (
     <UserContext.Provider value={{ user, userLoading, userError, refreshUser }}>
