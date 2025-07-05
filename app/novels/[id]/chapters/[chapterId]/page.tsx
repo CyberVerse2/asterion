@@ -368,11 +368,11 @@ export default function IndividualChapterPage() {
       observerRef.current.disconnect();
     }
 
-    // Test observer configuration
+    // Test observer configuration - Updated for better intersection detection
     const observerConfig = {
       root: null, // Use viewport as root
-      rootMargin: '-10% 0px -10% 0px', // Only count elements that are well within viewport
-      threshold: [0, 0.1, 0.5, 1.0] // Reduced thresholds for better performance
+      rootMargin: '0px 0px 0px 0px', // Remove restrictive margins to catch more intersections
+      threshold: [0, 0.25, 0.5, 0.75, 1.0] // More granular thresholds for better detection
     };
     console.log('🎛️ Observer configuration:', observerConfig);
 
@@ -448,7 +448,7 @@ export default function IndividualChapterPage() {
         if (isTrackingRef.current) {
           const progressDelta = Math.abs(currentReadingLine - lastSavedLineRef.current);
           const visibleAreaSize = bottomMostVisible - topMostVisible + 1;
-          const saveThreshold = Math.max(5, Math.floor(visibleAreaSize / 2)); // At least 5 lines or half the visible area
+          const saveThreshold = Math.max(2, Math.floor(visibleAreaSize / 3)); // Reduced threshold: at least 2 lines or 1/3 of visible area
 
           console.log('📊 Progress check:', {
             currentReadingLine,

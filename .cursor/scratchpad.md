@@ -407,8 +407,10 @@ Users report that after reading progress is saved, the page sometimes jumps up o
   - ✅ Improved user data validation before tracking starts
   - ✅ Fixed tracking state initialization timing
   - ✅ Enhanced ref management for consistent state
+  - ✅ Fixed IntersectionObserver configuration for better detection
   - **Success Criteria:** Reading progress saves consistently and reliably ✅
   - **Test Results:** Logs show successful initialization, user data loading, and tracking activation
+  - **Final Fix:** Updated IntersectionObserver rootMargin from restrictive `-10% 0px -10% 0px` to `0px 0px 0px 0px` and added more granular thresholds for better intersection detection
 
 - [ ] **Add Reading Progress Indicators to Novel/Chapter Lists**
 
