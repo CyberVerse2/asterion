@@ -191,7 +191,7 @@ export default function ProfilePage() {
   });
 
   // Alternative detection: if user has fid in profile, they're a Farcaster user
-  const isFarcasterUser = hasFarcasterContext || (profile && profile.fid);
+  const isFarcasterUser = Boolean(hasFarcasterContext || (profile && profile.fid));
 
   console.log('[Profile] Final user type determination:', {
     hasFarcasterContext,
