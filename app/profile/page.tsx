@@ -254,6 +254,34 @@ export default function ProfilePage() {
     }
   }
 
+  // Optimized back navigation with fallback logic
+  const handleBackNavigation = () => {
+    // Check if there's browser history to go back to
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      // Fallback to home page if no history (direct URL access)
+      router.push('/');
+    }
+  };
+
+  // Add keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Handle Escape key to go back (common UX pattern)
+      if (event.key === 'Escape') {
+        handleBackNavigation();
+      }
+    };
+
+    // Only add listener on mobile devices where back button is visible
+    const isMobile = window.innerWidth < 640; // sm breakpoint
+    if (isMobile) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, []);
+
   // Move handleApproveSpend inside the component
   async function handleApproveSpend() {
     setApproving(true);
@@ -534,8 +562,9 @@ export default function ProfilePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.back()}
-              className="p-0.5 h-6 w-6 hover:bg-white/80 transition-colors"
+              onClick={handleBackNavigation}
+              className="p-0.5 h-6 w-6 hover:bg-white/80 transition-colors focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
+              aria-label="Go back to previous page"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -895,7 +924,7 @@ export default function ProfilePage() {
                         <span>Permission Granted</span>
                       </div>
                     ) : (
-                      'Approve Spend Permission'
+                      'Approve Spend'
                     )}
                   </Button>
                 )}
