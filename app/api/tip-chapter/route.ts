@@ -6,6 +6,22 @@ import {
   USDC_ADDRESS
 } from '@/lib/abi/SpendPermissionManager';
 import { prisma } from '@/lib/prisma';
+import { validateSpendPermission } from '@/lib/utils/spend-permission';
+
+// ERC20 ABI for transfer function
+const erc20Abi = [
+  {
+    type: 'function',
+    name: 'transferFrom',
+    inputs: [
+      { name: 'from', type: 'address', internalType: 'address' },
+      { name: 'to', type: 'address', internalType: 'address' },
+      { name: 'value', type: 'uint256', internalType: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'nonpayable'
+  }
+] as const;
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,11 +34,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Look up user in DB (assume spendPermission and signature are stored on user)
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { tips: true }
+    });
     console.log('[tip-chapter] User lookup result:', user);
     if (!user || !user.spendPermission || !user.spendPermissionSignature) {
       console.error('[tip-chapter] User has not granted spend permission', { user });
       return NextResponse.json({ error: 'User has not granted spend permission' }, { status: 400 });
+    }
+
+    // Validate spend permission using the utility function
+    const permissionStatus = validateSpendPermission(user as any);
+    console.log('[tip-chapter] Permission validation result:', permissionStatus);
+
+    if (!permissionStatus.isValid) {
+      console.error('[tip-chapter] Invalid spend permission:', permissionStatus.errorMessage);
+      return NextResponse.json(
+        {
+          error: 'Invalid spend permission',
+          details: permissionStatus.errorMessage
+        },
+        { status: 400 }
+      );
     }
 
     // Get the chapter to find the novel
@@ -49,11 +83,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You have already tipped this chapter' }, { status: 400 });
     }
 
-    const spendPermission = user.spendPermission;
-    const signature = user.spendPermissionSignature;
-    console.log('[tip-chapter] SpendPermission:', spendPermission);
-    console.log('[tip-chapter] Signature:', signature);
-
     // Use user's custom chapter tip amount, fallback to 0.01 USDC
     const tipAmountUSD = user.chapterTipAmount || 0.01;
     const amount = BigInt(Math.round(tipAmountUSD * 10 ** 6)); // Convert to USDC wei (6 decimals)
@@ -69,13 +98,38 @@ export async function POST(request: NextRequest) {
     const publicClient = await getPublicClient();
     console.log('[tip-chapter] Got spenderBundlerClient and publicClient');
 
-    const spendTxnHash = await spenderBundlerClient.writeContract({
-      address: spendPermissionManagerAddress,
-      abi: spendPermissionManagerAbi,
-      functionName: 'spend',
-      args: [spendPermission, amount]
-    });
-    console.log('[tip-chapter] spendTxnHash:', spendTxnHash);
+    let spendTxnHash: string;
+
+    // Handle different permission types
+    if (permissionStatus.permissionType === 'erc20') {
+      // For ERC20 approval users (Farcaster users), use transferFrom
+      console.log('[tip-chapter] Using ERC20 transferFrom for Farcaster user');
+
+      if (!user.walletAddress) {
+        console.error('[tip-chapter] ERC20 user missing wallet address');
+        return NextResponse.json({ error: 'Wallet address not found' }, { status: 400 });
+      }
+
+      spendTxnHash = await spenderBundlerClient.writeContract({
+        address: USDC_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'transferFrom',
+        args: [user.walletAddress as `0x${string}`, spenderBundlerClient.account.address, amount]
+      });
+      console.log('[tip-chapter] ERC20 transferFrom txnHash:', spendTxnHash);
+    } else {
+      // For Coinbase spend permission users, use the SpendPermissionManager
+      console.log('[tip-chapter] Using SpendPermissionManager for wallet-only user');
+
+      const spendPermission = user.spendPermission;
+      spendTxnHash = (await spenderBundlerClient.writeContract({
+        address: spendPermissionManagerAddress,
+        abi: spendPermissionManagerAbi,
+        functionName: 'spend',
+        args: [spendPermission, amount]
+      })) as `0x${string}`;
+      console.log('[tip-chapter] SpendPermissionManager spend txnHash:', spendTxnHash);
+    }
 
     const spendReceipt = await publicClient.waitForTransactionReceipt({ hash: spendTxnHash });
     console.log('[tip-chapter] spendReceipt:', spendReceipt);
