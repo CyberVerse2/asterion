@@ -519,14 +519,14 @@ export default function ProfilePage() {
 
   // Save spendLimit to DB after ERC-20 approve for Farcaster users
   useEffect(() => {
-    if (hasFarcasterContext && isApproveTxSuccess && profile?.id) {
+    if (isFarcasterUser && isApproveTxSuccess && profile?.id) {
       fetch('/api/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: profile.id, spendLimit })
       });
     }
-  }, [hasFarcasterContext, isApproveTxSuccess, profile?.id, spendLimit]);
+  }, [isFarcasterUser, isApproveTxSuccess, profile?.id, spendLimit]);
 
   if (isLoading) {
     return (
@@ -894,7 +894,7 @@ export default function ProfilePage() {
 
               {/* Action Button */}
               <div className="pt-4 border-t border-white/10">
-                {hasFarcasterContext ? (
+                {isFarcasterUser ? (
                   <Button
                     onClick={handleFarcasterApproval}
                     disabled={saving || isApprovePending || isApproveTxLoading || !writeContract}
@@ -946,7 +946,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Error Messages */}
-              {hasFarcasterContext && isApproveError && (
+              {isFarcasterUser && isApproveError && (
                 <div className="flex items-center gap-3 text-sm text-red-400 bg-red-500/10 border border-red-400/20 p-3 rounded-lg">
                   <div className="h-4 w-4 rounded-full bg-red-400 flex items-center justify-center">
                     <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
@@ -957,7 +957,7 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {hasFarcasterContext && isApproveTxSuccess && (
+              {isFarcasterUser && isApproveTxSuccess && (
                 <div className="flex items-center gap-3 text-sm text-green-400 bg-green-500/10 border border-green-400/20 p-3 rounded-lg">
                   <div className="h-4 w-4 rounded-full bg-green-400 flex items-center justify-center">
                     <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
