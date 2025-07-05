@@ -55,7 +55,6 @@ export default function IndividualChapterPage() {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [permissionChecked, setPermissionChecked] = useState(false);
 
   // Navigation state
   const [previousChapter, setPreviousChapter] = useState<{ id: string; title: string } | null>(
@@ -108,7 +107,6 @@ export default function IndividualChapterPage() {
   const chapterTipAmount = (user as any)?.chapterTipAmount || 0.01;
   const tipAmountDisplay = chapterTipAmount.toFixed(2);
 
-
   // Fetch chapter data
   const fetchChapter = useCallback(
     async (retryCount = 0) => {
@@ -142,15 +140,16 @@ export default function IndividualChapterPage() {
 
         // Check if user has already tipped this chapter
         // But don't override hasLoved if we recently completed a successful tip
-        if ((user as any)?.tips && timeSinceLastTip > 5000) {
-          const hasAlreadyTipped = (user as any).tips.some(
+        const currentUser = userRef.current; // Use ref instead of dependency
+        if ((currentUser as any)?.tips && timeSinceLastTip > 5000) {
+          const hasAlreadyTipped = (currentUser as any).tips.some(
             (tip: any) => tip.chapterId === chapterId
           );
           setHasLoved(hasAlreadyTipped);
-        } else if ((user as any)?.tips && timeSinceLastTip <= 5000) {
+        } else if ((currentUser as any)?.tips && timeSinceLastTip <= 5000) {
           // If we recently tipped, only update hasLoved if the user actually has a tip
           // This ensures the visual state matches the database state
-          const hasAlreadyTipped = (user as any).tips.some(
+          const hasAlreadyTipped = (currentUser as any).tips.some(
             (tip: any) => tip.chapterId === chapterId
           );
           // Only update if the database confirms the tip exists
@@ -171,7 +170,7 @@ export default function IndividualChapterPage() {
         setLoading(false);
       }
     },
-    [chapterId, user]
+    [chapterId, hasLoved] // Removed user dependency, added hasLoved since it's used in the logic
   );
 
   // Fetch navigation data
@@ -355,8 +354,8 @@ export default function IndividualChapterPage() {
     // Test observer configuration - Updated for better intersection detection
     const observerConfig = {
       root: null, // Use viewport as root
-      rootMargin: '0px 0px 0px 0px', // Remove restrictive margins to catch more intersections
-      threshold: [0, 0.25, 0.5, 0.75, 1.0] // More granular thresholds for better detection
+      rootMargin: '50px 0px 50px 0px', // Add some margin to catch elements near viewport edges
+      threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0] // More granular thresholds for better detection
     };
     console.log('🎛️ Observer configuration:', observerConfig);
 
@@ -372,19 +371,30 @@ export default function IndividualChapterPage() {
 
       // Debug: Log all entries regardless of intersection status
       entries.forEach((entry, index) => {
-        console.log(`📋 Entry ${index} [${entry.target.tagName}]:`, {
-          isIntersecting: entry.isIntersecting,
-          intersectionRatio: entry.intersectionRatio,
-          target: entry.target.tagName,
-          text: entry.target.textContent?.substring(0, 30),
-          boundingRect: {
-            top: entry.boundingClientRect.top,
-            bottom: entry.boundingClientRect.bottom,
-            height: entry.boundingClientRect.height
-          },
-          rootBounds: entry.rootBounds,
-          intersectionRect: entry.intersectionRect
-        });
+        if (index < 5) {
+          // Only log first 5 to avoid spam
+          console.log(`📋 Entry ${index} [${entry.target.tagName}]:`, {
+            isIntersecting: entry.isIntersecting,
+            intersectionRatio: entry.intersectionRatio,
+            target: entry.target.tagName,
+            text: entry.target.textContent?.substring(0, 30),
+            boundingRect: {
+              top: entry.boundingClientRect.top,
+              bottom: entry.boundingClientRect.bottom,
+              height: entry.boundingClientRect.height,
+              left: entry.boundingClientRect.left,
+              right: entry.boundingClientRect.right,
+              width: entry.boundingClientRect.width
+            },
+            rootBounds: entry.rootBounds,
+            intersectionRect: entry.intersectionRect,
+            viewportHeight: window.innerHeight,
+            viewportWidth: window.innerWidth,
+            isInViewport:
+              entry.boundingClientRect.top >= 0 &&
+              entry.boundingClientRect.bottom <= window.innerHeight
+          });
+        }
       });
 
       let visibleElements = [];
@@ -482,36 +492,64 @@ export default function IndividualChapterPage() {
 
     console.log('🎯 Setting up observer for', lines.length, 'elements');
 
-    // Test first few elements to see their initial positions
-    lines.forEach((line, index) => {
-      if (index < 5) {
-        const rect = line.getBoundingClientRect();
-        console.log(`📍 Element ${index} initial position:`, {
-          tagName: line.tagName,
-          text: line.textContent?.substring(0, 30),
-          top: rect.top,
-          bottom: rect.bottom,
-          height: rect.height,
-          inViewport: rect.top >= 0 && rect.bottom <= window.innerHeight
-        });
-      }
-      observerRef.current?.observe(line);
-    });
-
-    // Force initial callback by manually triggering intersection check
-    // This ensures the observer fires even for elements already in viewport
+    // Wait a bit longer for elements to be fully positioned before observing
     setTimeout(() => {
-      console.log('🔄 Forcing initial intersection check...');
-      if (observerRef.current) {
-        // Temporarily disconnect and reconnect to force initial callbacks
-        const currentObserver = observerRef.current;
-        lines.forEach((line) => {
-          currentObserver.unobserve(line);
-          currentObserver.observe(line);
-        });
-        console.log('✅ Initial intersection check completed');
-      }
-    }, 100);
+      console.log('⏳ Delayed observer setup - elements should be positioned now');
+
+      // Test first few elements to see their initial positions
+      lines.forEach((line, index) => {
+        if (index < 5) {
+          const rect = line.getBoundingClientRect();
+          console.log(`📍 Element ${index} initial position:`, {
+            tagName: line.tagName,
+            text: line.textContent?.substring(0, 30),
+            top: rect.top,
+            bottom: rect.bottom,
+            height: rect.height,
+            inViewport: rect.top >= 0 && rect.bottom <= window.innerHeight,
+            viewportHeight: window.innerHeight,
+            viewportWidth: window.innerWidth,
+            scrollY: window.scrollY,
+            scrollX: window.scrollX
+          });
+        }
+        observerRef.current?.observe(line);
+      });
+
+      // Manual test: Check if any elements are actually in viewport
+      const elementsInViewport = Array.from(lines).filter((line, index) => {
+        const rect = line.getBoundingClientRect();
+        const inViewport = rect.top >= 0 && rect.bottom <= window.innerHeight;
+        if (index < 10) {
+          console.log(`🔍 Manual check - Element ${index}:`, {
+            tagName: line.tagName,
+            top: rect.top,
+            bottom: rect.bottom,
+            inViewport,
+            viewportHeight: window.innerHeight
+          });
+        }
+        return inViewport;
+      });
+      console.log(
+        `🔍 Manual viewport check: ${elementsInViewport.length} of ${lines.length} elements in viewport`
+      );
+
+      // Force initial callback by manually triggering intersection check
+      // This ensures the observer fires even for elements already in viewport
+      setTimeout(() => {
+        console.log('🔄 Forcing initial intersection check...');
+        if (observerRef.current) {
+          // Temporarily disconnect and reconnect to force initial callbacks
+          const currentObserver = observerRef.current;
+          lines.forEach((line) => {
+            currentObserver.unobserve(line);
+            currentObserver.observe(line);
+          });
+          console.log('✅ Initial intersection check completed');
+        }
+      }, 500); // Increased delay to ensure elements are fully positioned
+    }, 1000); // Wait 1 second before setting up observer
 
     // Cleanup function
     return () => {
@@ -759,12 +797,10 @@ export default function IndividualChapterPage() {
 
   // Effects
   useEffect(() => {
-    // Only fetch chapter data after permission is verified
-    if (permissionChecked) {
-      fetchChapter();
-      fetchNavigation();
-    }
-  }, [fetchChapter, fetchNavigation, permissionChecked]);
+    // Load chapter data immediately
+    fetchChapter();
+    fetchNavigation();
+  }, [fetchChapter, fetchNavigation]);
 
   useEffect(() => {
     if (chapter && contentRef.current && !isInitialized) {

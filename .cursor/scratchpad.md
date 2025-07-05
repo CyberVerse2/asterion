@@ -589,10 +589,24 @@ Need to implement better debugging and fix the conditions that are preventing sa
    - **Lesson:** Permission requirements should be based on actual capability, not convenience warnings
 
 9. **Spend Permission Loading Optimization**
+
    - **Issue:** Unnecessary spend permission validation running on every chapter page load
    - **Root Cause:** Full permission validation was running even for users who clearly have valid permissions
    - **Solution:** Added quick check for `spendPermissionSignature` to skip full validation for users who already have permissions
    - **Lesson:** Optimize permission checks by doing quick validation first, then full validation only when needed
+
+10. **Chapter Loading Performance Issue**
+
+    - **Issue:** Chapters taking a very long time to load or not loading at all
+    - **Root Cause:** Chapter loading was blocked by `permissionChecked` state that was never set to `true` after the spend permission check logic was removed
+    - **Solution:** Removed the `permissionChecked` state dependency and allowed chapters to load immediately
+    - **Lesson:** When removing feature dependencies, ensure all related state and conditions are also cleaned up to prevent blocking behavior
+
+11. **Chapter Double Loading Issue**
+    - **Issue:** Chapter page loading twice, causing unnecessary API calls and performance issues
+    - **Root Cause:** `fetchChapter` function had `user` in its dependency array, causing it to recreate when user data loads, which triggered the useEffect again
+    - **Solution:** Removed `user` from fetchChapter dependencies and used `userRef.current` instead to access user data without causing re-renders
+    - **Lesson:** Be careful with useCallback dependencies - only include values that actually affect the function's behavior, not values that are just used inside the function
 
 ## User Experience Lessons
 
