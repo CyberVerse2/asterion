@@ -473,7 +473,7 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4 py-8 profile-page">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Profile Header */}
-        <div className="flex items-center gap-3 md:gap-6">
+        <div className="flex items-center md:gap-6">
           {isWalletOnly ? (
             <>
               <div className="h-16 w-16 md:h-20 md:w-20">
@@ -483,17 +483,15 @@ export default function ProfilePage() {
                   </Identity>
                 </Wallet>
               </div>
-              <div className="flex-1 min-w-0 md:hidden">
-                <div className="text-xl font-bold mb-1">
+              <div className="flex-col min-w-0">
+                <div className="text-xl font-bold">
                   <Wallet>
                     <Identity address={profile.walletAddress as ViemAddress}>
                       <OnchainName />
                     </Identity>
                   </Wallet>
                 </div>
-                <div className="text-sm text-muted-foreground pr-4">
-                  Asterion Reader & Supporter
-                </div>
+                <div className="text-sm text-muted-foreground px-8 py-1 ">Asterion Reader</div>
               </div>
             </>
           ) : (

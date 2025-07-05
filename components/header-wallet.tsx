@@ -4,6 +4,7 @@ import {
   ConnectWallet,
   Wallet,
   WalletDropdown,
+  WalletDropdownBasename,
   WalletDropdownDisconnect,
   WalletDropdownLink
 } from '@coinbase/onchainkit/wallet';
@@ -25,51 +26,52 @@ export default function HeaderWallet() {
       ((context as any).client &&
         ((context as any).client.fid || (context as any).client.clientFid)));
 
-  // Show Farcaster profile for users in Farcaster context
-  if (hasFarcasterContext && user) {
+  // Check if user is in miniapp environment
+  const isInMiniApp = hasFarcasterContext;
+
+  if (user && user.walletAddress && !hasFarcasterContext) {
+    // Wallet-only user (no Farcaster context)
     return (
-      <div className="flex justify-end">
-        <Link href="/profile" className="flex items-center gap-2 hover:opacity-80">
-          <UIAvatar className="h-6 w-6">
-            <AvatarImage
-              src={
-                typeof user.pfpUrl === 'string' && user.pfpUrl.length > 0
-                  ? user.pfpUrl
-                  : '/placeholder.svg'
-              }
-            />
-            <AvatarFallback className="text-xs">
-              {typeof user.username === 'string' && user.username.length > 0
-                ? user.username.charAt(0).toUpperCase()
-                : '?'}
-            </AvatarFallback>
-          </UIAvatar>
-          <span className="text-sm font-medium hidden sm:block">
-            @{typeof user.username === 'string' ? user.username : 'unknown'}
-          </span>
+      <Wallet>
+        <ConnectWallet>
+          <Avatar className="h-6 w-6" />
+          <Name className="hidden sm:block" />
+        </ConnectWallet>
+        <WalletDropdown>
+          <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+            <Avatar />
+            <Name />
+            <Address />
+          </Identity>
+          {!isInMiniApp && <WalletDropdownBasename />}
+          <WalletDropdownDisconnect />
+        </WalletDropdown>
+      </Wallet>
+    );
+  }
+
+  if (user && user.fid && hasFarcasterContext) {
+    // Farcaster user
+    return (
+      <div className="flex items-center gap-2">
+        <UIAvatar className="h-6 w-6">
+          <AvatarImage src={user.pfpUrl} alt={user.username} />
+          <AvatarFallback>{user.username?.[0] || 'U'}</AvatarFallback>
+        </UIAvatar>
+        <Link href="/profile" className="text-sm font-medium hover:underline">
+          {user.username}
         </Link>
       </div>
     );
   }
 
-  // Show wallet connection for wallet-only users
+  // No user - show connect wallet
   return (
-    <div className="flex justify-end">
-      <Wallet>
-        <ConnectWallet>
-          <Avatar className="h-6 w-6" />
-        </ConnectWallet>
-        <WalletDropdown>
-          <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-            <Avatar />
-            <Address className="text-gray-400" />
-          </Identity>
-          <WalletDropdownLink icon="user" href="/profile">
-            Profile
-          </WalletDropdownLink>
-          <WalletDropdownDisconnect />
-        </WalletDropdown>
-      </Wallet>
-    </div>
+    <Wallet>
+      <ConnectWallet>
+        <Avatar className="h-6 w-6" />
+        <Name className='hidden sm:block'/>
+      </ConnectWallet>
+    </Wallet>
   );
 }
