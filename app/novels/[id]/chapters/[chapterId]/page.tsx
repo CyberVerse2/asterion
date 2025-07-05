@@ -91,7 +91,6 @@ export default function IndividualChapterPage() {
   const animationIdRef = useRef(0);
   const isTrackingRef = useRef(false);
   const lastSavedLineRef = useRef(0);
-  const lastManualCheckRef = useRef(0);
   const userRef = useRef(user);
   const chapterIdRef = useRef(chapterId);
   const novelIdRef = useRef(novelId);
@@ -187,7 +186,7 @@ export default function IndividualChapterPage() {
         setLoading(false);
       }
     },
-    [chapterId, user, hasLoved]
+    [chapterId, user]
   );
 
   // Fetch navigation data
@@ -448,97 +447,9 @@ export default function IndividualChapterPage() {
       observerRef.current?.observe(line);
     });
 
-    // Add scroll event listener for manual checking when observer fails
-    const handleScroll = () => {
-      // Reduced logging frequency - only log every 50th scroll event to reduce spam
-      if (Math.random() < 0.02) {
-        console.log('📜 Scroll event detected:', {
-          scrollY: window.scrollY,
-          scrollX: window.scrollX,
-          documentHeight: document.documentElement.scrollHeight,
-          windowHeight: window.innerHeight,
-          observerActive: !!observerRef.current
-        });
-      }
-
-      // Manual fallback check if tracking is active and observer seems stuck
-      if (isTrackingRef.current && observerRef.current && contentRef.current) {
-        // Throttle manual checks to every 2 seconds to give saves time to complete
-        const now = Date.now();
-        if (now - lastManualCheckRef.current > 2000) {
-          lastManualCheckRef.current = now;
-
-          // Re-query lines since the original 'lines' variable is out of scope
-          const currentLines = contentRef.current.querySelectorAll(
-            'p, div, h1, h2, h3, h4, h5, h6'
-          );
-
-          // Manual visibility check
-          let manualTopVisible = Infinity;
-          let manualBottomVisible = -1;
-          let manualVisibleCount = 0;
-
-          currentLines.forEach((line, index) => {
-            const rect = line.getBoundingClientRect();
-            // Check if element is in viewport with 10% margin
-            const viewportTop = window.innerHeight * 0.1;
-            const viewportBottom = window.innerHeight * 0.9;
-
-            if (rect.top < viewportBottom && rect.bottom > viewportTop && rect.height > 0) {
-              manualVisibleCount++;
-              if (index < manualTopVisible) {
-                manualTopVisible = index;
-              }
-              if (index > manualBottomVisible) {
-                manualBottomVisible = index;
-              }
-            }
-          });
-
-          if (manualVisibleCount > 0 && manualTopVisible !== Infinity) {
-            const manualCurrentLine = Math.floor((manualTopVisible + manualBottomVisible) / 2);
-            const progressDelta = Math.abs(manualCurrentLine - lastSavedLineRef.current);
-            const visibleAreaSize = manualBottomVisible - manualTopVisible + 1;
-            const saveThreshold = Math.max(5, Math.floor(visibleAreaSize / 2));
-
-            console.log('🔧 Manual scroll check:', {
-              manualVisibleCount,
-              manualTopVisible,
-              manualBottomVisible,
-              manualCurrentLine,
-              lastSavedLineFromRef: lastSavedLineRef.current,
-              progressDelta,
-              saveThreshold,
-              shouldSave: progressDelta >= saveThreshold,
-              totalLines: currentLines.length
-            });
-
-            if (progressDelta >= saveThreshold) {
-              console.log('💾 Manual scroll trigger - saving progress');
-              setCurrentLine(manualCurrentLine);
-              setTopVisibleLine(manualTopVisible);
-              setBottomVisibleLine(manualBottomVisible);
-              setLastSavedLine(manualCurrentLine);
-              // Update ref immediately to prevent duplicate saves
-              lastSavedLineRef.current = manualCurrentLine;
-              saveImmediately(manualCurrentLine, currentLines.length);
-            } else {
-              console.log('⏸️ Manual check - not saving, progress too small:', {
-                needed: saveThreshold,
-                actual: progressDelta
-              });
-            }
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-
-    // Cleanup function to remove scroll listener
+    // Cleanup function
     return () => {
       console.log('🧹 [CLEANUP] initializeLineTracking cleanup running');
-      window.removeEventListener('scroll', handleScroll);
       if (observerRef.current) {
         observerRef.current.disconnect();
       }

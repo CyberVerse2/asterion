@@ -765,7 +765,47 @@ The reading progress tracking feature is now **production-ready** with:
 
 ## Executor's Feedback or Assistance Requests
 
-### Fixed Love Button State Issue (Latest)
+### Fixed Page Refresh on Tip Issue (Latest)
+
+**Issue**: The page was refreshing/reloading every time a user clicked the love button to tip a chapter, causing a disruptive user experience.
+
+**Root Cause**: The `fetchChapter` function had `hasLoved` in its dependency array, which caused the function to be recreated every time the love button was clicked (since `hasLoved` changes from false to true). This triggered the useEffect that calls `fetchChapter()`, causing the page to refresh.
+
+**Solution**: Removed `hasLoved` from the `fetchChapter` useCallback dependency array:
+
+- Changed dependencies from `[chapterId, user, hasLoved]` to `[chapterId, user]`
+- The function now only recreates when `chapterId` or `user` changes, not when tipping
+- This prevents the unnecessary page refresh while maintaining proper function behavior
+
+**Files Modified**:
+
+- `app/novels/[id]/chapters/[chapterId]/page.tsx` - Updated fetchChapter dependency array
+
+**Benefits**:
+
+- Smooth tipping experience without page interruption
+- Love button animation and state changes work properly
+- No disruption to reading flow when tipping chapters
+
+### Simplified Progress Bar Updates
+
+**Issue**: The progress bar was updating through both Intersection Observer and a redundant manual scroll event listener, causing unnecessary complexity and potential conflicts.
+
+**Solution**: Removed the manual scroll event listener and simplified the progress tracking system:
+
+- Removed the `handleScroll` function and its associated manual visibility checks
+- Removed the `lastManualCheckRef` that was only used for manual scroll tracking
+- Simplified the cleanup function to only handle the Intersection Observer
+- Progress bar now updates purely through the Intersection Observer as intended
+
+**Benefits**:
+
+- Cleaner, more predictable progress tracking
+- Better performance by removing redundant scroll event listeners
+- Simplified code maintenance
+- Reduced console logging noise from manual scroll checks
+
+### Fixed Love Button State Issue
 
 **Issue**: When users clicked the love button on a chapter, the button would briefly turn red but then revert to its original state instead of remaining red.
 
@@ -779,8 +819,4 @@ The reading progress tracking feature is now **production-ready** with:
 
 **Files Modified**:
 
-- `app/novels/[id]/chapters/[chapterId]/page.tsx` - Enhanced fetchChapter function logic
-
-**Status**: ✅ **COMPLETED** - Love button now properly remains red after being clicked
-
-### Previous Issues Fixed
+- `app/novels/[id]/chapters/[chapterId]/page.tsx` - Updated fetchChapter function and progress tracking logic
