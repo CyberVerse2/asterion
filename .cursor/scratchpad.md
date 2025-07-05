@@ -461,40 +461,38 @@ Users report that after reading progress is saved, the page sometimes jumps up o
 ## Most Recent Update
 
 **Date:** Current session  
-**Status:** Investigating reading progress saving issue  
-**Context:** User reported that reading progress is not saving anymore
+**Status:** 🔧 Fixed tracking initialization timing issue  
+**Context:** Tracking wasn't being initialized because user data wasn't available when content was ready
 
 ## Analysis Summary
 
-The reading progress saving issue appears to be related to the conditions in the `saveImmediately` function not being met. The function requires:
+The reading progress tracking wasn't being initialized at all. The issue was:
 
-1. User ID to be available: `(currentUser as any)?.id`
-2. Chapter ID to be available: `currentChapterId`
-3. Tracking to be active: `isTrackingRef.current`
+1. **✅ Content Ready**: Content container had proper dimensions and was ready for tracking
+2. **❌ User Not Ready**: User data wasn't available when content was ready
+3. **❌ Tracking Not Initialized**: The useEffect only ran once when `hasInitializedTrackingRef.current` was false, but at that time user wasn't available
+4. **❌ No Retry**: Once `hasInitializedTrackingRef.current` was set to true, the useEffect wouldn't run again even when user became available
 
-If any of these conditions fail, the save operation is skipped with a warning log.
+**Root Cause Identified**: The `useEffect` that initializes tracking only runs once when `hasInitializedTrackingRef.current` is false, but at that time the user data wasn't available. When the user became available later, the `useEffect` wouldn't run again because `hasInitializedTrackingRef.current` was already true.
+
+**Fix Applied**:
+
+- Added user availability check to the `useEffect` condition: `user && (user as any)?.id`
+- Added `user` to the dependency array so the `useEffect` runs when user becomes available
+- Fixed the user reset logic to reset `hasInitializedTrackingRef.current = false` when user becomes available
+- Removed the unnecessary condition `!hasInitializedTrackingRef.current` from the user reset logic
+
+**Expected Result**:
+
+- Tracking should now be initialized when both content and user are available
+- The `useEffect` should run when user becomes available, even if content was ready earlier
+- Reading progress tracking should start working properly
 
 ## Next Steps
 
-1. **Debug the Save Conditions**
-
-   - Add more detailed logging to identify which condition is failing
-   - Check user data loading timing and availability
-   - Verify tracking state initialization
-
-2. **Fix User Data Loading**
-
-   - Ensure user data is properly loaded before tracking starts
-   - Add proper loading states and error handling
-
-3. **Improve Tracking State Management**
-
-   - Verify that `isTrackingRef.current` is properly set to true
-   - Check timing of tracking initialization
-
-4. **Test the Fix**
-   - Verify that reading progress saves correctly
-   - Test across different user types (Farcaster vs wallet-only)
+1. **Test the Fix** - Verify that tracking is initialized when user becomes available
+2. **Monitor Performance** - Ensure reading progress saves reliably across different scenarios
+3. **Clean Up Debug Logs** - Remove excessive debug logging once the system is working reliably
 
 # Executor's Feedback or Assistance Requests
 
@@ -603,10 +601,25 @@ Need to implement better debugging and fix the conditions that are preventing sa
     - **Lesson:** When removing feature dependencies, ensure all related state and conditions are also cleaned up to prevent blocking behavior
 
 11. **Chapter Double Loading Issue**
+
     - **Issue:** Chapter page loading twice, causing unnecessary API calls and performance issues
     - **Root Cause:** `fetchChapter` function had `user` in its dependency array, causing it to recreate when user data loads, which triggered the useEffect again
     - **Solution:** Removed `user` from fetchChapter dependencies and used `userRef.current` instead to access user data without causing re-renders
     - **Lesson:** Be careful with useCallback dependencies - only include values that actually affect the function's behavior, not values that are just used inside the function
+
+12. **IntersectionObserver Retry Logic Issue**
+
+    - **Issue:** Elements had proper dimensions after retry but IntersectionObserver wasn't triggering callbacks
+    - **Root Cause:** In retry logic, code was querying for `currentLines` but using original `lines` array for observation and line index calculation
+    - **Solution:** Updated retry logic to consistently use `currentLines` for both observation and line index calculation
+    - **Lesson:** When refactoring element collections in retry logic, ensure all references use the same collection consistently
+
+13. **Reading Progress Tracking Initialization**
+
+    - **Issue:** Reading progress tracking not starting properly due to timing and condition issues
+    - **Root Cause:** User data availability, tracking state management, and ref synchronization problems
+    - **Solution:** Added user ID validation before tracking starts, enhanced ref management, and improved timing of tracking initialization
+    - **Lesson:** State-dependent initialization requires careful validation of all prerequisites and proper ref management for async operations
 
 ## User Experience Lessons
 

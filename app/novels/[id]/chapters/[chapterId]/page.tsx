@@ -95,6 +95,8 @@ export default function IndividualChapterPage() {
   const novelIdRef = useRef(novelId);
   const hasRestoredPositionRef = useRef(false);
   const recentTipTimestampRef = useRef<number>(0);
+  const currentLinesRef = useRef<NodeListOf<Element> | null>(null);
+  const hasInitializedTrackingRef = useRef(false);
 
   // Reading progress hooks
   const { readingProgress, mutate: mutateProgress } = useReadingProgress(
@@ -314,6 +316,7 @@ export default function IndividualChapterPage() {
 
     const content = contentRef.current;
     const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+    currentLinesRef.current = lines;
 
     // Validate that elements have proper dimensions
     let validElements = 0;
@@ -415,7 +418,9 @@ export default function IndividualChapterPage() {
 
         if (entry.isIntersecting && entry.intersectionRatio > 0) {
           const element = entry.target;
-          const lineIndex = Array.from(lines).indexOf(element as Element);
+          const lineIndex = Array.from(currentLinesRef.current || lines).indexOf(
+            element as Element
+          );
 
           if (lineIndex !== -1) {
             visibleElements.push({
@@ -475,7 +480,7 @@ export default function IndividualChapterPage() {
             console.log('💾 Triggering save - significant progress detected');
             setLastSavedLine(currentReadingLine);
             lastSavedLineRef.current = currentReadingLine;
-            saveImmediately(currentReadingLine, lines.length);
+            saveImmediately(currentReadingLine, currentLinesRef.current?.length || lines.length);
           } else {
             console.log('⏸️ Not saving - progress delta too small', {
               needed: saveThreshold,
@@ -535,37 +540,220 @@ export default function IndividualChapterPage() {
         `🔍 Manual viewport check: ${elementsInViewport.length} of ${lines.length} elements in viewport`
       );
 
-      // Force initial callback by manually triggering intersection check
-      // This ensures the observer fires even for elements already in viewport
-      setTimeout(() => {
-        console.log('🔄 Forcing initial intersection check...');
-        if (observerRef.current) {
-          // Temporarily disconnect and reconnect to force initial callbacks
-          const currentObserver = observerRef.current;
-          lines.forEach((line) => {
-            currentObserver.unobserve(line);
-            currentObserver.observe(line);
-          });
-          console.log('✅ Initial intersection check completed');
-        }
-      }, 500); // Increased delay to ensure elements are fully positioned
-    }, 1000); // Wait 1 second before setting up observer
+      // Check if elements have proper dimensions
+      const elementsWithDimensions = Array.from(lines).filter((line) => {
+        const rect = line.getBoundingClientRect();
+        return rect.height > 0 && rect.width > 0;
+      });
+      console.log(
+        `📏 Elements with dimensions: ${elementsWithDimensions.length} of ${lines.length}`
+      );
 
-    // Cleanup function
-    return () => {
-      console.log('🧹 [CLEANUP] initializeLineTracking cleanup running');
-      if (observerRef.current) {
-        observerRef.current.disconnect();
+      // If elements don't have proper dimensions yet, retry after a longer delay
+      if (elementsWithDimensions.length === 0) {
+        console.log('⚠️ No elements have proper dimensions yet, retrying in 2 seconds...');
+        setTimeout(() => {
+          console.log('🔄 Retrying observer setup after longer delay...');
+          if (observerRef.current) {
+            // Clear existing observer
+            observerRef.current.disconnect();
+
+            // Check if elements still exist and have dimensions
+            const currentLines = contentRef.current?.querySelectorAll(
+              'p, div, h1, h2, h3, h4, h5, h6'
+            );
+            console.log(`🔍 Retry: Found ${currentLines?.length || 0} elements in DOM`);
+
+            if (!currentLines || currentLines.length === 0) {
+              console.log('❌ Retry failed: No elements found in DOM');
+              return;
+            }
+
+            // Update the ref to point to current lines
+            currentLinesRef.current = currentLines;
+
+            // Test first few elements
+            Array.from(currentLines)
+              .slice(0, 5)
+              .forEach((line, index) => {
+                const rect = line.getBoundingClientRect();
+                console.log(`🔍 Retry element ${index}:`, {
+                  tagName: line.tagName,
+                  height: rect.height,
+                  width: rect.width,
+                  top: rect.top,
+                  bottom: rect.bottom,
+                  hasDimensions: rect.height > 0 && rect.width > 0
+                });
+              });
+
+            // Recreate observer
+            observerRef.current = new IntersectionObserver((entries) => {
+              console.log(
+                '🔍 IntersectionObserver callback triggered with',
+                entries.length,
+                'entries'
+              );
+              console.log('🔍 Callback context:', {
+                isTrackingRef: isTrackingRef.current,
+                currentLine,
+                lastSavedLine,
+                totalLines,
+                timestamp: new Date().toISOString()
+              });
+
+              // Debug: Log all entries regardless of intersection status
+              entries.forEach((entry, index) => {
+                if (index < 5) {
+                  // Only log first 5 to avoid spam
+                  console.log(`📋 Entry ${index} [${entry.target.tagName}]:`, {
+                    isIntersecting: entry.isIntersecting,
+                    intersectionRatio: entry.intersectionRatio,
+                    target: entry.target.tagName,
+                    text: entry.target.textContent?.substring(0, 30),
+                    boundingRect: {
+                      top: entry.boundingClientRect.top,
+                      bottom: entry.boundingClientRect.bottom,
+                      height: entry.boundingClientRect.height,
+                      left: entry.boundingClientRect.left,
+                      right: entry.boundingClientRect.right,
+                      width: entry.boundingClientRect.width
+                    },
+                    rootBounds: entry.rootBounds,
+                    intersectionRect: entry.intersectionRect,
+                    viewportHeight: window.innerHeight,
+                    viewportWidth: window.innerWidth,
+                    isInViewport:
+                      entry.boundingClientRect.top >= 0 &&
+                      entry.boundingClientRect.bottom <= window.innerHeight
+                  });
+                }
+              });
+
+              let visibleElements = [];
+              let topMostVisible = Infinity;
+              let bottomMostVisible = -1;
+
+              entries.forEach((entry, index) => {
+                console.log(`📋 Entry ${index}:`, {
+                  isIntersecting: entry.isIntersecting,
+                  intersectionRatio: entry.intersectionRatio,
+                  target: entry.target.tagName,
+                  boundingRect: {
+                    top: entry.boundingClientRect.top,
+                    bottom: entry.boundingClientRect.bottom,
+                    height: entry.boundingClientRect.height
+                  }
+                });
+
+                if (entry.isIntersecting && entry.intersectionRatio > 0) {
+                  const element = entry.target;
+                  const lineIndex = Array.from(currentLines).indexOf(element as Element);
+
+                  if (lineIndex !== -1) {
+                    visibleElements.push({
+                      lineIndex,
+                      intersectionRatio: entry.intersectionRatio,
+                      element
+                    });
+
+                    // Track the topmost and bottommost visible elements
+                    if (lineIndex < topMostVisible) {
+                      topMostVisible = lineIndex;
+                    }
+                    if (lineIndex > bottomMostVisible) {
+                      bottomMostVisible = lineIndex;
+                    }
+                  }
+                }
+              });
+
+              console.log(
+                `👁️ Visible elements: ${visibleElements.length}, Top: ${topMostVisible}, Bottom: ${bottomMostVisible}`
+              );
+
+              if (visibleElements.length > 0 && topMostVisible !== Infinity) {
+                // Update visible range
+                setTopVisibleLine(topMostVisible);
+                setBottomVisibleLine(bottomMostVisible);
+
+                // Calculate current reading position (use the middle of visible area)
+                const currentReadingLine = Math.floor((topMostVisible + bottomMostVisible) / 2);
+                setCurrentLine(currentReadingLine);
+
+                console.log('📍 Position update:', {
+                  topMostVisible,
+                  bottomMostVisible,
+                  currentReadingLine,
+                  previousCurrentLine: currentLine
+                });
+
+                // Check if we should save progress
+                if (isTrackingRef.current) {
+                  const progressDelta = Math.abs(currentReadingLine - lastSavedLineRef.current);
+                  const visibleAreaSize = bottomMostVisible - topMostVisible + 1;
+                  const saveThreshold = Math.max(2, Math.floor(visibleAreaSize / 3)); // Reduced threshold: at least 2 lines or 1/3 of visible area
+
+                  console.log('📊 Progress check:', {
+                    currentReadingLine,
+                    lastSavedLine: lastSavedLineRef.current,
+                    progressDelta,
+                    saveThreshold,
+                    visibleAreaSize
+                  });
+
+                  if (progressDelta >= saveThreshold) {
+                    console.log('💾 Progress threshold met, saving...');
+                    saveImmediately(
+                      currentReadingLine,
+                      currentLinesRef.current?.length || lines.length
+                    );
+                  }
+                }
+              } else {
+                console.log('❌ No visible elements found or invalid range');
+              }
+            }, observerConfig);
+
+            // Actually observe the current lines
+            Array.from(currentLines).forEach((line) => {
+              const rect = line.getBoundingClientRect();
+              if (rect.height > 0 && rect.width > 0) {
+                observerRef.current?.observe(line);
+              }
+            });
+
+            // Check how many elements were actually observed
+            const observedElements = Array.from(currentLines).filter((line) => {
+              const rect = line.getBoundingClientRect();
+              return rect.height > 0 && rect.width > 0;
+            });
+            console.log(
+              `📏 Retry: ${observedElements.length} elements observed out of ${currentLines.length}`
+            );
+
+            console.log('✅ Retry observer setup completed');
+          }
+        }, 2000);
+        return;
       }
-      if (saveTimeoutRef.current) {
-        console.log(
-          '🧹 [CLEANUP] Clearing saveTimeoutRef in initializeLineTracking cleanup, ID:',
-          saveTimeoutRef.current
-        );
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [user, currentLine, saveImmediately, chapterId, isInitialized]);
+
+      // Cleanup function
+      return () => {
+        console.log('🧹 [CLEANUP] initializeLineTracking cleanup running');
+        if (observerRef.current) {
+          observerRef.current.disconnect();
+        }
+        if (saveTimeoutRef.current) {
+          console.log(
+            '🧹 [CLEANUP] Clearing saveTimeoutRef in initializeLineTracking cleanup, ID:',
+            saveTimeoutRef.current
+          );
+          clearTimeout(saveTimeoutRef.current);
+        }
+      };
+    }, 1000); // Wait 1 second before setting up observer
+  }, [user, saveImmediately, chapterId, isInitialized]);
 
   // Start tracking after initial delay - fixed timing
   useEffect(() => {
@@ -692,7 +880,15 @@ export default function IndividualChapterPage() {
   // Reset hasRestoredPositionRef when chapterId changes
   useEffect(() => {
     hasRestoredPositionRef.current = false;
+    hasInitializedTrackingRef.current = false;
   }, [chapterId]);
+
+  // Reset hasInitializedTrackingRef when user changes
+  useEffect(() => {
+    if (user && (user as any)?.id) {
+      hasInitializedTrackingRef.current = false;
+    }
+  }, [user]);
 
   // Love/tip handler
   const handleLove = useCallback(
@@ -803,7 +999,15 @@ export default function IndividualChapterPage() {
   }, [fetchChapter, fetchNavigation]);
 
   useEffect(() => {
-    if (chapter && contentRef.current && !isInitialized) {
+    if (
+      chapter &&
+      contentRef.current &&
+      !isInitialized &&
+      !hasInitializedTrackingRef.current &&
+      user &&
+      (user as any)?.id
+    ) {
+      hasInitializedTrackingRef.current = true;
       // Wait longer for content to be fully rendered and styled
       const cleanup = setTimeout(() => {
         // Double-check that content still exists and has proper dimensions
@@ -817,21 +1021,13 @@ export default function IndividualChapterPage() {
           });
 
           if (contentRect.height > 0) {
-            const cleanupFn = initializeLineTracking();
-
-            // Store cleanup function for later
-            if (cleanupFn && typeof cleanupFn === 'function') {
-              return cleanupFn;
-            }
+            initializeLineTracking();
           } else {
             console.log('⚠️ Content not ready yet, retrying...');
             // Retry after another delay if content isn't ready
             setTimeout(() => {
               if (!isInitialized) {
-                const retryCleanupFn = initializeLineTracking();
-                if (retryCleanupFn && typeof retryCleanupFn === 'function') {
-                  return retryCleanupFn;
-                }
+                initializeLineTracking();
               }
             }, 1000);
           }
@@ -867,7 +1063,7 @@ export default function IndividualChapterPage() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [chapter, initializeLineTracking, isInitialized]);
+  }, [chapter, isInitialized, user]);
 
   // Calculate progress percentage
   const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
