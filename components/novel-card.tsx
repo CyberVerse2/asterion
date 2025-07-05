@@ -40,6 +40,8 @@ export default function NovelCard({ novel }: NovelCardProps) {
               fill
               className="object-cover rounded-t-lg"
             />
+
+            {/* Top badges */}
             <div className="absolute top-2 right-2">
               <Badge className="bg-green-600 text-white border-0">
                 {novel.status?.toUpperCase()}
@@ -48,30 +50,31 @@ export default function NovelCard({ novel }: NovelCardProps) {
             <div className="absolute top-2 left-2">
               <Badge className="bg-red-600 text-white border-0">RANK {novel.rank}</Badge>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 space-y-3 flex-grow">
-          <div>
-            <h3 className="font-bold text-lg mb-1 line-clamp-2 text-white">{novel.title}</h3>
-            <p className="text-sm text-gray-400 mb-2">Author: {novel.author}</p>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center">
-                {[...Array(4)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                ))}
-                <Star className="h-4 w-4 fill-yellow-400/50 text-yellow-400" />
-              </div>
-              <span className="text-sm text-gray-400">({rating})</span>
-            </div>
-          </div>
 
-          {/* Stats */}
-          <div className="stats-card rounded-lg p-1.5">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="flex items-center justify-center gap-1">
-                <BookOpen className="h-4 w-4 text-gray-400" />
-                <div>
-                  <div className="text-sm font-bold text-white px-1">
+            {/* Bottom overlay with gradient */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 rounded-b-lg">
+              {/* Title and Author */}
+              <div className="mb-2">
+                <h3 className="font-bold text-lg mb-1 line-clamp-2 text-white">{novel.title}</h3>
+                <p className="text-sm text-gray-300 mb-2">by {novel.author}</p>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center">
+                  {[...Array(4)].map((_, i) => (
+                    <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  ))}
+                  <Star className="h-3 w-3 fill-yellow-400/50 text-yellow-400" />
+                </div>
+                <span className="text-xs text-gray-300">({rating})</span>
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <BookOpen className="h-3 w-3 text-gray-300" />
+                  <span className="text-xs font-medium text-white">
                     {(() => {
                       const chaptersNum = Number(novel.totalChapters);
                       if (!isNaN(chaptersNum) && chaptersNum > 0) {
@@ -79,19 +82,20 @@ export default function NovelCard({ novel }: NovelCardProps) {
                       }
                       return '0K';
                     })()}
-                  </div>
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Eye className="h-3 w-3 text-gray-300" />
+                  <span className="text-xs font-medium text-white">{novel.views || '0'}</span>
                 </div>
               </div>
-              <div className="flex items-center justify-center gap-1">
-                <Eye className="h-4 w-4 text-gray-400" />
-                <div>
-                  <div className="text-sm font-bold text-white px-1">{novel.views || '0'}</div>
-                </div>
-              </div>
+          <p className="text-sm text-gray-300 line-clamp-3">{novel.summary}</p>
             </div>
           </div>
-          <p className="text-sm text-gray-400 line-clamp-3">{novel.summary}</p>
-        </CardContent>
+        </CardHeader>
+
+        {/* <CardContent className="p-4 flex-grow">
+        </CardContent> */}
       </Card>
     </Link>
   );
