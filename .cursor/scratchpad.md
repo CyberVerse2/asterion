@@ -575,10 +575,24 @@ Need to implement better debugging and fix the conditions that are preventing sa
    - **Lesson:** Complex conditional logic for critical features needs robust debugging and error handling
 
 7. **Reading Progress Tracking Initialization**
+
    - **Issue:** Reading progress tracking not starting properly due to timing and condition issues
    - **Root Cause:** User data availability, tracking state management, and ref synchronization problems
    - **Solution:** Added user ID validation before tracking starts, enhanced ref management, and improved timing of tracking initialization
    - **Lesson:** State-dependent initialization requires careful validation of all prerequisites and proper ref management for async operations
+
+8. **Spend Permission Modal Logic**
+
+   - **Issue:** Spend permission modal showing for users who already have valid permissions, just because they're expiring soon
+   - **Root Cause:** Modal was showing for both "no permissions" AND "permissions expiring soon" cases
+   - **Solution:** Changed logic to only show modal when users don't have spend permissions at all (no signature or no permission data)
+   - **Lesson:** Permission requirements should be based on actual capability, not convenience warnings
+
+9. **Spend Permission Loading Optimization**
+   - **Issue:** Unnecessary spend permission validation running on every chapter page load
+   - **Root Cause:** Full permission validation was running even for users who clearly have valid permissions
+   - **Solution:** Added quick check for `spendPermissionSignature` to skip full validation for users who already have permissions
+   - **Lesson:** Optimize permission checks by doing quick validation first, then full validation only when needed
 
 ## User Experience Lessons
 

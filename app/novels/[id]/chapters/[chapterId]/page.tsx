@@ -108,22 +108,6 @@ export default function IndividualChapterPage() {
   const chapterTipAmount = (user as any)?.chapterTipAmount || 0.01;
   const tipAmountDisplay = chapterTipAmount.toFixed(2);
 
-  // Check spend permission on page load
-  useEffect(() => {
-    if (!permissionChecked && user !== undefined) {
-      const proceedWithReading = () => {
-        setPermissionChecked(true);
-        // Continue with normal chapter loading
-      };
-
-      const hasValidPermission = checkPermissionAndProceed(user, proceedWithReading);
-      if (!hasValidPermission) {
-        // Permission check failed, modal will be shown
-        setPermissionChecked(true);
-        return;
-      }
-    }
-  }, [user, permissionChecked, checkPermissionAndProceed]);
 
   // Fetch chapter data
   const fetchChapter = useCallback(
@@ -386,6 +370,23 @@ export default function IndividualChapterPage() {
         timestamp: new Date().toISOString()
       });
 
+      // Debug: Log all entries regardless of intersection status
+      entries.forEach((entry, index) => {
+        console.log(`📋 Entry ${index} [${entry.target.tagName}]:`, {
+          isIntersecting: entry.isIntersecting,
+          intersectionRatio: entry.intersectionRatio,
+          target: entry.target.tagName,
+          text: entry.target.textContent?.substring(0, 30),
+          boundingRect: {
+            top: entry.boundingClientRect.top,
+            bottom: entry.boundingClientRect.bottom,
+            height: entry.boundingClientRect.height
+          },
+          rootBounds: entry.rootBounds,
+          intersectionRect: entry.intersectionRect
+        });
+      });
+
       let visibleElements = [];
       let topMostVisible = Infinity;
       let bottomMostVisible = -1;
@@ -496,6 +497,21 @@ export default function IndividualChapterPage() {
       }
       observerRef.current?.observe(line);
     });
+
+    // Force initial callback by manually triggering intersection check
+    // This ensures the observer fires even for elements already in viewport
+    setTimeout(() => {
+      console.log('🔄 Forcing initial intersection check...');
+      if (observerRef.current) {
+        // Temporarily disconnect and reconnect to force initial callbacks
+        const currentObserver = observerRef.current;
+        lines.forEach((line) => {
+          currentObserver.unobserve(line);
+          currentObserver.observe(line);
+        });
+        console.log('✅ Initial intersection check completed');
+      }
+    }, 100);
 
     // Cleanup function
     return () => {

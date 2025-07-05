@@ -1,9 +1,6 @@
 import { useState, useCallback } from 'react';
 import { User } from '@/lib/types';
-import {
-  validateSpendPermission,
-  isSpendPermissionExpiringSoon
-} from '@/lib/utils/spend-permission';
+import { validateSpendPermission } from '@/lib/utils/spend-permission';
 
 interface UseSpendPermissionGuardReturn {
   isModalOpen: boolean;
@@ -19,14 +16,20 @@ export function useSpendPermissionGuard(): UseSpendPermissionGuardReturn {
     (user: User | null, onSuccess: () => void): boolean => {
       const permissionStatus = validateSpendPermission(user);
 
-      if (permissionStatus.isValid && !isSpendPermissionExpiringSoon(user)) {
-        // User has valid spend permission and it's not expiring soon, proceed with reading
+      if (permissionStatus.isValid) {
+        // User has valid spend permission, proceed with reading
         onSuccess();
         return true;
-      } else {
-        // User doesn't have valid spend permission OR it's expiring within 1 day, show modal
+      } else if (!permissionStatus.hasPermission || !permissionStatus.hasSignature) {
+        // User doesn't have spend permission at all, show modal
         setIsModalOpen(true);
         return false;
+      } else {
+        // User has permission but it's expired or not started - still allow reading
+        // since they've already approved spending, just log the issue
+        console.log('Spend permission issue:', permissionStatus.errorMessage);
+        onSuccess();
+        return true;
       }
     },
     []
