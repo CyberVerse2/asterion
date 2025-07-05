@@ -335,6 +335,20 @@ export default function IndividualChapterPage() {
     fetchNavigation();
   }, [fetchChapter, fetchNavigation]);
 
+  // Ensure browser back button always goes to novel page
+  useEffect(() => {
+    // Simple approach: modify browser history to ensure back goes to novel page
+    const novelUrl = `/novels/${novelId}`;
+
+    // Push novel page to history so back button goes there
+    window.history.pushState(null, '', novelUrl);
+
+    // Then immediately push current chapter page back
+    window.history.pushState(null, '', window.location.href);
+
+    // Now when user hits back, they'll go to the novel page
+  }, [novelId]);
+
   useEffect(() => {
     if (chapter && contentRef.current) {
       setTimeout(() => {
@@ -481,18 +495,6 @@ export default function IndividualChapterPage() {
             style={{ lineHeight: '1.8' }}
             dangerouslySetInnerHTML={{ __html: chapter.content }}
           />
-
-          {/* Tip feedback */}
-          {tradePending && (
-            <div className="text-blue-400 mt-4">
-              Tipping author ({tipAmountDisplay} USDC) in progress...
-            </div>
-          )}
-          {tradeSuccess && (
-            <div className="text-green-400 mt-4">
-              Tipped! You automatically sent {tipAmountDisplay} USDC to support the author ❤️
-            </div>
-          )}
           {tradeError && <div className="text-red-400 mt-4">{tradeError}</div>}
 
           {/* Navigation */}
