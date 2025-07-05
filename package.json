@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
+    "@farcaster/miniapp-wagmi-connector": "^1.0.0",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.11.0",
     "@radix-ui/react-accordion": "latest",

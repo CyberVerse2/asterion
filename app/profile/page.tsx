@@ -504,7 +504,8 @@ export default function ProfilePage() {
       accountAddress: account?.address,
       profileWalletAddress: profile?.walletAddress,
       accountConnected: account?.isConnected,
-      contextAvailable: !!context
+      contextAvailable: !!context,
+      availableConnectors: connectors.map((c) => c.name)
     });
 
     // Try to get wallet address from multiple sources
@@ -522,8 +523,36 @@ export default function ProfilePage() {
       });
     }
 
+    // If still no wallet address, try to connect using Farcaster connector
     if (!walletAddress) {
-      console.log('[Profile] ❌ No wallet address found from any source');
+      console.log(
+        '[Profile] 🔗 No wallet address found, attempting to connect with Farcaster connector'
+      );
+      try {
+        // Find the Farcaster connector (should be first one now)
+        const farcasterConnector = connectors.find(
+          (c) => c.name.includes('Farcaster') || c.name.includes('miniapp')
+        );
+        const connectorToUse = farcasterConnector || connectors[0];
+
+        console.log('[Profile] 🔗 Using connector:', connectorToUse.name);
+
+        const connectResult = await connectAsync({ connector: connectorToUse });
+        console.log('[Profile] 🔗 Connected successfully:', connectResult);
+
+        walletAddress = connectResult.accounts[0];
+
+        // Wait a bit for the connection to be established
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error('[Profile] 🔗 Connection failed:', error);
+        setApproveError('Failed to connect wallet. Please try again.');
+        return;
+      }
+    }
+
+    if (!walletAddress) {
+      console.log('[Profile] ❌ No wallet address found from any source after connection attempt');
       setApproveError('Wallet not connected. Please connect your wallet in Farcaster first.');
       return;
     }
