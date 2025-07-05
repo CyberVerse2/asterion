@@ -4,7 +4,6 @@ import {
   ConnectWallet,
   Wallet,
   WalletDropdown,
-  WalletDropdownBasename,
   WalletDropdownDisconnect,
   WalletDropdownLink
 } from '@coinbase/onchainkit/wallet';
@@ -43,7 +42,7 @@ export default function HeaderWallet() {
             <Name />
             <Address />
           </Identity>
-          {!isInMiniApp && <WalletDropdownBasename />}
+          {!isInMiniApp && <WalletDropdownLink href="/profile">View Profile</WalletDropdownLink>}
           <WalletDropdownDisconnect />
         </WalletDropdown>
       </Wallet>
@@ -70,7 +69,7 @@ export default function HeaderWallet() {
     <Wallet>
       <ConnectWallet>
         <Avatar className="h-6 w-6" />
-        <Name className='hidden sm:block'/>
+        <Name className="hidden sm:block" />
       </ConnectWallet>
     </Wallet>
   );

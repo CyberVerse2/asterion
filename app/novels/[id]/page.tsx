@@ -263,7 +263,7 @@ export default function NovelPage() {
 
   return (
     <div className="container mx-auto max-w-md">
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Novel Cover with Overlay Content - Full screen on mobile */}
         <div className="relative aspect-[4/3] w-full overflow-hidden group sm:mx-4 sm:mt-4 sm:rounded-lg">
           {/* Back Button Overlay */}
@@ -321,7 +321,7 @@ export default function NovelPage() {
           </div>
         </div>
 
-        <div className="px-4 space-y-6">
+        <div className="px-4 space-y-3">
           {/* Stats Section - Outside the image */}
           <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
             <div className="grid grid-cols-4 gap-4">
@@ -362,7 +362,7 @@ export default function NovelPage() {
 
           {/* Enhanced Synopsis with Glass Morphism */}
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-white font-semibold text-lg">Synopsis</h3>
               <Button
                 className="bg-transparent text-gray-400 hover:text-white hover:bg-white/10 p-2 transition-all duration-200"
@@ -434,10 +434,10 @@ export default function NovelPage() {
         <div className="fixed bottom-0 left-0 w-full z-20 bg-black/95 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-3 sm:py-4">
           <div className="max-w-md mx-auto">
             {/* Single Row Layout */}
-            <div className="grid grid-cols-4 gap-3">
-              {/* READ NOW Button */}
+            <div className="grid grid-cols-5 gap-3">
+              {/* READ NOW Button - Takes 2 columns */}
               <Button
-                className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:via-purple-600 hover:to-indigo-700 text-white border-0 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-purple-500/25 group touch-manipulation"
+                className="col-span-2 relative overflow-hidden bg-purple-600 hover:bg-purple-700 text-white border-0 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-purple-500/25 group touch-manipulation"
                 onClick={handleReadNow}
                 disabled={chaptersLoading}
               >
