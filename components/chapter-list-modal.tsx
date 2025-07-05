@@ -16,6 +16,12 @@ interface ChapterListModalProps {
   currentChapterId: string;
 }
 
+interface Chapter {
+  id: string;
+  title: string;
+  chapterNumber: number;
+}
+
 export default function ChapterListModal({
   isOpen,
   onClose,
@@ -52,9 +58,9 @@ export default function ChapterListModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-      <Card className="bg-gray-900/95 backdrop-blur-sm border-white/10 w-full max-w-xl max-h-[80vh] overflow-hidden">
+      <Card className="bg-gray-900/95 backdrop-blur-sm border-white/10 w-full max-w-sm max-h-[40vh] overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-xl text-white flex items-center gap-2">
+          <CardTitle className=" text-lg text-white flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-purple-400" />
             Chapter List
           </CardTitle>
@@ -68,7 +74,7 @@ export default function ChapterListModal({
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="max-h-[60vh] overflow-y-auto">
+          <div className="max-h-[30vh] overflow-y-auto">
             {isLoading ? (
               <div className="p-6 text-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-4"></div>
@@ -76,7 +82,7 @@ export default function ChapterListModal({
               </div>
             ) : chapters && chapters.length > 0 ? (
               <div className="space-y-1 p-4">
-                {chapters.map((chapter) => {
+                {chapters.map((chapter: Chapter) => {
                   const progress = getChapterProgress(chapter.id);
                   const progressPercentage = getProgressPercentage(chapter.id);
                   const isCompleted = isChapterCompleted(chapter.id);
@@ -105,17 +111,7 @@ export default function ChapterListModal({
                               </span>
                             )}
                           </div>
-                          <h3 className="text-white font-medium truncate mb-1">{chapter.title}</h3>
-                          {progress && (
-                            <div className="flex items-center gap-2 text-xs text-gray-400">
-                              <Clock className="h-3 w-3" />
-                              <span>{progressPercentage}% complete</span>
-                              <span>•</span>
-                              <span>
-                                Line {progress.currentLine} of {progress.totalLines}
-                              </span>
-                            </div>
-                          )}
+                          
                         </div>
                         {progress && (
                           <div className="ml-3 flex-shrink-0">
