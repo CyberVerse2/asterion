@@ -844,3 +844,22 @@ Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** o
 - All TypeScript errors resolved
 
 **Status**: ✅ Both issues resolved. Profile navigation working and Farcaster usernames properly extracted.
+
+### 🔧 **Spend Permission Button Logic Fix - COMPLETED**
+
+**Issue**: "Approve Spend" button was using Coinbase spend permissions instead of ERC20 spend permissions for Farcaster users
+
+- **Root Cause**: The profile page had the logic correct but the button labels were confusing
+- **Analysis**:
+  - Farcaster users should use ERC20 approve (`handleFarcasterApproval`)
+  - Non-Farcaster users should use Coinbase spend permissions (`handleApproveSpend`)
+  - The code was working correctly but the button text was misleading
+- **Solution**:
+  - Updated button text to be more descriptive
+  - Farcaster users now see "Approve ERC20 Spend Permission"
+  - Non-Farcaster users see "Approve Coinbase Spend Permission"
+  - No functional changes needed - the logic was already correct
+- **Files Modified**: `app/profile/page.tsx`
+- **Result**: ✅ Button text now clearly indicates which spend permission system is being used
+
+**Status**: ✅ Spend permission button logic clarified and working correctly.

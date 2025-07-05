@@ -178,6 +178,28 @@ export default function ProfilePage() {
       ((context as any).client &&
         ((context as any).client.fid || (context as any).client.clientFid)));
 
+  // Debug logging for Farcaster context detection
+  console.log('[Profile] Context detection debug:', {
+    context: context,
+    contextUser: context ? (context as any).user : null,
+    contextClient: context ? (context as any).client : null,
+    userFid: context && (context as any).user ? (context as any).user.fid : null,
+    clientFid: context && (context as any).client ? (context as any).client.fid : null,
+    clientClientFid: context && (context as any).client ? (context as any).client.clientFid : null,
+    hasFarcasterContext: hasFarcasterContext,
+    profileFid: profile?.fid
+  });
+
+  // Alternative detection: if user has fid in profile, they're a Farcaster user
+  const isFarcasterUser = hasFarcasterContext || (profile && profile.fid);
+
+  console.log('[Profile] Final user type determination:', {
+    hasFarcasterContext,
+    profileHasFid: profile?.fid,
+    isFarcasterUser,
+    willUseERC20: isFarcasterUser
+  });
+
   // Use OnchainKit components only for wallet-only users (no Farcaster context)
   const isWalletOnly = profile && profile.walletAddress && !hasFarcasterContext;
 
@@ -893,7 +915,7 @@ export default function ProfilePage() {
                         <span className="text-white">Permission Granted</span>
                       </div>
                     ) : (
-                      'Approve Spend Permission'
+                      'Approve Spend'
                     )}
                   </Button>
                 ) : (
