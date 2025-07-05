@@ -898,27 +898,29 @@ export default function IndividualChapterPage() {
       ))}
 
       {/* Floating Action Buttons - Back and Love, stacked and responsive */}
-      <div className="fixed left-2 md:left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-4">
+      <div className="fixed left-1 md:left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 md:gap-4 opacity-40 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
         <button
           type="button"
           onClick={goBackToNovel}
-          className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-2 sm:p-3 text-gray-400 hover:text-white hover:bg-white/20 transition-all duration-300 shadow-lg touch-manipulation mb-1"
+          className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-full p-2 md:p-3 text-gray-400 hover:text-white hover:bg-white/20 active:bg-white/30 focus:bg-white/20 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation mb-1"
           aria-label="Back to Novel"
         >
-          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+          <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
         </button>
         <button
           type="button"
           onClick={handleLove}
           disabled={hasLoved || tradePending}
-          className={`focus:outline-none bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-3 text-gray-400 hover:text-red-500 hover:bg-red-100/20 transition-all duration-300 shadow-lg ${
+          className={`focus:outline-none bg-white/5 backdrop-blur-sm border border-white/10 rounded-full p-2 md:p-3 text-gray-400 hover:text-red-500 hover:bg-red-100/20 active:bg-red-100/30 focus:bg-red-100/20 transition-all duration-300 shadow-lg ${
             hasLoved ? 'text-red-500 bg-red-100/20' : ''
           }`}
           aria-label={`Love this chapter ${tipAmountDisplay} USDC`}
         >
-          <Heart className={`h-6 w-6 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
+          <Heart
+            className={`h-4 w-4 md:h-5 md:w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`}
+          />
         </button>
-        <span className="text-xs text-gray-300 font-semibold bg-black/60 rounded px-2 py-1 mt-1 shadow-md select-none">
+        <span className="text-xs text-gray-300 font-semibold bg-black/40 rounded px-1.5 py-0.5 md:px-2 md:py-1 mt-1 shadow-md select-none">
           {tipCount}
         </span>
       </div>
