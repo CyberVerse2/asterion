@@ -14,7 +14,11 @@ const config = createConfig({
   chains: [base],
   connectors: [
     // Farcaster mini-app connector (for Farcaster context)
-    farcasterMiniApp(),
+    farcasterMiniApp({
+      // Add explicit configuration for better reliability
+      name: 'Farcaster MiniApp',
+      chains: [base]
+    }),
     // Coinbase wallet connector (for non-Farcaster users)
     coinbaseWallet({
       appName: 'Asterion',
@@ -24,7 +28,10 @@ const config = createConfig({
   ],
   transports: {
     [base.id]: http()
-  }
+  },
+  // Add better error handling
+  ssr: false,
+  enablePublicClient: true
 });
 
 export function WagmiContextProvider({ children }: { children: ReactNode }) {

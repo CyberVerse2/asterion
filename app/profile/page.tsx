@@ -499,89 +499,62 @@ export default function ProfilePage() {
     console.log('[Profile] 🎯 handleFarcasterApproval called - This should be ERC20 approve');
     console.log('[Profile] 🎯 User type check:', { isFarcasterUser, profileFid: profile?.fid });
 
-    // Debug wallet address availability
-    console.log('[Profile] 🔍 Wallet address debug:', {
-      accountAddress: account?.address,
-      profileWalletAddress: profile?.walletAddress,
-      accountConnected: account?.isConnected,
-      contextAvailable: !!context,
-      availableConnectors: connectors.map((c) => c.name)
-    });
-
-    // Try to get wallet address from multiple sources
-    let walletAddress = account?.address || profile?.walletAddress;
-
-    // If no wallet address found, try to get from Farcaster context
-    if (!walletAddress && context) {
-      const contextUser = (context as any).user;
-      const contextClient = (context as any).client;
-      walletAddress = contextUser?.walletAddress || contextClient?.walletAddress;
-      console.log('[Profile] 🔍 Trying to get wallet from Farcaster context:', {
-        contextUser: contextUser,
-        contextClient: contextClient,
-        foundWalletAddress: walletAddress
-      });
-    }
-
-    // If still no wallet address, try to connect using Farcaster connector
-    if (!walletAddress) {
-      console.log(
-        '[Profile] 🔗 No wallet address found, attempting to connect with Farcaster connector'
-      );
-      try {
-        // Find the Farcaster connector (should be first one now)
-        const farcasterConnector = connectors.find(
-          (c) => c.name.includes('Farcaster') || c.name.includes('miniapp')
-        );
-        const connectorToUse = farcasterConnector || connectors[0];
-
-        console.log('[Profile] 🔗 Using connector:', connectorToUse.name);
-
-        const connectResult = await connectAsync({ connector: connectorToUse });
-        console.log('[Profile] 🔗 Connected successfully:', connectResult);
-
-        walletAddress = connectResult.accounts[0];
-
-        // Wait a bit for the connection to be established
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
-        console.error('[Profile] 🔗 Connection failed:', error);
-        setApproveError('Failed to connect wallet. Please try again.');
-        return;
-      }
-    }
-
-    if (!walletAddress) {
-      console.log('[Profile] ❌ No wallet address found from any source after connection attempt');
-      setApproveError('Wallet not connected. Please connect your wallet in Farcaster first.');
-      return;
-    }
-
-    console.log('[Profile] ✅ Using wallet address:', walletAddress);
-
-    if (!writeContract) {
-      console.log('[Profile] writeContract not available');
-      setApproveError('Wallet not ready. Please refresh and try again.');
-      return;
-    }
+    setApproving(true);
+    setApproveError(null);
 
     try {
+      // Debug current state
+      console.log('[Profile] 🔍 Current state:', {
+        accountAddress: account?.address,
+        accountConnected: account?.isConnected,
+        profileWalletAddress: profile?.walletAddress,
+        contextAvailable: !!context,
+        writeContractAvailable: !!writeContract,
+        availableConnectors: connectors.map((c) => ({ name: c.name, id: c.id }))
+      });
+
+      // Save settings first
+      if (spendLimit !== profile?.spendLimit) {
+        await saveSpendLimit(spendLimit);
+      }
+      if (chapterTipAmount !== profile?.chapterTipAmount) {
+        await saveChapterTipAmount(chapterTipAmount);
+      }
+
+      // Check if writeContract is available
+      if (!writeContract) {
+        console.log('[Profile] ❌ writeContract not available');
+        setApproveError('Contract interaction not ready. Please refresh the page and try again.');
+        return;
+      }
+
+      // Check if account is connected
+      if (!account?.isConnected || !account?.address) {
+        console.log('[Profile] ❌ Account not connected');
+        setApproveError('Wallet not connected. Please ensure you are in Farcaster and try again.');
+        return;
+      }
+
+      console.log('[Profile] ✅ Account connected, proceeding with ERC20 approval');
       console.log('[Profile] 🎯 Calling ERC20 approve with:', {
         contract: usdcAddress,
         spender: spenderAddress,
         amount: approveAmount.toString(),
-        walletAddress: walletAddress
+        account: account.address
       });
 
+      // Call ERC20 approve directly
       writeContract({
         abi: ERC20_ABI,
         address: usdcAddress as `0x${string}`,
         functionName: 'approve',
         args: [spenderAddress as `0x${string}`, approveAmount]
       });
-    } catch (error) {
-      console.error('[Profile] ERC20 approve failed:', error);
-      setApproveError('Failed to approve spending. Please try again.');
+    } catch (error: any) {
+      console.error('[Profile] 🔥 Error in handleFarcasterApproval:', error);
+      setApproveError(`Failed to approve spending: ${error.message || 'Unknown error'}`);
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -965,10 +938,16 @@ export default function ProfilePage() {
                 {isFarcasterUser ? (
                   <Button
                     onClick={handleFarcasterApproval}
-                    disabled={saving || isApprovePending || isApproveTxLoading || !writeContract}
+                    disabled={
+                      saving ||
+                      approving ||
+                      isApprovePending ||
+                      isApproveTxLoading ||
+                      !writeContract
+                    }
                     className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-200"
                   >
-                    {isApprovePending || isApproveTxLoading ? (
+                    {approving || isApprovePending || isApproveTxLoading ? (
                       <div className="flex items-center gap-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                         <span>Approving...</span>
@@ -1014,14 +993,25 @@ export default function ProfilePage() {
               </div>
 
               {/* Error Messages */}
-              {isFarcasterUser && isApproveError && (
+              {isFarcasterUser && (isApproveError || approveError) && (
                 <div className="flex items-center gap-3 text-sm text-red-400 bg-red-500/10 border border-red-400/20 p-3 rounded-lg">
                   <div className="h-4 w-4 rounded-full bg-red-400 flex items-center justify-center">
                     <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
                       <path d="M7.5 1L6.5 0 4 2.5 1.5 0 0.5 1 3 3.5 0.5 6 1.5 7 4 4.5 6.5 7 7.5 6 5 3.5z" />
                     </svg>
                   </div>
-                  <span>{approveErrorObj?.message || 'Approval failed'}</span>
+                  <span>{approveError || approveErrorObj?.message || 'Approval failed'}</span>
+                </div>
+              )}
+
+              {!isFarcasterUser && approveError && (
+                <div className="flex items-center gap-3 text-sm text-red-400 bg-red-500/10 border border-red-400/20 p-3 rounded-lg">
+                  <div className="h-4 w-4 rounded-full bg-red-400 flex items-center justify-center">
+                    <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
+                      <path d="M7.5 1L6.5 0 4 2.5 1.5 0 0.5 1 3 3.5 0.5 6 1.5 7 4 4.5 6.5 7 7.5 6 5 3.5z" />
+                    </svg>
+                  </div>
+                  <span>{approveError}</span>
                 </div>
               )}
 
