@@ -50,13 +50,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <SWRProvider>
                     <header className="border-b border-white/10 bg-black/50 backdrop-blur supports-[backdrop-filter]:bg-black/30 sticky top-0 z-50">
                       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                        <Link href="/" className="flex items-center gap-3">
-                          <img src="/placeholder.png" alt="Asterion Logo" className="h-8 w-8" />
+                        <Link href="/" className="flex items-center gap-2 sm:gap-3">
+                          <img
+                            src="/placeholder.png"
+                            alt="Asterion Logo"
+                            className="h-6 w-6 sm:h-8 sm:w-8"
+                          />
                           <div className="flex flex-col">
-                            <span className="font-bold text-xl leading-tight text-white">
+                            <span className="font-bold text-lg sm:text-xl leading-tight text-white">
                               Asterion
                             </span>
-                            <span className="text-sm text-gray-400 leading-tight">
+                            <span className="text-xs sm:text-sm text-gray-400 leading-tight hidden sm:block">
                               Discover Amazing Stories
                             </span>
                           </div>

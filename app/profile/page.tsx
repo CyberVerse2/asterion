@@ -200,6 +200,13 @@ export default function ProfilePage() {
     willUseERC20: isFarcasterUser
   });
 
+  // ADDITIONAL DEBUG: Log the exact button that will be rendered
+  console.log('[Profile] Button logic debug:', {
+    isFarcasterUser,
+    buttonType: isFarcasterUser ? 'FARCASTER (ERC20)' : 'WALLET (Coinbase)',
+    functionToCall: isFarcasterUser ? 'handleFarcasterApproval' : 'handleApproveSpend'
+  });
+
   // Use OnchainKit components only for wallet-only users (no Farcaster context)
   const isWalletOnly = profile && profile.walletAddress && !hasFarcasterContext;
 
@@ -283,6 +290,12 @@ export default function ProfilePage() {
 
   // Move handleApproveSpend inside the component
   async function handleApproveSpend() {
+    console.log(
+      '[Profile] 🚨 handleApproveSpend called - This should be Coinbase spend permissions'
+    );
+    console.log('[Profile] 🚨 User type check:', { isFarcasterUser, profileFid: profile?.fid });
+    console.log('[Profile] 🚨 This function should NOT be called for Farcaster users!');
+
     setApproving(true);
     setApproveError(null);
     setTransactionStatus(null);
@@ -483,6 +496,9 @@ export default function ProfilePage() {
 
   // Handle Farcaster approval with connector check
   const handleFarcasterApproval = async () => {
+    console.log('[Profile] 🎯 handleFarcasterApproval called - This should be ERC20 approve');
+    console.log('[Profile] 🎯 User type check:', { isFarcasterUser, profileFid: profile?.fid });
+
     if (!account?.address) {
       console.log('[Profile] No account address, attempting to connect...');
       try {
