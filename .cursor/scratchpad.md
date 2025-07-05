@@ -1014,321 +1014,43 @@ Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** o
 
 - **Result**: ✅ Now properly validates ERC20 approval status for Farcaster users
 
-### 🔧 **CRITICAL FIX - Username Generation Only for Wallet-Only Users - COMPLETED**
+### 🔧 **CRITICAL FIX - Race Condition in Farcaster Context Loading - COMPLETED**
 
-**Issue**: Username generation was potentially happening for Farcaster users due to flawed logic in UserProvider
-
-**Root Cause Analysis**:
-
-- The Farcaster user creation condition was `if (fid && username && !user && !userLoading)`
-- If username extraction failed for a Farcaster user, they would NOT be created as a Farcaster user
-- This could cause them to fall through to the wallet-only user creation flow
-- Wallet-only flow generates usernames, which should NEVER happen for Farcaster users
-
-**Solution Implemented**:
-
-1. **Fixed Farcaster User Detection**: Changed condition to `if (fid && !user && !userLoading)`
-
-   - Now ANY user with an fid is ALWAYS treated as a Farcaster user
-   - Added explicit error handling if username extraction fails for Farcaster users
-   - Prevents fallback to wallet-only flow for Farcaster users
-
-2. **Enhanced Wallet-Only User Protection**: Added multiple safeguards to prevent Farcaster users from being created as wallet-only users
-
-   - Check for Farcaster context with fid before creating wallet-only user
-   - Additional check: if context exists but no fid, still skip wallet-only flow
-   - Comprehensive logging to track user type determination
-
-3. **Improved Error Handling**: Added explicit error when Farcaster user has fid but no username
-   - This should never happen, but if it does, we now fail gracefully with a clear error message
-   - Prevents silent creation of incorrect user types
-
-**Code Changes**:
-
-```typescript
-// Before (WRONG):
-if (fid && username && !user && !userLoading) {
-  // Create Farcaster user
-}
-
-// After (CORRECT):
-if (fid && !user && !userLoading) {
-  if (!username) {
-    setUserError('Farcaster user found but username could not be extracted');
-    return;
-  }
-  // Create Farcaster user
-}
-
-// Enhanced wallet-only protection:
-if (context) {
-  console.log(
-    '[UserProvider] Context exists but no fid found, skipping wallet-only flow to avoid conflicts'
-  );
-  return;
-}
-```
-
-**Files Modified**:
-
-- `providers/UserProvider.tsx` - Fixed Farcaster user detection and wallet-only user protection
-
-**Expected Behavior**:
-
-- ✅ Farcaster users are ALWAYS created as Farcaster users (never wallet-only)
-- ✅ Username generation ONLY happens for true wallet-only users
-- ✅ Clear error messages if username extraction fails for Farcaster users
-- ✅ Multiple safeguards prevent incorrect user type creation
-
-**Status**: ✅ **CRITICAL ISSUE RESOLVED** - Username generation now only happens for wallet-only users
-
-## Executor's Feedback or Assistance Requests
-
-### ✅ **Task 38 & 39 Completed Successfully**
-
-- **Spend Permission Integration**: Successfully integrated comprehensive spend permission checks across all reading entry points
-- **Permission Guard Hook**: Created reusable hook that manages state and orchestrates UI components
-- **UI Components**: All permission-related UI components are working correctly
-- **Reading Flow Protection**: All paths to reading content now require valid spend permission
-
-### 🔧 **Mobile Responsiveness Fix - COMPLETED**
-
-**Issue**: The spend permission modal was not properly responsive on mobile devices
-**Solution**: Updated `components/spend-permission-required.tsx` with comprehensive mobile optimizations:
-
-**Changes Made**:
-
-- **Container**: Added responsive padding (`p-2 sm:p-4`) and max-height (`max-h-[90vh]`) with scroll
-- **Modal Size**: Responsive width (`max-w-sm sm:max-w-md`) with proper margins
-- **Typography**: Responsive text sizes (`text-lg sm:text-xl`, `text-sm sm:text-base`)
-- **Layout**: Improved title/badge layout - stacked vertically instead of side-by-side on mobile
-- **Spacing**: Responsive spacing throughout (`mb-3 sm:mb-4`, `space-y-4 sm:space-y-6`)
-- **Icons**: Responsive icon sizes (`h-5 w-5 sm:h-6 sm:w-6`)
-- **Badges**: Better mobile sizing with responsive padding (`px-2 sm:px-3`)
-- **Buttons**: Improved button padding (`py-3 sm:py-2`) and text layout
-- **Content**: Added `min-w-0` and `flex-shrink-0` for proper text wrapping
-- **Lists**: Changed bullet point alignment to `items-start` with proper positioning
-
-**Mobile Improvements**:
-
-- Modal now properly fits on small screens without overflow
-- Text is readable and appropriately sized
-- Touch targets are properly sized
-- Content scrolls when needed
-- Better visual hierarchy on mobile
-- Improved accessibility with proper focus management
-
-### 🎯 **Next Steps**
-
-Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** or address any other requirements.
-
-### 🔧 **Profile Image Navigation & Farcaster Username Fixes - COMPLETED**
-
-**Issue 1**: Profile image wasn't clickable to navigate to profile page
-
-- **Solution**: Wrapped Farcaster user avatar in Link component with hover effects
-- **Files Modified**: `components/header-wallet.tsx`
-- **Changes Made**:
-  - Added `Link` wrapper around `UIAvatar` component
-  - Added `cursor-pointer hover:opacity-80 transition-opacity` classes
-  - Profile image now navigates to `/profile` when clicked
-- **Result**: ✅ Profile image now clickable and navigates to profile page
-
-**Issue 2**: App generating usernames instead of using actual Farcaster usernames
-
-- **Analysis**: API logic was correct - only generates usernames for wallet-only users
-- **Root Cause**: UserProvider username extraction wasn't prioritizing actual Farcaster username
-- **Solution**:
-  - Improved username extraction priority: `username` > `displayName` > `name`
-  - Added better debugging logs to track available properties in context
-  - Fixed TypeScript casting issues for OnchainKit type definitions
-- **Files Modified**: `providers/UserProvider.tsx`
-- **Changes Made**:
-  ```typescript
-  // Prioritize actual Farcaster username over display name
-  const username =
-    (userObj && (userObj as any).username) || // First try actual username
-    (clientObj && (clientObj as any).username) ||
-    (userObj && (userObj as any).displayName) || // Then display name
-    (clientObj && (clientObj as any).displayName) ||
-    (userObj && (userObj as any).name) || // Finally name
-    (clientObj && (clientObj as any).name);
-  ```
-- **Result**: ✅ Now properly uses actual Farcaster usernames when available
-
-**TypeScript Compilation Fixes**:
-
-- Fixed linter errors related to OnchainKit type definitions
-- Added proper type casting for Farcaster-specific properties
-- All TypeScript errors resolved
-
-**Status**: ✅ Both issues resolved. Profile navigation working and Farcaster usernames properly extracted.
-
-### 🔧 **CRITICAL FIX - Spend Permission Button Logic Corrected - COMPLETED**
-
-**Issue**: Farcaster users were getting routed to Coinbase spend permissions instead of ERC20 approve when clicking "Approve Spend"
+**Issue**: The app was creating wallet-only users with generated usernames even when running in Farcaster context, due to a race condition where wallet-only user creation happened before Farcaster context became available.
 
 **Root Cause Analysis**:
 
-- The `hasFarcasterContext` detection was not reliable in all scenarios
-- Some Farcaster users were being incorrectly identified as wallet-only users
-- This caused them to use Coinbase spend permissions instead of ERC20 approve
+- The `farcasterContextChecked` flag was being set to `true` immediately when context was `null`
+- However, the Farcaster context might still be loading and become available later
+- This caused the wallet-only user creation to trigger before the Farcaster context was fully loaded
+- Result: Generated username like "BraveRanger820" instead of using the actual Farcaster username "thecyberverse"
+
+**Timeline from logs**:
+
+1. Context is `null` → `farcasterContextChecked` set to `true`
+2. Wallet-only user created with generated username "BraveRanger820"
+3. Later, Farcaster context becomes available with real data (fid: 656588, username: 'thecyberverse')
+4. But user already exists, so Farcaster user creation is skipped
 
 **Solution Implemented**:
 
-1. **Enhanced Farcaster Detection**: Added comprehensive debugging and improved detection logic
+1. **Added Timeout Mechanism**: Instead of immediately marking `farcasterContextChecked` as `true` when context is `null`, we now set a 2-second timeout
+2. **Proper Context State Management**: Added `contextLoadingTimeout` state to track the timeout
+3. **Timeout Cleanup**: Proper cleanup of timeouts to prevent memory leaks
+4. **Delayed Wallet-Only Fallback**: Wallet-only user creation only happens after the timeout expires
 
-   ```typescript
-   // Alternative detection: if user has fid in profile, they're a Farcaster user
-   const isFarcasterUser = hasFarcasterContext || (profile && profile.fid);
-   ```
+**Key Changes**:
 
-2. **Updated Button Logic**: Changed from `hasFarcasterContext` to `isFarcasterUser`
-
-   - **Farcaster Users**: Now reliably use `handleFarcasterApproval` (ERC20 approve)
-   - **Wallet-Only Users**: Use `handleApproveSpend` (Coinbase spend permissions)
-
-3. **Added Debug Logging**: Comprehensive logging to track user type determination
-
-   ```typescript
-   console.log('[Profile] Final user type determination:', {
-     hasFarcasterContext,
-     profileHasFid: profile?.fid,
-     isFarcasterUser,
-     willUseERC20: isFarcasterUser
-   });
-   ```
-
-4. **Updated All References**: Changed button logic, error handling, and useEffect to use `isFarcasterUser`
-
-**Files Modified**:
-
-- `app/profile/page.tsx` - Updated user type detection and button logic
+- Added `contextLoadingTimeout` state variable
+- When context is `null`, set a 2-second timeout before marking as checked
+- Clear timeout when context becomes available
+- Proper cleanup on unmount
+- Updated logging to show "after timeout" for wallet-only creation
 
 **Expected Behavior**:
 
-- ✅ Farcaster users will now always get "Approve ERC20 Spend Permission" button
-- ✅ ERC20 approve function will be called for all Farcaster users
-- ✅ Debug logs will show user type determination process
-- ✅ No more accidental routing to Coinbase spend permissions for Farcaster users
+- In Farcaster context: Wait for context to load, then create Farcaster user with real username
+- In wallet-only context: After 2-second timeout, create wallet-only user with generated username
+- No more race conditions or incorrect user type creation
 
-**Test Instructions**:
-
-1. Open profile page as Farcaster user
-2. Check console logs for user type determination
-3. Verify button shows "Approve ERC20 Spend Permission"
-4. Click button and verify it calls ERC20 approve, not Coinbase spend permissions
-
-**Status**: ✅ **CRITICAL ISSUE RESOLVED** - Farcaster users now correctly use ERC20 approve
-
-### 🔧 **Multiple User Creation in Wallet Context Fix - COMPLETED**
-
-**Issue**: The app was generating multiple users when in wallet context, causing duplicate user records
-
-**Root Cause Analysis**:
-
-- The wallet-only user effect had a race condition between Farcaster context loading and wallet connection
-- The effect was running multiple times as the context changed, causing duplicate user creation attempts
-- The `context` was in the dependency array, causing the effect to re-run whenever context updated
-
-**Solution Implemented**:
-
-1. **Added Farcaster Context Check State**: Added `farcasterContextChecked` state to track when context has been fully evaluated
-
-   ```typescript
-   const [farcasterContextChecked, setFarcasterContextChecked] = useState(false);
-   ```
-
-2. **Updated Farcaster Effect**: Modified the Farcaster context effect to mark when context has been checked
-
-   ```typescript
-   // Always mark that we've checked Farcaster context (even if null)
-   if (!farcasterContextChecked) {
-     setFarcasterContextChecked(true);
-   }
-   ```
-
-3. **Fixed Wallet-Only Effect**: Updated the wallet-only user effect to only run after Farcaster context has been checked
-
-   ```typescript
-   // Only proceed if Farcaster context has been checked (to avoid race conditions)
-   if (!isConnected || !walletAddress || user || userLoading || !farcasterContextChecked) {
-     return;
-   }
-   ```
-
-4. **Proper Dependency Management**: Added `farcasterContextChecked` and `context` to the wallet-only effect dependencies
-
-**Files Modified**:
-
-- `providers/UserProvider.tsx` - Fixed race condition and multiple user creation
-
-**Expected Behavior**:
-
-- ✅ Wallet-only users will only be created once per session
-- ✅ No more duplicate user records in wallet context
-- ✅ Proper separation between Farcaster and wallet-only user flows
-- ✅ Race condition between context loading and wallet connection resolved
-
-**Debug Output to Expect**:
-
-```
-[UserProvider] Farcaster context: null
-[UserProvider] context is null or undefined. Skipping Farcaster user extraction.
-[UserProvider] No Farcaster context, creating wallet-only user for address: 0x...
-[UserProvider] Creating/fetching user with payload: {walletAddress: "0x..."}
-```
-
-**Status**: ✅ **CRITICAL ISSUE RESOLVED** - Multiple user creation in wallet context fixed
-
-## Current Status / Progress Tracking
-
-**✅ COMPLETED - Task 45: Testing and Debugging**
-
-- Successfully implemented comprehensive spend permission system
-- Fixed multiple user creation issues in both Farcaster and wallet contexts
-- Resolved navbar responsiveness issues
-- Fixed profile stats responsiveness on mobile
-- Improved spend permission button logic for proper context detection
-- **NEW FIX: Spend Permission Modal After ERC20 Approval**
-  - **Issue**: After successful ERC20 approval in Farcaster context, the spend permission modal was still showing when trying to read novels
-  - **Root Cause**: The spend permission validation logic was only checking for Coinbase spend permissions, not ERC20 approvals
-  - **Solution**:
-    1. Updated `lib/utils/spend-permission.ts` to handle both Coinbase and ERC20 permission types
-    2. Added `refreshUser()` call after successful ERC20 approval to update user data
-    3. Fixed validation logic to properly check ERC20 approval status
-  - **Files Modified**: `lib/utils/spend-permission.ts`, `app/profile/page.tsx`
-  - **Status**: ✅ **FIXED** - Spend permission modal no longer shows after successful ERC20 approval
-
-**NEW FIX: Spend Permission Validation Logic Issue**:
-
-- **Issue**: The spend permission validation logic was incorrectly assuming ALL Farcaster users had valid permissions just because they had a wallet address
-- **Root Cause**: In `lib/utils/spend-permission.ts`, the validation was always returning `isValid: true` for Farcaster users with wallet addresses, regardless of actual ERC20 approval status
-- **Solution**:
-  1. **Fixed Validation Logic**: Updated `validateSpendPermission()` to check if Farcaster users have approval data before marking them as valid
-  2. **Added Approval Data Saving**: Added effect in profile page to save spend permission data after successful ERC20 approval
-  3. **Proper Permission Check**: Now checks for `spendPermission` or `spendPermissionSignature` data to determine if user has completed approval
-- **Files Modified**: `lib/utils/spend-permission.ts`, `app/profile/page.tsx`
-- **Changes Made**:
-
-  ```typescript
-  // Before (WRONG):
-  return {
-    isValid: true, // Always returned true!
-    hasPermission: true
-    // ...
-  };
-
-  // After (CORRECT):
-  const hasApprovalData = user.spendPermission || user.spendPermissionSignature;
-  if (!hasApprovalData) {
-    return {
-      isValid: false,
-      hasPermission: false,
-      errorMessage: 'ERC20 spending approval required'
-      // ...
-    };
-  }
-  ```
-
-- **Result**: ✅ Now properly validates ERC20 approval status for Farcaster users
+This fix ensures that username generation ONLY happens for actual wallet-only users, never for Farcaster users who are just slow to load their context.

@@ -29,6 +29,7 @@ export function UserProvider({ children }: UserProviderProps) {
   const [userLoading, setUserLoading] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
   const [farcasterContextChecked, setFarcasterContextChecked] = useState(false);
+  const [contextLoadingTimeout, setContextLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Function to refresh user data (fetch fresh data from API)
   const refreshUser = async () => {
@@ -86,77 +87,99 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   };
 
-  // Effect for Farcaster context (priority)
+  // Effect for Farcaster context detection and timeout management
   useEffect(() => {
     console.debug('[UserProvider] Farcaster context:', context);
 
-    // Always mark that we've checked Farcaster context (even if null)
-    if (!farcasterContextChecked) {
-      setFarcasterContextChecked(true);
+    // Clear any existing timeout
+    if (contextLoadingTimeout) {
+      clearTimeout(contextLoadingTimeout);
+      setContextLoadingTimeout(null);
     }
 
-    if (!context) {
-      console.warn(
-        '[UserProvider] context is null or undefined. Skipping Farcaster user extraction.'
-      );
-      return;
-    }
-
-    const userObj = context.user;
-    const clientObj = context.client;
-    console.debug('[UserProvider] context.user:', userObj);
-    console.debug('[UserProvider] context.client:', clientObj);
-
-    // Cast to any to access Farcaster-specific properties not in OnchainKit types
-    const fid =
-      (userObj && (userObj as any).fid) ||
-      (clientObj && ((clientObj as any).fid || (clientObj as any).clientFid));
-
-    // Prioritize actual Farcaster username over display name
-    const username =
-      (userObj && (userObj as any).username) || // First try actual username
-      (clientObj && (clientObj as any).username) ||
-      (userObj && (userObj as any).displayName) || // Then display name
-      (clientObj && (clientObj as any).displayName) ||
-      (userObj && (userObj as any).name) || // Finally name
-      (clientObj && (clientObj as any).name);
-
-    const pfpUrl =
-      (userObj && (userObj as any).pfpUrl) || (clientObj && (clientObj as any).pfpUrl) || '';
-
-    console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
-    console.debug(
-      '[UserProvider] Available userObj properties:',
-      userObj ? Object.keys(userObj) : 'none'
-    );
-    console.debug(
-      '[UserProvider] Available clientObj properties:',
-      clientObj ? Object.keys(clientObj) : 'none'
-    );
-
-    // CRITICAL: If we have an fid, this is ALWAYS a Farcaster user, regardless of username extraction
-    if (fid && !user && !userLoading) {
-      if (!username) {
-        console.error(
-          '[UserProvider] WARNING: Farcaster user has fid but no extractable username!'
-        );
-        console.error(
-          '[UserProvider] This should not happen - all Farcaster users should have usernames'
-        );
-        console.error('[UserProvider] Available context properties:', {
-          userObj: userObj ? Object.keys(userObj) : 'none',
-          clientObj: clientObj ? Object.keys(clientObj) : 'none'
-        });
-        // Don't proceed without username for Farcaster users
-        setUserError('Farcaster user found but username could not be extracted');
-        return;
+    if (context) {
+      // Context is available - mark as checked immediately
+      if (!farcasterContextChecked) {
+        console.log('[UserProvider] Farcaster context found, marking as checked');
+        setFarcasterContextChecked(true);
       }
 
-      // Farcaster user found - create/fetch (wallet address will be added later if needed)
-      const payload = { fid, username, pfpUrl };
-      console.log('[UserProvider] Creating/fetching Farcaster user:', payload);
-      createOrFetchUser(payload);
+      const userObj = context.user;
+      const clientObj = context.client;
+      console.debug('[UserProvider] context.user:', userObj);
+      console.debug('[UserProvider] context.client:', clientObj);
+
+      // Cast to any to access Farcaster-specific properties not in OnchainKit types
+      const fid =
+        (userObj && (userObj as any).fid) ||
+        (clientObj && ((clientObj as any).fid || (clientObj as any).clientFid));
+
+      // Prioritize actual Farcaster username over display name
+      const username =
+        (userObj && (userObj as any).username) || // First try actual username
+        (clientObj && (clientObj as any).username) ||
+        (userObj && (userObj as any).displayName) || // Then display name
+        (clientObj && (clientObj as any).displayName) ||
+        (userObj && (userObj as any).name) || // Finally name
+        (clientObj && (clientObj as any).name);
+
+      const pfpUrl =
+        (userObj && (userObj as any).pfpUrl) || (clientObj && (clientObj as any).pfpUrl) || '';
+
+      console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
+      console.debug(
+        '[UserProvider] Available userObj properties:',
+        userObj ? Object.keys(userObj) : 'none'
+      );
+      console.debug(
+        '[UserProvider] Available clientObj properties:',
+        clientObj ? Object.keys(clientObj) : 'none'
+      );
+
+      // CRITICAL: If we have an fid, this is ALWAYS a Farcaster user, regardless of username extraction
+      if (fid && !user && !userLoading) {
+        if (!username) {
+          console.error(
+            '[UserProvider] WARNING: Farcaster user has fid but no extractable username!'
+          );
+          console.error(
+            '[UserProvider] This should not happen - all Farcaster users should have usernames'
+          );
+          console.error('[UserProvider] Available context properties:', {
+            userObj: userObj ? Object.keys(userObj) : 'none',
+            clientObj: clientObj ? Object.keys(clientObj) : 'none'
+          });
+          // Don't proceed without username for Farcaster users
+          setUserError('Farcaster user found but username could not be extracted');
+          return;
+        }
+
+        // Farcaster user found - create/fetch (wallet address will be added later if needed)
+        const payload = { fid, username, pfpUrl };
+        console.log('[UserProvider] Creating/fetching Farcaster user:', payload);
+        createOrFetchUser(payload);
+      }
+    } else {
+      // Context is null - set a timeout to wait for it to potentially load
+      if (!farcasterContextChecked) {
+        console.log(
+          '[UserProvider] Context is null, setting timeout to wait for potential Farcaster context'
+        );
+        const timeout = setTimeout(() => {
+          console.log('[UserProvider] Farcaster context timeout reached, marking as checked');
+          setFarcasterContextChecked(true);
+        }, 2000); // Wait 2 seconds for Farcaster context to load
+
+        setContextLoadingTimeout(timeout);
+      }
     }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (contextLoadingTimeout) {
+        clearTimeout(contextLoadingTimeout);
+      }
+    };
   }, [context, user, userLoading, farcasterContextChecked]);
 
   // Separate effect to update existing Farcaster user with wallet address when it becomes available
@@ -186,17 +209,17 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   }, [user, walletAddress]);
 
-  // Effect for wallet-only users (fallback when no Farcaster context)
+  // Effect for wallet-only users (fallback when no Farcaster context after timeout)
   useEffect(() => {
     // Only proceed if:
     // 1. Wallet is connected
     // 2. No user is currently loaded/loading
-    // 3. Farcaster context has been checked (to avoid race conditions)
+    // 3. Farcaster context has been checked (either found or timeout reached)
     if (!isConnected || !walletAddress || user || userLoading || !farcasterContextChecked) {
       return;
     }
 
-    // CRITICAL: Check if we have Farcaster context - if yes, skip wallet-only flow
+    // CRITICAL: Double-check if we have Farcaster context - if yes, skip wallet-only flow
     // This prevents Farcaster users from being created as wallet-only users
     const hasFarcasterContext =
       context &&
@@ -218,7 +241,7 @@ export function UserProvider({ children }: UserProviderProps) {
     }
 
     console.log(
-      '[UserProvider] No Farcaster context detected, creating wallet-only user for address:',
+      '[UserProvider] No Farcaster context detected after timeout, creating wallet-only user for address:',
       walletAddress
     );
     console.log('[UserProvider] Context state:', {
