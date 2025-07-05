@@ -45,13 +45,13 @@ export function UserProvider({ children }) {
   // Helper function to create or fetch user
   const createOrFetchUser = async (payload) => {
     console.log('[UserProvider] Creating/fetching user with payload:', payload);
-    setUserLoading(true);
-    setUserError(null);
+        setUserLoading(true);
+        setUserError(null);
 
     try {
       const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -59,14 +59,14 @@ export function UserProvider({ children }) {
       if (!response.ok) {
         const err = await response.json();
         console.error('[UserProvider] /api/users error response:', err);
-        throw new Error(err.error || 'Unknown error');
-      }
+              throw new Error(err.error || 'Unknown error');
+            }
 
       const userData = await response.json();
       setUser(userData);
       console.debug('[UserProvider] User created/fetched:', userData);
     } catch (err) {
-      setUserError(err.message);
+            setUserError(err.message);
       console.error('[UserProvider] User onboarding error:', err);
     } finally {
       setUserLoading(false);

@@ -852,18 +852,6 @@ export default function IndividualChapterPage() {
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-2 text-gray-400">
-              <button
-                type="button"
-                onClick={handleLove}
-                disabled={hasLoved || tradePending}
-                className="focus:outline-none"
-                aria-label={`Love this chapter ${tipAmountDisplay} USDC`}
-              >
-                <Heart className={`h-5 w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
-              </button>
-              <span>{tipCount}</span>
-            </div>
           </div>
           <div className="text-sm text-gray-400">Chapter {chapter.chapterNumber}</div>
         </CardHeader>
@@ -909,15 +897,31 @@ export default function IndividualChapterPage() {
         />
       ))}
 
-      {/* Floating Back to Novel Button */}
-      <button
-        type="button"
-        onClick={goBackToNovel}
-        className="fixed left-2 top-1/2 transform -translate-y-1/2 z-50 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-2 sm:p-3 text-gray-400 hover:text-white hover:bg-white/20 transition-all duration-300 shadow-lg md:left-4 touch-manipulation"
-        aria-label="Back to Novel"
-      >
-        <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-      </button>
+      {/* Floating Action Buttons - Back and Love, stacked and responsive */}
+      <div className="fixed left-2 md:left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-4">
+        <button
+          type="button"
+          onClick={goBackToNovel}
+          className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-2 sm:p-3 text-gray-400 hover:text-white hover:bg-white/20 transition-all duration-300 shadow-lg touch-manipulation mb-1"
+          aria-label="Back to Novel"
+        >
+          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleLove}
+          disabled={hasLoved || tradePending}
+          className={`focus:outline-none bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-3 text-gray-400 hover:text-red-500 hover:bg-red-100/20 transition-all duration-300 shadow-lg ${
+            hasLoved ? 'text-red-500 bg-red-100/20' : ''
+          }`}
+          aria-label={`Love this chapter ${tipAmountDisplay} USDC`}
+        >
+          <Heart className={`h-6 w-6 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`} />
+        </button>
+        <span className="text-xs text-gray-300 font-semibold bg-black/60 rounded px-2 py-1 mt-1 shadow-md select-none">
+          {tipCount}
+        </span>
+      </div>
 
       {/* TEST BUTTON FOR TIMEOUT DIAGNOSIS */}
       <Button
