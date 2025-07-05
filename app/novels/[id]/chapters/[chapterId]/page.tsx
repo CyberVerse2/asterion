@@ -46,6 +46,7 @@ export default function IndividualChapterPage() {
   const novelId = params.id as string;
   const chapterId = params.chapterId as string;
   const startFromTop = searchParams.get('startFromTop') === 'true';
+  const shouldRestorePosition = searchParams.get('restore') === 'true';
 
   // Spend permission guard hook
   const { isModalOpen, checkPermissionAndProceed, closeModal } = useSpendPermissionGuard();
@@ -572,6 +573,7 @@ export default function IndividualChapterPage() {
       chapter &&
       readingProgress &&
       !startFromTop &&
+      shouldRestorePosition &&
       !hasRestoredPositionRef.current &&
       contentRef.current
     ) {
@@ -579,7 +581,8 @@ export default function IndividualChapterPage() {
         chapterId,
         currentLine: readingProgress.currentLine,
         totalLines: totalLines,
-        hasRestored: hasRestoredPositionRef.current
+        hasRestored: hasRestoredPositionRef.current,
+        shouldRestorePosition
       });
       const content = contentRef.current;
       const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
@@ -627,10 +630,12 @@ export default function IndividualChapterPage() {
       if (!chapter) console.log('[ScrollRestore] Skipped: chapter not loaded');
       if (!readingProgress) console.log('[ScrollRestore] Skipped: readingProgress not loaded');
       if (startFromTop) console.log('[ScrollRestore] Skipped: startFromTop is true');
+      if (!shouldRestorePosition)
+        console.log('[ScrollRestore] Skipped: shouldRestorePosition is false');
       if (hasRestoredPositionRef.current) console.log('[ScrollRestore] Skipped: already restored');
       if (!contentRef.current) console.log('[ScrollRestore] Skipped: contentRef not ready');
     }
-  }, [chapter, readingProgress, startFromTop, totalLines, chapterId]);
+  }, [chapter, readingProgress, startFromTop, shouldRestorePosition, totalLines, chapterId]);
 
   // Reset hasRestoredPositionRef when chapterId changes
   useEffect(() => {

@@ -465,6 +465,21 @@ export default function ProfilePage() {
           if (data.status === 'success') {
             setTransactionStatus('success');
             setTransactionUrl(data.transactionUrl);
+
+            // Invalidate novel cache to refresh permission-dependent UI
+            if (typeof window !== 'undefined') {
+              import('swr').then(({ mutate }) => {
+                // Invalidate novels list cache
+                mutate('/api/novels');
+                // Invalidate all novel detail caches (SWR will match patterns)
+                mutate((key) => typeof key === 'string' && key.startsWith('/api/novels/'));
+                // Invalidate all chapters caches
+                mutate((key) => typeof key === 'string' && key.startsWith('/api/chapters'));
+                console.log(
+                  '[Profile] Novel cache invalidated after wallet spend permission approval'
+                );
+              });
+            }
           } else {
             setTransactionStatus('failure');
             setTransactionUrl(null);
@@ -617,7 +632,7 @@ export default function ProfilePage() {
         );
       }
 
-      // Task 3: Refresh user data after other tasks complete
+      // Task 3: Refresh user data and invalidate novel cache after other tasks complete
       Promise.all(tasks)
         .then(() => {
           console.log('[Profile] All post-approval tasks completed, refreshing user data...');
@@ -627,6 +642,19 @@ export default function ProfilePage() {
         })
         .then(() => {
           console.log('[Profile] User data refreshed after ERC20 approval');
+
+          // Invalidate novel cache to refresh permission-dependent UI
+          if (typeof window !== 'undefined') {
+            import('swr').then(({ mutate }) => {
+              // Invalidate novels list cache
+              mutate('/api/novels');
+              // Invalidate all novel detail caches (SWR will match patterns)
+              mutate((key) => typeof key === 'string' && key.startsWith('/api/novels/'));
+              // Invalidate all chapters caches
+              mutate((key) => typeof key === 'string' && key.startsWith('/api/chapters'));
+              console.log('[Profile] Novel cache invalidated after spend permission approval');
+            });
+          }
         })
         .catch((error) => {
           console.error('[Profile] Error in post-approval tasks:', error);

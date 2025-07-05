@@ -221,13 +221,13 @@ export default function NovelPage() {
 
     // Check spend permission before proceeding with reading
     const proceedWithReading = () => {
-      // If user has reading progress, navigate to specific chapter
+      // If user has reading progress, navigate to specific chapter with restore parameter
       if (continueReadingInfo) {
-        router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}`);
+        router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}?restore=true`);
         return;
       }
 
-      // If no reading progress, navigate to the first chapter
+      // If no reading progress, navigate to the first chapter without restore
       if (chapters && chapters.length > 0) {
         const firstChapter = chapters[0];
         router.push(`/novels/${novelId}/chapters/${firstChapter.id}`);
