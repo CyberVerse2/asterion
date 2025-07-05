@@ -869,3 +869,11 @@ The reading progress tracking feature is now **production-ready** with:
 - ✅ Position restoration working correctly
 
 **Ready for User Testing**: The new approach should provide much more reliable and intuitive reading progress tracking.
+
+## Executor's Feedback or Assistance Requests
+
+- Updated debouncedSave logic as requested. Please test scrolling and confirm you see the save logs (⏰ Save timeout executed, 💾 Actually saving progress, ✅ Progress saved successfully) even if you scroll multiple times within a few seconds.
+
+## Lessons
+
+- When implementing debounce for save operations, never clear a pending timeout if the operation is critical and must eventually execute. Only set a new timeout if none is pending, to avoid lost saves during rapid user actions.

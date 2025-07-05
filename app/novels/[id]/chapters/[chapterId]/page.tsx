@@ -79,6 +79,8 @@ export default function IndividualChapterPage() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationIdRef = useRef(0);
   const isTrackingRef = useRef(false);
+  const lastSavedLineRef = useRef(0);
+  const lastManualCheckRef = useRef(0);
 
   // Reading progress hooks
   const { readingProgress, mutate: mutateProgress } = useReadingProgress(
@@ -175,10 +177,17 @@ export default function IndividualChapterPage() {
         timestamp: new Date().toISOString()
       });
 
+      // Only set a new timeout if one is not already pending
       if (saveTimeoutRef.current) {
-        console.log('🔄 Clearing previous save timeout');
-        clearTimeout(saveTimeoutRef.current);
+        console.log('⏸️ Save already pending, not setting a new timeout');
+        return;
       }
+
+      console.log('🎯 Setting new save timeout...', {
+        lineIndex,
+        totalLinesCount,
+        timestamp: new Date().toISOString()
+      });
 
       saveTimeoutRef.current = setTimeout(async () => {
         console.log('⏰ Save timeout executed, checking conditions...', {
@@ -186,7 +195,9 @@ export default function IndividualChapterPage() {
           hasChapterId: !!chapterId,
           isTrackingActive: isTrackingRef.current,
           userId: (user as any)?.id,
-          chapterId: chapterId
+          chapterId: chapterId,
+          lineIndex,
+          totalLinesCount
         });
 
         if ((user as any)?.id && chapterId && isTrackingRef.current) {
@@ -241,9 +252,17 @@ export default function IndividualChapterPage() {
             debugInfo: 'Save conditions not met'
           });
         }
-      }, 1000);
 
-      console.log('⏳ Save timeout set for 1 second from now');
+        // Clear the timeout ref after execution
+        saveTimeoutRef.current = null;
+      }, 2000);
+
+      console.log('⏳ Save timeout set for 2 seconds from now, ID:', saveTimeoutRef.current);
+
+      // Test timeout to verify setTimeout is working
+      setTimeout(() => {
+        console.log('🧪 Test timeout executed - setTimeout is working');
+      }, 2500);
     },
     [(user as any)?.id, chapterId, novelId, saveProgress, mutateProgress]
   );
@@ -298,19 +317,37 @@ export default function IndividualChapterPage() {
     // Test observer configuration
     const observerConfig = {
       root: null, // Use viewport as root
-      rootMargin: '10px', // Small buffer to catch elements just entering/leaving
-      threshold: [0, 0.01, 0.1, 0.25, 0.5, 0.75, 1.0] // More granular thresholds
+      rootMargin: '-10% 0px -10% 0px', // Only count elements that are well within viewport
+      threshold: [0, 0.1, 0.5, 1.0] // Reduced thresholds for better performance
     };
     console.log('🎛️ Observer configuration:', observerConfig);
 
     observerRef.current = new IntersectionObserver((entries) => {
       console.log('🔍 IntersectionObserver callback triggered with', entries.length, 'entries');
+      console.log('🔍 Callback context:', {
+        isTrackingRef: isTrackingRef.current,
+        currentLine,
+        lastSavedLine,
+        totalLines,
+        timestamp: new Date().toISOString()
+      });
 
       let visibleElements = [];
       let topMostVisible = Infinity;
       let bottomMostVisible = -1;
 
-      entries.forEach((entry) => {
+      entries.forEach((entry, index) => {
+        console.log(`📋 Entry ${index}:`, {
+          isIntersecting: entry.isIntersecting,
+          intersectionRatio: entry.intersectionRatio,
+          target: entry.target.tagName,
+          boundingRect: {
+            top: entry.boundingClientRect.top,
+            bottom: entry.boundingClientRect.bottom,
+            height: entry.boundingClientRect.height
+          }
+        });
+
         if (entry.isIntersecting && entry.intersectionRatio > 0) {
           const element = entry.target;
           const lineIndex = Array.from(lines).indexOf(element as Element);
@@ -346,26 +383,45 @@ export default function IndividualChapterPage() {
         const currentReadingLine = Math.floor((topMostVisible + bottomMostVisible) / 2);
         setCurrentLine(currentReadingLine);
 
+        console.log('📍 Position update:', {
+          topMostVisible,
+          bottomMostVisible,
+          currentReadingLine,
+          previousCurrentLine: currentLine
+        });
+
         // Check if we should save progress
         if (isTrackingRef.current) {
-          const progressDelta = Math.abs(currentReadingLine - lastSavedLine);
+          const progressDelta = Math.abs(currentReadingLine - lastSavedLineRef.current);
           const visibleAreaSize = bottomMostVisible - topMostVisible + 1;
           const saveThreshold = Math.max(5, Math.floor(visibleAreaSize / 2)); // At least 5 lines or half the visible area
 
           console.log('📊 Progress check:', {
             currentReadingLine,
-            lastSavedLine,
+            lastSavedLineFromRef: lastSavedLineRef.current,
             progressDelta,
             saveThreshold,
-            shouldSave: progressDelta >= saveThreshold
+            visibleAreaSize,
+            shouldSave: progressDelta >= saveThreshold,
+            isTracking: isTrackingRef.current
           });
 
           if (progressDelta >= saveThreshold) {
             console.log('💾 Triggering save - significant progress detected');
             setLastSavedLine(currentReadingLine);
+            lastSavedLineRef.current = currentReadingLine;
             debouncedSave(currentReadingLine, lines.length);
+          } else {
+            console.log('⏸️ Not saving - progress delta too small', {
+              needed: saveThreshold,
+              actual: progressDelta
+            });
           }
+        } else {
+          console.log('⏸️ Not saving - tracking not started yet');
         }
+      } else {
+        console.log('❌ No visible elements found or invalid range');
       }
     }, observerConfig);
 
@@ -387,7 +443,7 @@ export default function IndividualChapterPage() {
       observerRef.current?.observe(line);
     });
 
-    // Add scroll event listener for debugging
+    // Add scroll event listener for manual checking when observer fails
     const handleScroll = () => {
       // Reduced logging frequency - only log every 50th scroll event to reduce spam
       if (Math.random() < 0.02) {
@@ -398,6 +454,77 @@ export default function IndividualChapterPage() {
           windowHeight: window.innerHeight,
           observerActive: !!observerRef.current
         });
+      }
+
+      // Manual fallback check if tracking is active and observer seems stuck
+      if (isTrackingRef.current && observerRef.current && contentRef.current) {
+        // Throttle manual checks to every 2 seconds to give saves time to complete
+        const now = Date.now();
+        if (now - lastManualCheckRef.current > 2000) {
+          lastManualCheckRef.current = now;
+
+          // Re-query lines since the original 'lines' variable is out of scope
+          const currentLines = contentRef.current.querySelectorAll(
+            'p, div, h1, h2, h3, h4, h5, h6'
+          );
+
+          // Manual visibility check
+          let manualTopVisible = Infinity;
+          let manualBottomVisible = -1;
+          let manualVisibleCount = 0;
+
+          currentLines.forEach((line, index) => {
+            const rect = line.getBoundingClientRect();
+            // Check if element is in viewport with 10% margin
+            const viewportTop = window.innerHeight * 0.1;
+            const viewportBottom = window.innerHeight * 0.9;
+
+            if (rect.top < viewportBottom && rect.bottom > viewportTop && rect.height > 0) {
+              manualVisibleCount++;
+              if (index < manualTopVisible) {
+                manualTopVisible = index;
+              }
+              if (index > manualBottomVisible) {
+                manualBottomVisible = index;
+              }
+            }
+          });
+
+          if (manualVisibleCount > 0 && manualTopVisible !== Infinity) {
+            const manualCurrentLine = Math.floor((manualTopVisible + manualBottomVisible) / 2);
+            const progressDelta = Math.abs(manualCurrentLine - lastSavedLineRef.current);
+            const visibleAreaSize = manualBottomVisible - manualTopVisible + 1;
+            const saveThreshold = Math.max(5, Math.floor(visibleAreaSize / 2));
+
+            console.log('🔧 Manual scroll check:', {
+              manualVisibleCount,
+              manualTopVisible,
+              manualBottomVisible,
+              manualCurrentLine,
+              lastSavedLineFromRef: lastSavedLineRef.current,
+              progressDelta,
+              saveThreshold,
+              shouldSave: progressDelta >= saveThreshold,
+              totalLines: currentLines.length
+            });
+
+            if (progressDelta >= saveThreshold) {
+              console.log('💾 Manual scroll trigger - saving progress');
+              setCurrentLine(manualCurrentLine);
+              setTopVisibleLine(manualTopVisible);
+              setBottomVisibleLine(manualBottomVisible);
+              setLastSavedLine(manualCurrentLine);
+              // Update ref immediately to prevent duplicate saves
+              lastSavedLineRef.current = manualCurrentLine;
+              debouncedSave(manualCurrentLine, currentLines.length);
+            } else {
+              console.log('⏸️ Manual check - not saving, progress too small:', {
+                needed: saveThreshold,
+                actual: progressDelta
+              });
+            }
+          }
+        }
       }
     };
 
@@ -412,15 +539,27 @@ export default function IndividualChapterPage() {
   // Start tracking after initial delay - fixed timing
   useEffect(() => {
     if (isInitialized && !isTracking) {
+      console.log('⏰ Setting up tracking timer...');
       const timer = setTimeout(() => {
         console.log('🚀 Starting reading progress tracking');
+        console.log('🔧 Tracking context:', {
+          isInitialized,
+          totalLines,
+          userId: (user as any)?.id,
+          chapterId,
+          observerActive: !!observerRef.current
+        });
         setIsTracking(true);
         isTrackingRef.current = true;
+        console.log('✅ Tracking started - isTrackingRef.current =', isTrackingRef.current);
       }, 2000); // Start tracking after 2 seconds
 
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('🧹 Cleaning up tracking timer');
+        clearTimeout(timer);
+      };
     }
-  }, [isInitialized, isTracking]);
+  }, [isInitialized, isTracking, totalLines, user, chapterId]);
 
   // Restore reading position
   const restoreReadingPosition = useCallback(() => {
@@ -440,6 +579,7 @@ export default function IndividualChapterPage() {
         }, 500);
         setCurrentLine(readingProgress.currentLine);
         setLastSavedLine(readingProgress.currentLine);
+        lastSavedLineRef.current = readingProgress.currentLine;
       }
     }
   }, [readingProgress, startFromTop]);
@@ -584,6 +724,8 @@ export default function IndividualChapterPage() {
     if (startFromTop && chapter) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setCurrentLine(0);
+      setLastSavedLine(0);
+      lastSavedLineRef.current = 0;
     }
   }, [startFromTop, chapter]);
 
