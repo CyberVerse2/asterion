@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 // @ts-ignore
-import { Heart, Users, Star } from 'lucide-react';
+import { Heart, Users, Star, BookOpen, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -66,56 +66,32 @@ export default function NovelCard({ novel }: NovelCardProps) {
           </div>
 
           {/* Stats */}
-          <div className="stats-card rounded-lg p-3">
+          <div className="stats-card rounded-lg p-1.5">
             <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <div className="text-lg font-bold text-white">
-                  {(() => {
-                    const chaptersNum = Number(novel.totalChapters);
-                    if (!isNaN(chaptersNum) && chaptersNum > 0) {
-                      return (chaptersNum / 1000).toFixed(2) + 'K';
-                    }
-                    return '0K';
-                  })()}
+              <div className="flex items-center justify-center gap-1">
+                <BookOpen className="h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="text-sm font-bold text-white px-1">
+                    {(() => {
+                      const chaptersNum = Number(novel.totalChapters);
+                      if (!isNaN(chaptersNum) && chaptersNum > 0) {
+                        return (chaptersNum / 1000).toFixed(2) + 'K';
+                      }
+                      return '0K';
+                    })()}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400">CHAPTERS</div>
               </div>
-              <div>
-                <div className="text-lg font-bold text-white">{novel.views || '0'}</div>
-                <div className="text-xs text-gray-400">VIEWS</div>
+              <div className="flex items-center justify-center gap-1">
+                <Eye className="h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="text-sm font-bold text-white px-1">{novel.views || '0'}</div>
+                </div>
               </div>
             </div>
           </div>
-
-
-
           <p className="text-sm text-gray-400 line-clamp-3">{novel.summary}</p>
         </CardContent>
-        <CardFooter className="p-4 pt-0 mt-auto">
-          <div className="w-full">
-            <div className="flex justify-between items-center text-sm text-gray-400">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Heart className="h-4 w-4" />
-                  <span>{novel.loves}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{novel.tipCount}</span>
-                </div>
-              </div>
-              <div className="text-purple-400 font-medium">
-                {(() => {
-                  const tipsNum = Number(novel.totalTips);
-                  if (!isNaN(tipsNum) && tipsNum > 0) {
-                    return `$${tipsNum.toFixed(2)} tipped`;
-                  }
-                  return '$0.00 tipped';
-                })()}
-              </div>
-            </div>
-          </div>
-        </CardFooter>
       </Card>
     </Link>
   );
