@@ -559,7 +559,7 @@ export default function ProfilePage() {
                         : '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 px-2">
                     <div className="text-lg sm:text-xl font-bold truncate text-white">
                       {typeof profile?.username === 'string' ? profile.username : 'unknown'}
                     </div>
@@ -596,44 +596,42 @@ export default function ProfilePage() {
           {/* Enhanced Stats Cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-6">
             <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-green-400/30">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-green-400">
-                  Tipped
-                </CardTitle>
-                <div className="p-2 bg-green-500/20 rounded-full">
-                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
+              <CardContent className="p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-green-500/20 rounded-full">
+                    <DollarSign className="h-4 w-4 text-green-400" />
+                  </div>
+                  <span className="text-sm text-green-400">Tipped</span>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg sm:text-2xl font-bold text-green-400">
-                  $
-                  {Array.isArray(profile?.tips)
-                    ? (profile.tips as TipWithNovel[])
-                        .reduce(
-                          (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
-                          0
-                        )
-                        .toFixed(2)
-                    : '0.00'}
+                <div className="text-right">
+                  <div className="text-lg font-bold text-green-400">
+                    $
+                    {Array.isArray(profile?.tips)
+                      ? (profile.tips as TipWithNovel[])
+                          .reduce(
+                            (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
+                            0
+                          )
+                          .toFixed(2)
+                      : '0.00'}
+                  </div>
                 </div>
-                <div className="text-xs text-green-300 mt-1">Supporting authors</div>
               </CardContent>
             </Card>
 
             <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-blue-400/30">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-blue-400">
-                  Saved
-                </CardTitle>
-                <div className="p-2 bg-blue-500/20 rounded-full">
-                  <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+              <CardContent className="p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-500/20 rounded-full">
+                    <BookOpen className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <span className="text-sm text-blue-400">Saved</span>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg sm:text-2xl font-bold text-blue-400">
-                  {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
+                <div className="text-right">
+                  <div className="text-lg font-bold text-blue-400">
+                    {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
+                  </div>
                 </div>
-                <div className="text-xs text-blue-300 mt-1">Stories bookmarked</div>
               </CardContent>
             </Card>
           </div>
@@ -652,8 +650,8 @@ export default function ProfilePage() {
 
           {/* Enhanced Tipping History */}
           <Card className="novel-card-dark border-white/10">
-            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-white">
+            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg p-3 space-y-0">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-1 text-white">
                 Recent Tips
                 <Badge
                   variant="secondary"
@@ -685,7 +683,7 @@ export default function ProfilePage() {
                             {tip.date ? new Date(tip.date).toLocaleDateString() : 'Unknown date'}
                           </div>
                         </div>
-                        <Badge className="flex items-center gap-1 flex-shrink-0 bg-green-500/20 text-green-300 border-green-400/30">
+                        <Badge className="flex items-center flex-shrink-0 bg-green-500/20 text-green-300 border-green-400/30 px-1">
                           <DollarSign className="h-3 w-3" />
                           <span className="text-xs">
                             {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
@@ -722,8 +720,8 @@ export default function ProfilePage() {
 
           {/* Enhanced Spend Settings */}
           <Card className="novel-card-dark border-white/10">
-            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-white">
+            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg p-3 space-y-0">
+              <CardTitle className="flex items-center gap-1 text-base sm:text-lg text-white">
                 Spend Settings
                 <TooltipProvider>
                   <Tooltip>
@@ -745,7 +743,7 @@ export default function ProfilePage() {
                     <h3 className="font-medium text-white">Spend Limit</h3>
                     <p className="text-xs text-gray-400">Maximum total USDC</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <span className="text-gray-400">$</span>
                     <input
                       type="number"
@@ -759,7 +757,7 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1 flex-wrap">
                   {[10, 25, 50, 100].map((amount) => (
                     <Button
                       key={amount}
@@ -786,7 +784,7 @@ export default function ProfilePage() {
                     <h3 className="font-medium text-white">Tip Amount</h3>
                     <p className="text-xs text-gray-400">Per chapter tip</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <span className="text-gray-400">$</span>
                     <input
                       type="number"
@@ -801,7 +799,7 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1 flex-wrap">
                   {[0.01, 0.05, 0.1, 0.25].map((amount) => (
                     <Button
                       key={amount}
