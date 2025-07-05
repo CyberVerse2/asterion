@@ -12,6 +12,7 @@ import { DollarSign, BookOpen, ArrowLeft, Star, Library, Eye, MessageCircle } fr
 import Link from 'next/link';
 import { useUser } from '@/providers/UserProvider';
 import { useNovel, useChapters } from '@/hooks/useNovels';
+import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 
 interface Novel {
   id: string;
@@ -65,10 +66,16 @@ export default function NovelPage() {
   const { novel, isLoading, error, mutate: mutateNovel } = useNovel(novelId);
   const { chapters, isLoading: chaptersLoading, mutate: mutateChapters } = useChapters(novelId);
 
+  // Fetch user's reading progress for this novel
+  const { user }: { user: any } = useUser();
+  const { readingProgress, isLoading: progressLoading } = useNovelReadingProgress(
+    user?.id || null,
+    novelId
+  );
+
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isReading, setIsReading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const { user }: { user: any } = useUser();
   const summaryRef = useRef<HTMLDivElement>(null);
   const [summaryHeight, setSummaryHeight] = useState<number | undefined>(undefined);
   const [bookmarking, setBookmarking] = useState(false);
@@ -105,6 +112,59 @@ export default function NovelPage() {
     };
   }, [novel, chapters.length, randomReviews]);
 
+  // Calculate continue reading information
+  const continueReadingInfo = useMemo(() => {
+    if (!readingProgress || !Array.isArray(readingProgress) || !Array.isArray(chapters)) {
+      return null;
+    }
+
+    // Find the most recently read chapter
+    const lastReadProgress = readingProgress
+      .filter((progress) => progress.lastReadAt)
+      .sort((a, b) => new Date(b.lastReadAt).getTime() - new Date(a.lastReadAt).getTime())[0];
+
+    if (!lastReadProgress) {
+      return null;
+    }
+
+    // Find the corresponding chapter
+    const lastReadChapter = chapters.find((chapter) => chapter.id === lastReadProgress.chapterId);
+
+    if (!lastReadChapter) {
+      return null;
+    }
+
+    // Check if the chapter is completed (95% or more)
+    const isCompleted = lastReadProgress.currentLine / lastReadProgress.totalLines >= 0.95;
+
+    // If completed, suggest next chapter, otherwise continue current chapter
+    if (isCompleted) {
+      const currentChapterIndex = chapters.findIndex(
+        (chapter) => chapter.id === lastReadChapter.id
+      );
+      const nextChapter = chapters[currentChapterIndex + 1];
+
+      if (nextChapter) {
+        return {
+          chapterId: nextChapter.id,
+          chapterTitle: nextChapter.title,
+          chapterIndex: currentChapterIndex + 1,
+          isNewChapter: true
+        };
+      }
+    }
+
+    // Continue with current chapter
+    const chapterIndex = chapters.findIndex((chapter) => chapter.id === lastReadChapter.id);
+    return {
+      chapterId: lastReadChapter.id,
+      chapterTitle: lastReadChapter.title,
+      chapterIndex: chapterIndex,
+      isNewChapter: false,
+      progress: lastReadProgress
+    };
+  }, [readingProgress, chapters]);
+
   // Memoized event handlers
   const handleBookmark = useCallback(async () => {
     if (!user || !user.id || !novel) return alert('You must be logged in to bookmark novels.');
@@ -130,9 +190,23 @@ export default function NovelPage() {
 
   const handleReadNow = useCallback(() => {
     if (!novel) return;
-    // Chapters are already loaded via SWR
+
+    // If user has reading progress, navigate to specific chapter
+    if (continueReadingInfo) {
+      router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}`);
+      return;
+    }
+
+    // If no reading progress, navigate to the first chapter
+    if (chapters && chapters.length > 0) {
+      const firstChapter = chapters[0];
+      router.push(`/novels/${novelId}/chapters/${firstChapter.id}`);
+      return;
+    }
+
+    // Fallback: if chapters are still loading or unavailable, use embedded reader
     setIsReading(true);
-  }, [novel]);
+  }, [novel, continueReadingInfo, router, novelId, chapters]);
 
   const handleChapterTipped = useCallback(
     (chapterId: string, newTipCount: number) => {
@@ -199,6 +273,26 @@ export default function NovelPage() {
       }
     }
   }, [novel, showToastNotification]);
+
+  // Calculate button text
+  const readButtonText = useMemo(() => {
+    if (chaptersLoading || progressLoading) {
+      return 'Loading...';
+    }
+
+    if (continueReadingInfo) {
+      const truncatedTitle =
+        continueReadingInfo.chapterTitle.length > 20
+          ? continueReadingInfo.chapterTitle.substring(0, 20) + '...'
+          : continueReadingInfo.chapterTitle;
+
+      return continueReadingInfo.isNewChapter
+        ? `Next: ${truncatedTitle}`
+        : `Continue: ${truncatedTitle}`;
+    }
+
+    return 'READ NOW';
+  }, [chaptersLoading, progressLoading, continueReadingInfo]);
 
   useEffect(() => {
     if (showSummary && summaryRef.current) {
@@ -521,13 +615,10 @@ export default function NovelPage() {
               <Button
                 className="col-span-2 relative overflow-hidden bg-purple-600 hover:bg-purple-700 text-white border-0 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-purple-500/25 group touch-manipulation"
                 onClick={handleReadNow}
-                disabled={chaptersLoading}
+                disabled={chaptersLoading || progressLoading}
               >
                 <div className="relative flex flex-col items-center justify-center gap-1">
-                  {/* <BookOpen className="h-8 w-8 sm:h-10 sm:w-10 transition-transform duration-300 group-hover:scale-110" /> */}
-                  <span className="text-xs sm:text-sm font-bold">
-                    {chaptersLoading ? 'Loading...' : 'READ NOW'}
-                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-center">{readButtonText}</span>
                 </div>
               </Button>
 

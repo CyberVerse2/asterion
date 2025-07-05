@@ -350,6 +350,11 @@ export default function ChapterReader({
     if (currentChapterIndex < chapters.length - 1) {
       onChapterChange(currentChapterIndex + 1);
       setHasLoved(false);
+      // Scroll to top when going to next chapter
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setCurrentLine(0);
+      }, 100);
     }
   };
 

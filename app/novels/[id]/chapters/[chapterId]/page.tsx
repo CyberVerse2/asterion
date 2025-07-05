@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -37,10 +37,12 @@ interface LoveAnimationState {
 export default function IndividualChapterPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useUser();
-  
+
   const novelId = params.id as string;
   const chapterId = params.chapterId as string;
+  const startFromTop = searchParams.get('startFromTop') === 'true';
 
   // Chapter state
   const [chapter, setChapter] = useState<Chapter | null>(null);
@@ -48,7 +50,9 @@ export default function IndividualChapterPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Navigation state
-  const [previousChapter, setPreviousChapter] = useState<{ id: string; title: string } | null>(null);
+  const [previousChapter, setPreviousChapter] = useState<{ id: string; title: string } | null>(
+    null
+  );
   const [nextChapter, setNextChapter] = useState<{ id: string; title: string } | null>(null);
 
   // Reading progress state
@@ -80,33 +84,50 @@ export default function IndividualChapterPage() {
   const tipAmountDisplay = chapterTipAmount.toFixed(2);
 
   // Fetch chapter data
-  const fetchChapter = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchChapter = useCallback(
+    async (retryCount = 0) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const response = await fetch(`/api/chapters/${chapterId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch chapter');
+        const response = await fetch(`/api/chapters/${chapterId}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Chapter not found');
+          } else if (response.status >= 500 && retryCount < 2) {
+            // Retry on server errors (up to 2 retries)
+            console.log(`Server error, retrying... (attempt ${retryCount + 1})`);
+            setTimeout(() => fetchChapter(retryCount + 1), 1000 * (retryCount + 1));
+            return;
+          } else {
+            throw new Error(`Failed to fetch chapter (${response.status})`);
+          }
+        }
+
+        const chapterData = await response.json();
+        setChapter(chapterData);
+        setTipCount(chapterData.tipCount || 0);
+
+        // Check if user has already tipped this chapter
+        if (user?.tips) {
+          const hasAlreadyTipped = user.tips.some((tip: any) => tip.chapterId === chapterId);
+          setHasLoved(hasAlreadyTipped);
+        }
+      } catch (err) {
+        console.error('Error fetching chapter:', err);
+        if (retryCount < 2 && err instanceof Error && !err.message.includes('not found')) {
+          // Retry on network errors (but not 404s)
+          console.log(`Network error, retrying... (attempt ${retryCount + 1})`);
+          setTimeout(() => fetchChapter(retryCount + 1), 1000 * (retryCount + 1));
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Failed to load chapter');
+      } finally {
+        setLoading(false);
       }
-
-      const chapterData = await response.json();
-      setChapter(chapterData);
-      setTipCount(chapterData.tipCount || 0);
-
-      // Check if user has already tipped this chapter
-      if (user?.tips) {
-        const hasAlreadyTipped = user.tips.some((tip: any) => tip.chapterId === chapterId);
-        setHasLoved(hasAlreadyTipped);
-      }
-
-    } catch (err) {
-      console.error('Error fetching chapter:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load chapter');
-    } finally {
-      setLoading(false);
-    }
-  }, [chapterId, user?.tips]);
+    },
+    [chapterId, user?.tips]
+  );
 
   // Fetch navigation data
   const fetchNavigation = useCallback(async () => {
@@ -204,7 +225,7 @@ export default function IndividualChapterPage() {
 
   // Restore reading position
   const restoreReadingPosition = useCallback(() => {
-    if (!readingProgress || !contentRef.current) return;
+    if (!readingProgress || !contentRef.current || startFromTop) return;
 
     const content = contentRef.current;
     const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
@@ -221,7 +242,7 @@ export default function IndividualChapterPage() {
         setCurrentLine(readingProgress.currentLine);
       }
     }
-  }, [readingProgress]);
+  }, [readingProgress, startFromTop]);
 
   // Love/tip handler
   const handleLove = useCallback(
@@ -287,7 +308,7 @@ export default function IndividualChapterPage() {
 
   const goToNext = () => {
     if (nextChapter) {
-      router.push(`/novels/${novelId}/chapters/${nextChapter.id}`);
+      router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
     }
   };
 
@@ -324,6 +345,14 @@ export default function IndividualChapterPage() {
     }
   }, [readingProgress, chapter, restoreReadingPosition]);
 
+  // Scroll to top when navigating from next chapter
+  useEffect(() => {
+    if (startFromTop && chapter) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setCurrentLine(0);
+    }
+  }, [startFromTop, chapter]);
+
   // Calculate progress percentage
   const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
 
@@ -341,12 +370,28 @@ export default function IndividualChapterPage() {
   if (error || !chapter) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-white">
-          {error || 'Chapter not found'}
-        </h1>
-        <Button onClick={goBackToNovel} className="bg-purple-600 hover:bg-purple-700">
-          Back to Novel
-        </Button>
+        <h1 className="text-2xl font-bold mb-4 text-white">{error || 'Chapter not found'}</h1>
+        {error && !error.includes('not found') && (
+          <p className="text-gray-400 mb-6">
+            There was a problem loading this chapter. This might be a temporary network issue.
+          </p>
+        )}
+        <div className="space-y-3">
+          {error && !error.includes('not found') && (
+            <Button
+              onClick={() => {
+                setError(null);
+                fetchChapter();
+              }}
+              className="bg-green-600 hover:bg-green-700 mr-3"
+            >
+              Try Again
+            </Button>
+          )}
+          <Button onClick={goBackToNovel} className="bg-purple-600 hover:bg-purple-700">
+            Back to Novel
+          </Button>
+        </div>
       </div>
     );
   }
@@ -414,9 +459,7 @@ export default function IndividualChapterPage() {
               <span>{tipCount}</span>
             </div>
           </div>
-          <div className="text-sm text-gray-400">
-            Chapter {chapter.chapterNumber}
-          </div>
+          <div className="text-sm text-gray-400">Chapter {chapter.chapterNumber}</div>
         </CardHeader>
         <CardContent>
           <div
@@ -450,12 +493,6 @@ export default function IndividualChapterPage() {
               {previousChapter ? 'Previous' : 'First Chapter'}
             </Button>
 
-            <div className="text-sm text-gray-400 text-center max-w-xs">
-              <div className="love-hint">
-                Click the ❤️ to love this chapter & tip author ({tipAmountDisplay} USDC)
-              </div>
-            </div>
-
             <Button
               onClick={goToNext}
               disabled={!nextChapter}
@@ -479,4 +516,4 @@ export default function IndividualChapterPage() {
       ))}
     </div>
   );
-} 
+}

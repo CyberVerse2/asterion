@@ -434,6 +434,126 @@ Users want to be able to resume reading exactly where they left off, down to the
 
 # Current Status / Progress Tracking
 
+## ✅ NEW FEATURE IMPLEMENTED - Next Chapter Starts from Top
+
+**🎉 SUCCESSFULLY IMPLEMENTED**: When users click "Next Chapter", the new chapter now starts from the very top instead of restoring the previous reading position.
+
+### 🚀 New Features Added:
+
+**✅ Individual Chapter Page Navigation**:
+
+- **URL Parameter Detection**: Added `startFromTop=true` query parameter when navigating to next chapter
+- **Conditional Restore Logic**: Modified `restoreReadingPosition` to skip position restoration when `startFromTop` is true
+- **Automatic Scroll to Top**: Added effect to scroll to page top and reset current line to 0 when coming from next chapter navigation
+- **Smooth User Experience**: Uses smooth scrolling behavior for better visual experience
+
+**✅ Embedded ChapterReader Navigation**:
+
+- **Automatic Top Scroll**: Modified `goToNext` function to scroll to top after chapter change
+- **Reading Position Reset**: Resets `currentLine` to 0 when navigating to next chapter
+- **Timing Optimization**: Added 100ms delay to ensure DOM updates before scrolling
+
+### 🔧 Technical Implementation:
+
+**Individual Chapter Page** (`/novels/[id]/chapters/[chapterId]/page.tsx`):
+
+1. **Import Enhancement**: Added `useSearchParams` from Next.js navigation
+2. **Parameter Detection**: Extract `startFromTop` from URL search parameters
+3. **Conditional Restoration**: Skip reading position restoration when `startFromTop=true`
+4. **Top Scroll Effect**: New `useEffect` that scrolls to top and resets line position
+5. **Navigation Update**: `goToNext` adds `?startFromTop=true` to next chapter URL
+
+**Embedded ChapterReader** (`components/chapter-reader.tsx`):
+
+1. **Enhanced Navigation**: `goToNext` function includes scroll-to-top logic
+2. **Position Reset**: Automatically resets current line to 0 for next chapter
+3. **Timing Coordination**: Uses setTimeout to ensure proper DOM rendering before scroll
+
+### 📱 User Experience Improvements:
+
+- **Consistent Behavior**: Both individual chapter pages and embedded reader now start from top on next chapter
+- **Reading Flow**: Users get a fresh start when moving to new chapters instead of jumping to middle of content
+- **Visual Clarity**: Smooth scrolling provides better visual feedback
+- **Proper Tracking**: Reading progress tracking starts correctly from line 0 on new chapters
+
+### 🧪 Testing Coverage:
+
+**Individual Chapter Pages**:
+
+- ✅ Next chapter navigation starts from top
+- ✅ Direct chapter access (bookmarks, etc.) still restores reading position
+- ✅ Previous chapter navigation preserves position restoration
+- ✅ URL parameter properly controls behavior
+
+**Embedded ChapterReader**:
+
+- ✅ Next chapter button scrolls to top
+- ✅ Previous chapter button maintains existing behavior
+- ✅ Reading position resets to line 0 for next chapter
+- ✅ Progress tracking starts correctly from beginning
+
+**Cross-Component Consistency**:
+
+- ✅ Both navigation methods behave identically
+- ✅ No breaking changes to existing functionality
+- ✅ Maintains backward compatibility
+
+## ✅ NEW FEATURE IMPLEMENTED - Continue Reading with Chapter Names
+
+**🎉 SUCCESSFULLY IMPLEMENTED**: The "Read Now" button now intelligently shows "Continue: Chapter Name" when users have started reading a novel.
+
+### 🚀 New Features Added:
+
+**✅ Smart Button Text**:
+
+- **"READ NOW"**: For novels the user hasn't started reading
+- **"Continue: Chapter Name"**: When user has reading progress but hasn't finished the chapter
+- **"Next: Chapter Name"**: When user completed the last read chapter and there's a next chapter available
+- **Chapter name truncation**: Long chapter titles are truncated to 20 characters with "..." for better UI
+
+**✅ Reading Progress Integration**:
+
+- Uses `useNovelReadingProgress` hook to fetch user's reading progress across all chapters
+- Identifies the most recently read chapter based on `lastReadAt` timestamp
+- Calculates completion status (95% threshold for considering a chapter "completed")
+- Automatically suggests next chapter when current chapter is completed
+
+**✅ Enhanced Navigation**:
+
+- **Direct Chapter Navigation**: When user has progress, button navigates directly to specific chapter page (`/novels/[id]/chapters/[chapterId]`)
+- **Fallback to Embedded Reader**: For new readers, maintains existing behavior with embedded ChapterReader
+- **Progress Restoration**: When navigating to specific chapter, user's exact reading position is restored
+
+**✅ User Experience Improvements**:
+
+- **Loading States**: Button shows "Loading..." while fetching reading progress
+- **Intelligent Chapter Selection**: Automatically determines whether to continue current chapter or start next chapter
+- **Seamless Flow**: No interruption to existing reading experience for users without progress
+
+### 🔧 Technical Implementation:
+
+**Data Flow**:
+
+1. **Fetch Progress**: `useNovelReadingProgress(userId, novelId)` retrieves all reading progress for the novel
+2. **Calculate Continue Info**: `continueReadingInfo` memoized calculation determines:
+   - Most recent chapter read
+   - Completion status (95% threshold)
+   - Whether to continue current or start next chapter
+3. **Button Logic**: `readButtonText` dynamically calculates appropriate button text
+4. **Navigation**: `handleReadNow` routes to specific chapter or embedded reader
+
+**Performance Optimizations**:
+
+- **Memoized Calculations**: Both `continueReadingInfo` and `readButtonText` are memoized to prevent unnecessary recalculations
+- **SWR Caching**: Reading progress data is cached and efficiently revalidated
+- **Conditional Loading**: Progress only fetched when user is logged in
+
+**Error Handling**:
+
+- **Graceful Fallbacks**: If progress data is unavailable, falls back to "READ NOW" behavior
+- **Safe Array Access**: Proper null/undefined checks for progress and chapters arrays
+- **Missing Chapter Handling**: Handles cases where progress references non-existent chapters
+
 ## ✅ ISSUE RESOLVED - Fixed "Read Now" Blank Page Bug
 
 **🎉 ROOT CAUSE IDENTIFIED AND FIXED**: The "Read Now" button was showing blank pages due to a **data structure mismatch** between the API response and the useChapters hook.
@@ -663,3 +783,40 @@ mutateChapters((currentData: any) => {
 ```
 
 **Test Status**: Author tipping should now work without the `.map()` error.
+
+## ✅ BUG FIX - Read Now Button Navigation Issue
+
+**🎉 SUCCESSFULLY FIXED**: The "Read Now" button now properly navigates to individual chapter pages instead of staying on the novel route with embedded reader.
+
+### 🐛 **Issue Identified**:
+
+- When clicking "Read Now" button, users were staying on the novel route (`/novels/[id]`)
+- The embedded ChapterReader component was showing instead of navigating to the individual chapter page (`/novels/[id]/chapters/[chapterId]`)
+- This was confusing because the URL didn't change and users thought they were still on the novel page
+
+### ✅ **Solution Implemented**:
+
+**Updated `handleReadNow` Function Logic**:
+
+1. **Has Reading Progress**: Navigate to the specific chapter where user left off
+2. **No Reading Progress**: Navigate to the first chapter (instead of embedded reader)
+3. **Fallback Only**: Use embedded reader only if chapters are still loading or unavailable
+
+**Navigation Behavior Now**:
+
+- ✅ **Continue Reading**: `/novels/[id]/chapters/[lastChapterId]`
+- ✅ **Start Reading**: `/novels/[id]/chapters/[firstChapterId]`
+- ✅ **Proper URL Changes**: Users can see they're on a chapter page
+- ✅ **Browser Navigation**: Back button works correctly
+- ✅ **Bookmarkable**: Users can bookmark specific chapters
+
+### 🚀 **User Experience Improvements**:
+
+- **Clear Navigation**: Users know they're on a chapter page, not the novel page
+- **Consistent Routing**: All reading actions lead to individual chapter pages
+- **Better Browser History**: Proper URL changes for navigation
+- **Mobile Friendly**: Individual chapter pages are optimized for reading
+
+---
+
+## ✅ NEW FEATURE IMPLEMENTED - Next Chapter Starts from Top
