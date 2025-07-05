@@ -432,7 +432,8 @@ export default function ProfilePage() {
             body: JSON.stringify(
               {
                 spendPermission: spendPermission,
-                signature
+                signature,
+                userId: profile.id
               },
               replacer
             )

@@ -58,7 +58,8 @@ export const useChapters = (novelId: string | null) => {
   );
 
   return {
-    chapters: data || [],
+    chapters: data?.chapters || [],
+    pagination: data?.pagination || null,
     isLoading,
     error,
     mutate

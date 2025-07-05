@@ -434,6 +434,40 @@ Users want to be able to resume reading exactly where they left off, down to the
 
 # Current Status / Progress Tracking
 
+## ✅ ISSUE RESOLVED - Fixed "Read Now" Blank Page Bug
+
+**🎉 ROOT CAUSE IDENTIFIED AND FIXED**: The "Read Now" button was showing blank pages due to a **data structure mismatch** between the API response and the useChapters hook.
+
+**The Problem**:
+
+1. **API Response Structure**: `/api/chapters` returns `{ chapters: [...], pagination: {...} }`
+2. **Hook Expected Structure**: `useChapters` was treating the entire response as the chapters array
+3. **Result**: `chapters` became `{ chapters: [...], pagination: {...} }` instead of `[...]`
+4. **ChapterReader Impact**: `currentChapter = chapters[0]` was undefined, causing blank page
+
+**✅ SOLUTION IMPLEMENTED**:
+
+- **Fixed `useChapters` hook** in `hooks/useNovels.ts`
+- **Changed**: `chapters: data || []`
+- **To**: `chapters: data?.chapters || []`
+- **Added**: `pagination: data?.pagination || null` for future use
+
+**Current Database Status**:
+
+- ✅ Novels: Present (68 novels with chapter URLs)
+- ✅ Chapters: **Being rescraped** (API returns valid chapter data)
+- ✅ Users: Functional
+- ✅ Reading Progress: Ready
+
+**What Users Will Now See**:
+
+- ✅ **"Read Now" button works properly** when chapters are available
+- ✅ **Loading state** while chapters are fetching
+- ✅ **Proper error handling** if no chapters are found
+- ✅ **Full chapter content** with reading progress tracking
+
+**Test Status**: Ready for immediate testing - the fix resolves the API response parsing issue.
+
 ## Latest Updates (Line-Level Reading Progress Tracking)
 
 **✅ COMPLETED - Core Reading Progress Tracking Implementation + Critical Bug Fixes**
@@ -568,3 +602,34 @@ The line-level reading progress tracking feature has been fully implemented and 
 The system now provides users with a professional-grade reading experience comparable to leading ebook platforms, with exact position tracking and automatic progress saving.
 
 **Ready for User Testing**: The feature is production-ready and available for user testing and feedback.
+
+## ✅ NEW BUG FIX - Fixed Spend Permission Prisma Error
+
+**🐛 ISSUE**: When users grant spend permissions, the app was throwing a Prisma error:
+
+```
+PrismaClientValidationError: Argument 'where' of type UserWhereUniqueInput needs at least one of 'id', 'fid' or 'username' arguments.
+```
+
+**🔍 ROOT CAUSE**: The `/api/collect` endpoint was being called from the profile page without the required `userId` parameter. The API route was trying to query:
+
+```typescript
+const user = await prisma.user.findUnique({ where: { id: userId } });
+```
+
+But `userId` was `undefined`.
+
+**✅ SOLUTION IMPLEMENTED**:
+
+- **Fixed profile page** (`app/profile/page.tsx`)
+- **Added missing `userId`** to the `/api/collect` request body:
+
+```typescript
+body: JSON.stringify({
+  spendPermission: spendPermission,
+  signature,
+  userId: profile.id // ← Added this missing field
+});
+```
+
+**Test Status**: Spend permission granting should now work without errors.
