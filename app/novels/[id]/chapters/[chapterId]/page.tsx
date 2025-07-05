@@ -46,7 +46,7 @@ export default function IndividualChapterPage() {
   const novelId = params.id as string;
   const chapterId = params.chapterId as string;
   const startFromTop = searchParams.get('startFromTop') === 'true';
-  const shouldRestorePosition = searchParams.get('restore') === 'true';
+  const disableRestore = searchParams.get('noRestore') === 'true';
 
   // Spend permission guard hook
   const { isModalOpen, checkPermissionAndProceed, closeModal } = useSpendPermissionGuard();
@@ -66,14 +66,14 @@ export default function IndividualChapterPage() {
   const [isChapterListOpen, setIsChapterListOpen] = useState(false);
 
   // Reading progress state
+  const [lines, setLines] = useState<Element[]>([]);
   const [currentLine, setCurrentLine] = useState(0);
   const [totalLines, setTotalLines] = useState(0);
-  const [isTracking, setIsTracking] = useState(false);
-  const [lastSaveTime, setLastSaveTime] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [topVisibleLine, setTopVisibleLine] = useState(0);
-  const [bottomVisibleLine, setBottomVisibleLine] = useState(0);
-  const [lastSavedLine, setLastSavedLine] = useState(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedLineRef = useRef<number>(0);
+  const hasRestoredRef = useRef(false);
+  const initializedRef = useRef(false);
 
   // Love/tip state
   const [hasLoved, setHasLoved] = useState(false);
@@ -85,18 +85,11 @@ export default function IndividualChapterPage() {
 
   // Refs
   const contentRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const animationIdRef = useRef(0);
-  const isTrackingRef = useRef(false);
-  const lastSavedLineRef = useRef(0);
   const userRef = useRef(user);
   const chapterIdRef = useRef(chapterId);
   const novelIdRef = useRef(novelId);
-  const hasRestoredPositionRef = useRef(false);
   const recentTipTimestampRef = useRef<number>(0);
-  const currentLinesRef = useRef<NodeListOf<Element> | null>(null);
-  const hasInitializedTrackingRef = useRef(false);
+  const animationIdRef = useRef(0);
 
   // Reading progress hooks
   const { readingProgress, mutate: mutateProgress } = useReadingProgress(
@@ -197,116 +190,14 @@ export default function IndividualChapterPage() {
     }
   }, [chapterId]);
 
-  // Save function - now immediate, not debounced
-  const saveImmediately = useCallback(
-    async (lineIndex: number, totalLinesCount: number) => {
-      const currentUser = userRef.current;
-      const currentChapterId = chapterIdRef.current;
-      const currentNovelId = novelIdRef.current;
-
-      console.log('💾 saveImmediately called:', {
-        lineIndex,
-        totalLinesCount,
-        userId: (currentUser as any)?.id,
-        chapterId: currentChapterId,
-        novelId: currentNovelId,
-        hasUser: !!(currentUser as any)?.id,
-        hasChapterId: !!currentChapterId,
-        isTracking: isTrackingRef.current,
-        userType: currentUser ? 'loaded' : 'not loaded',
-        timestamp: new Date().toISOString()
-      });
-
-      // Enhanced condition checking with detailed logging
-      if (!(currentUser as any)?.id) {
-        console.error('❌ Cannot save - User ID not available:', {
-          currentUser,
-          userFromHook: (user as any)?.id,
-          userRef: userRef.current,
-          debugInfo: 'User data not loaded or missing ID'
-        });
-        return;
-      }
-
-      if (!currentChapterId) {
-        console.error('❌ Cannot save - Chapter ID not available:', {
-          currentChapterId,
-          chapterIdFromParams: chapterId,
-          chapterIdRef: chapterIdRef.current,
-          debugInfo: 'Chapter ID not available'
-        });
-        return;
-      }
-
-      if (!isTrackingRef.current) {
-        console.error('❌ Cannot save - Tracking not active:', {
-          isTrackingRef: isTrackingRef.current,
-          isTrackingState: isTracking,
-          isInitialized,
-          debugInfo: 'Tracking not started yet'
-        });
-        return;
-      }
-
-      // All conditions met, proceed with save
-      console.log('✅ All conditions met, proceeding with save:', {
-        userId: (currentUser as any).id,
-        chapterId: currentChapterId,
-        lineIndex,
-        totalLinesCount
-      });
-
-      try {
-        const result = await saveProgress({
-          userId: (currentUser as any).id,
-          chapterId: currentChapterId,
-          currentLine: lineIndex,
-          totalLines: totalLinesCount,
-          scrollPosition: window.scrollY
-        });
-        console.log('✅ Progress saved successfully:', result);
-
-        // Update local cache
-        mutateProgress();
-
-        // Invalidate novel reading progress cache
-        if (typeof window !== 'undefined') {
-          const { mutate } = await import('swr');
-          mutate(
-            `/api/reading-progress?userId=${(currentUser as any).id}&novelId=${currentNovelId}`
-          );
-          console.log('🔄 Cache invalidated for novel reading progress');
-        }
-      } catch (error: any) {
-        console.error('❌ Error saving reading progress:', error);
-        console.error('📋 Error details:', {
-          message: error?.message || String(error),
-          stack: error?.stack,
-          userId: (currentUser as any).id,
-          chapterId: currentChapterId,
-          lineIndex,
-          totalLinesCount,
-          requestData: {
-            userId: (currentUser as any).id,
-            chapterId: currentChapterId,
-            currentLine: lineIndex,
-            totalLines: totalLinesCount,
-            scrollPosition: window.scrollY
-          }
-        });
-      }
-    },
-    [user, chapterId, novelId, saveProgress, mutateProgress, isTracking, isInitialized]
-  );
-
   // Initialize line tracking - fixed to prevent re-initialization loop
   const initializeLineTracking = useCallback(() => {
-    if (!contentRef.current || !user || !(user as any)?.id || isInitialized) {
+    if (!contentRef.current || !user || !(user as any)?.id || initializedRef.current) {
       console.log('⏸️ Skipping line tracking init:', {
         hasContent: !!contentRef.current,
         hasUser: !!user,
         hasUserId: !!(user as any)?.id,
-        isInitialized,
+        isInitialized: initializedRef.current,
         debugInfo: 'Missing required data for tracking initialization'
       });
       return;
@@ -315,580 +206,160 @@ export default function IndividualChapterPage() {
     console.log('🔍 Initializing line tracking for user:', (user as any)?.id);
 
     const content = contentRef.current;
-    const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
-    currentLinesRef.current = lines;
+    // 1) Grab elements in a local var
+    const lineElements = Array.from(
+      content.querySelectorAll<HTMLParagraphElement | HTMLHeadingElement>(
+        'p, div, h1, h2, h3, h4, h5, h6'
+      )
+    );
 
-    // Validate that elements have proper dimensions
-    let validElements = 0;
-    lines.forEach((line, index) => {
-      const rect = line.getBoundingClientRect();
-      if (rect.height > 0) {
-        validElements++;
-      }
-      if (index < 3) {
-        console.log(`📏 Element ${index} dimensions:`, {
-          tagName: line.tagName,
-          height: rect.height,
-          top: rect.top,
-          bottom: rect.bottom
-        });
-      }
-    });
+    // 2) Sync state (for progress bar & elsewhere)
+    setLines(lineElements);
+    setTotalLines(lineElements.length);
 
-    console.log(`📊 Total lines detected: ${lines.length}, Valid elements: ${validElements}`);
-
-    if (validElements === 0) {
-      console.log('❌ No valid elements found, aborting initialization');
-      return;
-    }
-
-    setTotalLines(lines.length);
-    setIsInitialized(true);
-
-    // Update refs with current values
-    userRef.current = user;
-    chapterIdRef.current = chapterId;
-    novelIdRef.current = novelId;
+    // 3) Build a fast lookup map
+    const indexMap = new Map<HTMLElement, number>();
+    lineElements.forEach((el, idx) => indexMap.set(el, idx));
 
     if (observerRef.current) {
       observerRef.current.disconnect();
     }
 
-    // Test observer configuration - Updated for better intersection detection
+    // Observer config: only care about entering viewport
     const observerConfig = {
-      root: null, // Use viewport as root
-      rootMargin: '50px 0px 50px 0px', // Add some margin to catch elements near viewport edges
-      threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0] // More granular thresholds for better detection
+      root: null,
+      rootMargin: '0px',
+      threshold: 0
     };
     console.log('🎛️ Observer configuration:', observerConfig);
 
     observerRef.current = new IntersectionObserver((entries) => {
-      console.log('🔍 IntersectionObserver callback triggered with', entries.length, 'entries');
-      console.log('🔍 Callback context:', {
-        isTrackingRef: isTrackingRef.current,
-        currentLine,
-        lastSavedLine,
-        totalLines,
-        timestamp: new Date().toISOString()
-      });
-
-      // Debug: Log all entries regardless of intersection status
-      entries.forEach((entry, index) => {
-        if (index < 5) {
-          // Only log first 5 to avoid spam
-          console.log(`📋 Entry ${index} [${entry.target.tagName}]:`, {
-            isIntersecting: entry.isIntersecting,
-            intersectionRatio: entry.intersectionRatio,
-            target: entry.target.tagName,
-            text: entry.target.textContent?.substring(0, 30),
-            boundingRect: {
-              top: entry.boundingClientRect.top,
-              bottom: entry.boundingClientRect.bottom,
-              height: entry.boundingClientRect.height,
-              left: entry.boundingClientRect.left,
-              right: entry.boundingClientRect.right,
-              width: entry.boundingClientRect.width
-            },
-            rootBounds: entry.rootBounds,
-            intersectionRect: entry.intersectionRect,
-            viewportHeight: window.innerHeight,
-            viewportWidth: window.innerWidth,
-            isInViewport:
-              entry.boundingClientRect.top >= 0 &&
-              entry.boundingClientRect.bottom <= window.innerHeight
-          });
-        }
-      });
-
-      let visibleElements = [];
-      let topMostVisible = Infinity;
-      let bottomMostVisible = -1;
-
-      entries.forEach((entry, index) => {
-        console.log(`📋 Entry ${index}:`, {
-          isIntersecting: entry.isIntersecting,
-          intersectionRatio: entry.intersectionRatio,
-          target: entry.target.tagName,
-          boundingRect: {
-            top: entry.boundingClientRect.top,
-            bottom: entry.boundingClientRect.bottom,
-            height: entry.boundingClientRect.height
-          }
-        });
-
+      console.debug('🔍 Observer triggered:', entries.length, 'entries');
+      let topMost: number = Infinity;
+      let bottomMost: number = -1;
+      entries.forEach((entry) => {
         if (entry.isIntersecting && entry.intersectionRatio > 0) {
-          const element = entry.target;
-          const lineIndex = Array.from(currentLinesRef.current || lines).indexOf(
-            element as Element
-          );
-
-          if (lineIndex !== -1) {
-            visibleElements.push({
-              lineIndex,
-              intersectionRatio: entry.intersectionRatio,
-              element
-            });
-
-            // Track the topmost and bottommost visible elements
-            if (lineIndex < topMostVisible) {
-              topMostVisible = lineIndex;
-            }
-            if (lineIndex > bottomMostVisible) {
-              bottomMostVisible = lineIndex;
-            }
+          const idx = indexMap.get(entry.target as HTMLElement);
+          if (idx !== undefined) {
+            topMost = Math.min(topMost, idx);
+            bottomMost = Math.max(bottomMost, idx);
           }
         }
       });
-
-      console.log(
-        `👁️ Visible elements: ${visibleElements.length}, Top: ${topMostVisible}, Bottom: ${bottomMostVisible}`
-      );
-
-      if (visibleElements.length > 0 && topMostVisible !== Infinity) {
-        // Update visible range
-        setTopVisibleLine(topMostVisible);
-        setBottomVisibleLine(bottomMostVisible);
-
-        // Calculate current reading position (use the middle of visible area)
-        const currentReadingLine = Math.floor((topMostVisible + bottomMostVisible) / 2);
-        setCurrentLine(currentReadingLine);
-
-        console.log('📍 Position update:', {
-          topMostVisible,
-          bottomMostVisible,
-          currentReadingLine,
-          previousCurrentLine: currentLine
-        });
-
-        // Check if we should save progress
-        if (isTrackingRef.current) {
-          const progressDelta = Math.abs(currentReadingLine - lastSavedLineRef.current);
-          const visibleAreaSize = bottomMostVisible - topMostVisible + 1;
-          const saveThreshold = Math.max(2, Math.floor(visibleAreaSize / 3)); // Reduced threshold: at least 2 lines or 1/3 of visible area
-
-          console.log('📊 Progress check:', {
-            currentReadingLine,
-            lastSavedLineFromRef: lastSavedLineRef.current,
-            progressDelta,
-            saveThreshold,
-            visibleAreaSize,
-            shouldSave: progressDelta >= saveThreshold,
-            isTracking: isTrackingRef.current
-          });
-
+      console.debug('👁️ Visible:', entries.filter((e) => e.isIntersecting).length, 'range:', [
+        topMost,
+        bottomMost
+      ]);
+      if (topMost < Infinity) {
+        setCurrentLine(topMost);
+        if (observerRef.current) {
+          const progressDelta = Math.abs(topMost - lastSavedLineRef.current);
+          const visibleAreaSize = bottomMost - topMost + 1;
+          const saveThreshold = Math.max(2, Math.floor(visibleAreaSize / 3));
           if (progressDelta >= saveThreshold) {
-            console.log('💾 Triggering save - significant progress detected');
-            setLastSavedLine(currentReadingLine);
-            lastSavedLineRef.current = currentReadingLine;
-            saveImmediately(currentReadingLine, currentLinesRef.current?.length || lines.length);
-          } else {
-            console.log('⏸️ Not saving - progress delta too small', {
-              needed: saveThreshold,
-              actual: progressDelta
-            });
+            console.debug('💾 Saving progress:', topMost, 'of', lineElements.length);
+            lastSavedLineRef.current = topMost;
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = setTimeout(() => {
+              saveProgress({
+                userId: (user as any)?.id,
+                chapterId,
+                currentLine: topMost,
+                totalLines: lineElements.length,
+                scrollPosition: topMost
+              });
+            }, 500);
           }
-        } else {
-          console.log('⏸️ Not saving - tracking not started yet');
         }
-      } else {
-        console.log('❌ No visible elements found or invalid range');
       }
     }, observerConfig);
 
-    console.log('🎯 Setting up observer for', lines.length, 'elements');
+    console.log('🎯 Setting up observer for', lineElements.length, 'elements');
+    lineElements.slice(0, 5).forEach((el, i) => {
+      const r = el.getBoundingClientRect();
+      console.log(`Line ${i} rect`, r.top, r.bottom);
+    });
+    lineElements.forEach((el) => observerRef.current!.observe(el));
 
-    // Wait a bit longer for elements to be fully positioned before observing
-    setTimeout(() => {
-      console.log('⏳ Delayed observer setup - elements should be positioned now');
+    // Only now mark as done
+    initializedRef.current = true;
 
-      // Test first few elements to see their initial positions
-      lines.forEach((line, index) => {
-        if (index < 5) {
-          const rect = line.getBoundingClientRect();
-          console.log(`📍 Element ${index} initial position:`, {
-            tagName: line.tagName,
-            text: line.textContent?.substring(0, 30),
-            top: rect.top,
-            bottom: rect.bottom,
-            height: rect.height,
-            inViewport: rect.top >= 0 && rect.bottom <= window.innerHeight,
-            viewportHeight: window.innerHeight,
-            viewportWidth: window.innerWidth,
-            scrollY: window.scrollY,
-            scrollX: window.scrollX
-          });
-        }
-        observerRef.current?.observe(line);
-      });
+    // Cleanup function
+    return () => {
+      console.log('🧹 [CLEANUP] initializeLineTracking cleanup running');
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      if (saveTimeoutRef.current) {
+        console.log(
+          '🧹 [CLEANUP] Clearing saveTimeoutRef in initializeLineTracking cleanup, ID:',
+          saveTimeoutRef.current
+        );
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [user, saveProgress, chapterId]);
 
-      // Manual test: Check if any elements are actually in viewport
-      const elementsInViewport = Array.from(lines).filter((line, index) => {
-        const rect = line.getBoundingClientRect();
-        const inViewport = rect.top >= 0 && rect.bottom <= window.innerHeight;
-        if (index < 10) {
-          console.log(`🔍 Manual check - Element ${index}:`, {
-            tagName: line.tagName,
-            top: rect.top,
-            bottom: rect.bottom,
-            inViewport,
-            viewportHeight: window.innerHeight
-          });
-        }
-        return inViewport;
-      });
-      console.log(
-        `🔍 Manual viewport check: ${elementsInViewport.length} of ${lines.length} elements in viewport`
-      );
+  // Reset tracking initialization when chapter or user changes
+  useEffect(() => {
+    initializedRef.current = false;
+    setCurrentLine(0);
+    setTotalLines(0);
+    lastSavedLineRef.current = 0;
 
-      // Check if elements have proper dimensions
-      const elementsWithDimensions = Array.from(lines).filter((line) => {
-        const rect = line.getBoundingClientRect();
-        return rect.height > 0 && rect.width > 0;
-      });
-      console.log(
-        `📏 Elements with dimensions: ${elementsWithDimensions.length} of ${lines.length}`
-      );
+    // Clean up observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
 
-      // If elements don't have proper dimensions yet, retry after a longer delay
-      if (elementsWithDimensions.length === 0) {
-        console.log('⚠️ No elements have proper dimensions yet, retrying in 2 seconds...');
+    console.log('🔄 Reset tracking state for new chapter/user');
+  }, [chapter?.id, (user as any)?.id]);
+
+  // Calculate progress percentage
+  const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
+
+  // Keep refs up to date
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+  useEffect(() => {
+    chapterIdRef.current = chapterId;
+  }, [chapterId]);
+  useEffect(() => {
+    novelIdRef.current = novelId;
+  }, [novelId]);
+
+  // Simplify the scroll restore effect
+  useEffect(() => {
+    if (!chapter || !readingProgress || hasRestoredRef.current || !contentRef.current) return;
+    const lines = contentRef.current.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+    let attempts = 0;
+    function tryScroll() {
+      if (!readingProgress) return;
+      const idx = readingProgress.currentLine;
+      if (idx < lines.length) {
+        lines[idx].scrollIntoView({ block: 'center', behavior: 'auto' });
+        hasRestoredRef.current = true;
+        setCurrentLine(idx);
+        lastSavedLineRef.current = idx;
+        console.log('[ScrollRestore] Restored to line', idx);
+
+        // Now that we're at the right scroll Y, wire up the observer
         setTimeout(() => {
-          console.log('🔄 Retrying observer setup after longer delay...');
-          if (observerRef.current) {
-            // Clear existing observer
-            observerRef.current.disconnect();
-
-            // Check if elements still exist and have dimensions
-            const currentLines = contentRef.current?.querySelectorAll(
-              'p, div, h1, h2, h3, h4, h5, h6'
-            );
-            console.log(`🔍 Retry: Found ${currentLines?.length || 0} elements in DOM`);
-
-            if (!currentLines || currentLines.length === 0) {
-              console.log('❌ Retry failed: No elements found in DOM');
-              return;
-            }
-
-            // Update the ref to point to current lines
-            currentLinesRef.current = currentLines;
-
-            // Test first few elements
-            Array.from(currentLines)
-              .slice(0, 5)
-              .forEach((line, index) => {
-                const rect = line.getBoundingClientRect();
-                console.log(`🔍 Retry element ${index}:`, {
-                  tagName: line.tagName,
-                  height: rect.height,
-                  width: rect.width,
-                  top: rect.top,
-                  bottom: rect.bottom,
-                  hasDimensions: rect.height > 0 && rect.width > 0
-                });
-              });
-
-            // Recreate observer
-            observerRef.current = new IntersectionObserver((entries) => {
-              console.log(
-                '🔍 IntersectionObserver callback triggered with',
-                entries.length,
-                'entries'
-              );
-              console.log('🔍 Callback context:', {
-                isTrackingRef: isTrackingRef.current,
-                currentLine,
-                lastSavedLine,
-                totalLines,
-                timestamp: new Date().toISOString()
-              });
-
-              // Debug: Log all entries regardless of intersection status
-              entries.forEach((entry, index) => {
-                if (index < 5) {
-                  // Only log first 5 to avoid spam
-                  console.log(`📋 Entry ${index} [${entry.target.tagName}]:`, {
-                    isIntersecting: entry.isIntersecting,
-                    intersectionRatio: entry.intersectionRatio,
-                    target: entry.target.tagName,
-                    text: entry.target.textContent?.substring(0, 30),
-                    boundingRect: {
-                      top: entry.boundingClientRect.top,
-                      bottom: entry.boundingClientRect.bottom,
-                      height: entry.boundingClientRect.height,
-                      left: entry.boundingClientRect.left,
-                      right: entry.boundingClientRect.right,
-                      width: entry.boundingClientRect.width
-                    },
-                    rootBounds: entry.rootBounds,
-                    intersectionRect: entry.intersectionRect,
-                    viewportHeight: window.innerHeight,
-                    viewportWidth: window.innerWidth,
-                    isInViewport:
-                      entry.boundingClientRect.top >= 0 &&
-                      entry.boundingClientRect.bottom <= window.innerHeight
-                  });
-                }
-              });
-
-              let visibleElements = [];
-              let topMostVisible = Infinity;
-              let bottomMostVisible = -1;
-
-              entries.forEach((entry, index) => {
-                console.log(`📋 Entry ${index}:`, {
-                  isIntersecting: entry.isIntersecting,
-                  intersectionRatio: entry.intersectionRatio,
-                  target: entry.target.tagName,
-                  boundingRect: {
-                    top: entry.boundingClientRect.top,
-                    bottom: entry.boundingClientRect.bottom,
-                    height: entry.boundingClientRect.height
-                  }
-                });
-
-                if (entry.isIntersecting && entry.intersectionRatio > 0) {
-                  const element = entry.target;
-                  const lineIndex = Array.from(currentLines).indexOf(element as Element);
-
-                  if (lineIndex !== -1) {
-                    visibleElements.push({
-                      lineIndex,
-                      intersectionRatio: entry.intersectionRatio,
-                      element
-                    });
-
-                    // Track the topmost and bottommost visible elements
-                    if (lineIndex < topMostVisible) {
-                      topMostVisible = lineIndex;
-                    }
-                    if (lineIndex > bottomMostVisible) {
-                      bottomMostVisible = lineIndex;
-                    }
-                  }
-                }
-              });
-
-              console.log(
-                `👁️ Visible elements: ${visibleElements.length}, Top: ${topMostVisible}, Bottom: ${bottomMostVisible}`
-              );
-
-              if (visibleElements.length > 0 && topMostVisible !== Infinity) {
-                // Update visible range
-                setTopVisibleLine(topMostVisible);
-                setBottomVisibleLine(bottomMostVisible);
-
-                // Calculate current reading position (use the middle of visible area)
-                const currentReadingLine = Math.floor((topMostVisible + bottomMostVisible) / 2);
-                setCurrentLine(currentReadingLine);
-
-                console.log('📍 Position update:', {
-                  topMostVisible,
-                  bottomMostVisible,
-                  currentReadingLine,
-                  previousCurrentLine: currentLine
-                });
-
-                // Check if we should save progress
-                if (isTrackingRef.current) {
-                  const progressDelta = Math.abs(currentReadingLine - lastSavedLineRef.current);
-                  const visibleAreaSize = bottomMostVisible - topMostVisible + 1;
-                  const saveThreshold = Math.max(2, Math.floor(visibleAreaSize / 3)); // Reduced threshold: at least 2 lines or 1/3 of visible area
-
-                  console.log('📊 Progress check:', {
-                    currentReadingLine,
-                    lastSavedLine: lastSavedLineRef.current,
-                    progressDelta,
-                    saveThreshold,
-                    visibleAreaSize
-                  });
-
-                  if (progressDelta >= saveThreshold) {
-                    console.log('💾 Progress threshold met, saving...');
-                    saveImmediately(
-                      currentReadingLine,
-                      currentLinesRef.current?.length || lines.length
-                    );
-                  }
-                }
-              } else {
-                console.log('❌ No visible elements found or invalid range');
-              }
-            }, observerConfig);
-
-            // Actually observe the current lines
-            Array.from(currentLines).forEach((line) => {
-              const rect = line.getBoundingClientRect();
-              if (rect.height > 0 && rect.width > 0) {
-                observerRef.current?.observe(line);
-              }
-            });
-
-            // Check how many elements were actually observed
-            const observedElements = Array.from(currentLines).filter((line) => {
-              const rect = line.getBoundingClientRect();
-              return rect.height > 0 && rect.width > 0;
-            });
-            console.log(
-              `📏 Retry: ${observedElements.length} elements observed out of ${currentLines.length}`
-            );
-
-            console.log('✅ Retry observer setup completed');
-          }
-        }, 2000);
+          console.log('[ScrollRestore] initializing observer post-scroll');
+          initializeLineTracking();
+        }, 100);
         return;
       }
-
-      // Cleanup function
-      return () => {
-        console.log('🧹 [CLEANUP] initializeLineTracking cleanup running');
-        if (observerRef.current) {
-          observerRef.current.disconnect();
-        }
-        if (saveTimeoutRef.current) {
-          console.log(
-            '🧹 [CLEANUP] Clearing saveTimeoutRef in initializeLineTracking cleanup, ID:',
-            saveTimeoutRef.current
-          );
-          clearTimeout(saveTimeoutRef.current);
-        }
-      };
-    }, 1000); // Wait 1 second before setting up observer
-  }, [user, saveImmediately, chapterId, isInitialized]);
-
-  // Start tracking after initial delay - fixed timing
-  useEffect(() => {
-    if (isInitialized && !isTracking && user && (user as any)?.id) {
-      console.log('⏰ Setting up tracking timer...');
-      console.log('🔧 Pre-tracking validation:', {
-        isInitialized,
-        isTracking,
-        hasUser: !!user,
-        userId: (user as any)?.id,
-        totalLines,
-        chapterId,
-        observerActive: !!observerRef.current
-      });
-
-      const timer = setTimeout(() => {
-        console.log('🚀 Starting reading progress tracking');
-        console.log('🔧 Tracking context:', {
-          isInitialized,
-          totalLines,
-          userId: (user as any)?.id,
-          chapterId,
-          observerActive: !!observerRef.current,
-          userRefCurrent: userRef.current,
-          chapterIdRefCurrent: chapterIdRef.current
-        });
-
-        // Ensure refs are up to date
-        userRef.current = user;
-        chapterIdRef.current = chapterId;
-        novelIdRef.current = novelId;
-
-        setIsTracking(true);
-        isTrackingRef.current = true;
-        console.log('✅ Tracking started - isTrackingRef.current =', isTrackingRef.current);
-      }, 2000); // Start tracking after 2 seconds
-
-      return () => {
-        console.log('🧹 Cleaning up tracking timer');
-        clearTimeout(timer);
-      };
-    } else {
-      console.log('⏸️ Tracking conditions not met:', {
-        isInitialized,
-        isTracking,
-        hasUser: !!user,
-        userId: (user as any)?.id,
-        totalLines,
-        chapterId
-      });
-    }
-  }, [isInitialized, isTracking, totalLines, user, chapterId, novelId]);
-
-  // Only restore position once per chapter load, after both chapter and readingProgress are available
-  useEffect(() => {
-    if (
-      chapter &&
-      readingProgress &&
-      !startFromTop &&
-      shouldRestorePosition &&
-      !hasRestoredPositionRef.current &&
-      contentRef.current
-    ) {
-      console.log('[ScrollRestore] Attempting to restore position:', {
-        chapterId,
-        currentLine: readingProgress.currentLine,
-        totalLines: totalLines,
-        hasRestored: hasRestoredPositionRef.current,
-        shouldRestorePosition
-      });
-      const content = contentRef.current;
-      const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
-      let attempts = 0;
-      const maxAttempts = 20;
-      function tryScroll() {
-        attempts++;
-        if (!readingProgress) {
-          console.log('[ScrollRestore] Skipped: readingProgress not loaded (in tryScroll)');
-          return;
-        }
-        if (readingProgress.currentLine < lines.length) {
-          const targetLine = lines[readingProgress.currentLine];
-          if (targetLine) {
-            targetLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            console.log(
-              '[ScrollRestore] Restored to line',
-              readingProgress.currentLine,
-              'on attempt',
-              attempts
-            );
-            setCurrentLine(readingProgress.currentLine);
-            setLastSavedLine(readingProgress.currentLine);
-            lastSavedLineRef.current = readingProgress.currentLine;
-            hasRestoredPositionRef.current = true;
-            return;
-          } else {
-            console.log('[ScrollRestore] Target line not found on attempt', attempts);
-          }
-        } else {
-          console.log(
-            '[ScrollRestore] currentLine out of bounds:',
-            readingProgress.currentLine,
-            lines.length
-          );
-        }
-        if (attempts < maxAttempts) {
-          requestAnimationFrame(tryScroll);
-        } else {
-          console.log('[ScrollRestore] Max attempts reached, giving up.');
-        }
+      if (attempts++ < 20) {
+        requestAnimationFrame(tryScroll);
+      } else {
+        console.log('[ScrollRestore] Giving up after', attempts, 'attempts');
       }
-      tryScroll();
-    } else {
-      if (!chapter) console.log('[ScrollRestore] Skipped: chapter not loaded');
-      if (!readingProgress) console.log('[ScrollRestore] Skipped: readingProgress not loaded');
-      if (startFromTop) console.log('[ScrollRestore] Skipped: startFromTop is true');
-      if (!shouldRestorePosition)
-        console.log('[ScrollRestore] Skipped: shouldRestorePosition is false');
-      if (hasRestoredPositionRef.current) console.log('[ScrollRestore] Skipped: already restored');
-      if (!contentRef.current) console.log('[ScrollRestore] Skipped: contentRef not ready');
     }
-  }, [chapter, readingProgress, startFromTop, shouldRestorePosition, totalLines, chapterId]);
-
-  // Reset hasRestoredPositionRef when chapterId changes
-  useEffect(() => {
-    hasRestoredPositionRef.current = false;
-    hasInitializedTrackingRef.current = false;
-  }, [chapterId]);
-
-  // Reset hasInitializedTrackingRef when user changes
-  useEffect(() => {
-    if (user && (user as any)?.id) {
-      hasInitializedTrackingRef.current = false;
-    }
-  }, [user]);
+    tryScroll();
+  }, [chapter, readingProgress, totalLines, chapterId, initializeLineTracking]);
 
   // Love/tip handler
   const handleLove = useCallback(
@@ -959,9 +430,15 @@ export default function IndividualChapterPage() {
     if (previousChapter) {
       const proceedWithNavigation = async () => {
         // Save current reading progress before navigating
-        if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
+        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
           console.log('📖 Saving progress before navigating to previous chapter');
-          await saveImmediately(currentLine, totalLines);
+          await saveProgress({
+            userId: (user as any)?.id,
+            chapterId,
+            currentLine,
+            totalLines,
+            scrollPosition: currentLine
+          });
         }
         router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
       };
@@ -975,9 +452,15 @@ export default function IndividualChapterPage() {
     if (nextChapter) {
       const proceedWithNavigation = async () => {
         // Save current reading progress before navigating
-        if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
+        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
           console.log('📖 Saving progress before navigating to next chapter');
-          await saveImmediately(currentLine, totalLines);
+          await saveProgress({
+            userId: (user as any)?.id,
+            chapterId,
+            currentLine,
+            totalLines,
+            scrollPosition: currentLine
+          });
         }
         router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
       };
@@ -997,87 +480,6 @@ export default function IndividualChapterPage() {
     fetchChapter();
     fetchNavigation();
   }, [fetchChapter, fetchNavigation]);
-
-  useEffect(() => {
-    if (
-      chapter &&
-      contentRef.current &&
-      !isInitialized &&
-      !hasInitializedTrackingRef.current &&
-      user &&
-      (user as any)?.id
-    ) {
-      hasInitializedTrackingRef.current = true;
-      // Wait longer for content to be fully rendered and styled
-      const cleanup = setTimeout(() => {
-        // Double-check that content still exists and has proper dimensions
-        if (contentRef.current) {
-          const contentRect = contentRef.current.getBoundingClientRect();
-          console.log('📐 Content container dimensions before init:', {
-            width: contentRect.width,
-            height: contentRect.height,
-            top: contentRect.top,
-            bottom: contentRect.bottom
-          });
-
-          if (contentRect.height > 0) {
-            initializeLineTracking();
-          } else {
-            console.log('⚠️ Content not ready yet, retrying...');
-            // Retry after another delay if content isn't ready
-            setTimeout(() => {
-              if (!isInitialized) {
-                initializeLineTracking();
-              }
-            }, 1000);
-          }
-        }
-      }, 500); // Increased delay to allow for full rendering
-
-      return () => {
-        console.log('🧹 [CLEANUP] useEffect cleanup running');
-        clearTimeout(cleanup);
-        if (observerRef.current) {
-          observerRef.current.disconnect();
-        }
-        if (saveTimeoutRef.current) {
-          console.log(
-            '🧹 [CLEANUP] Clearing saveTimeoutRef in useEffect cleanup, ID:',
-            saveTimeoutRef.current
-          );
-          clearTimeout(saveTimeoutRef.current);
-        }
-      };
-    }
-
-    return () => {
-      console.log('🧹 [CLEANUP] useEffect cleanup running (no chapter/isInitialized)');
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-      if (saveTimeoutRef.current) {
-        console.log(
-          '🧹 [CLEANUP] Clearing saveTimeoutRef in useEffect cleanup (no chapter/isInitialized), ID:',
-          saveTimeoutRef.current
-        );
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [chapter, isInitialized, user]);
-
-  // Calculate progress percentage
-  const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
-
-  // Keep refs up to date
-  useEffect(() => {
-    userRef.current = user;
-  }, [user]);
-  useEffect(() => {
-    chapterIdRef.current = chapterId;
-  }, [chapterId]);
-  useEffect(() => {
-    novelIdRef.current = novelId;
-  }, [novelId]);
 
   if (loading) {
     return (
