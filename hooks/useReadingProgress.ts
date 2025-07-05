@@ -54,68 +54,119 @@ export const useSaveReadingProgress = () => {
     chapterId: string;
     currentLine: number;
     totalLines: number;
-    progressPercentage?: number;
     scrollPosition?: number;
   }) => {
-    try {
-      const response = await fetch('/api/reading-progress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(progressData)
-      });
+    const response = await fetch('/api/reading-progress', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(progressData)
+    });
 
-      if (!response.ok) {
-        throw new Error('Failed to save reading progress');
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Error saving reading progress:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error('Failed to save reading progress');
     }
+
+    return response.json();
   };
 
   return { saveProgress };
 };
 
-// Utility function to calculate reading progress percentage
-export const calculateProgressPercentage = (currentLine: number, totalLines: number): number => {
-  if (totalLines === 0) return 0;
-  return Math.min(Math.round((currentLine / totalLines) * 100), 100);
+// Utility function to format reading progress
+export const formatReadingProgress = (progress: ReadingProgress): string => {
+  if (!progress) return '0%';
+
+  const percentage = Math.round((progress.currentLine / progress.totalLines) * 100);
+  return `${percentage}% complete`;
 };
 
-// Utility function to format reading progress for display
-export const formatReadingProgress = (progress: ReadingProgress | undefined): string => {
-  if (!progress) return 'Not started';
+// Utility function to get last read timestamp
+export const getLastReadTimestamp = (progress: ReadingProgress): string => {
+  if (!progress || !progress.lastReadAt) return 'Never';
 
-  if (progress.progressPercentage === 100) {
-    return 'Completed';
-  }
-
-  if (progress.progressPercentage === 0) {
-    return 'Not started';
-  }
-
-  return `${progress.progressPercentage}% complete`;
-};
-
-// Utility function to get the last read timestamp
-export const getLastReadTimestamp = (progress: ReadingProgress | undefined): string => {
-  if (!progress) return '';
-
-  const lastRead = new Date(progress.lastReadAt);
   const now = new Date();
-  const diffInHours = Math.floor((now.getTime() - lastRead.getTime()) / (1000 * 60 * 60));
+  const lastRead = new Date(progress.lastReadAt);
+  const diffMs = now.getTime() - lastRead.getTime();
 
-  if (diffInHours < 1) {
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) {
     return 'Just now';
-  } else if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} min ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hr ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   } else {
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
+    return lastRead.toLocaleDateString();
   }
+};
+
+// Utility function to calculate reading time estimate
+export const getReadingTimeEstimate = (progress: ReadingProgress): string => {
+  if (!progress || progress.currentLine >= progress.totalLines) return 'Finished';
+
+  const remainingLines = progress.totalLines - progress.currentLine;
+  const averageWordsPerLine = 12; // Estimate
+  const averageReadingSpeed = 200; // Words per minute
+
+  const remainingWords = remainingLines * averageWordsPerLine;
+  const estimatedMinutes = Math.ceil(remainingWords / averageReadingSpeed);
+
+  if (estimatedMinutes < 1) {
+    return 'Less than 1 min';
+  } else if (estimatedMinutes < 60) {
+    return `${estimatedMinutes} min left`;
+  } else {
+    const hours = Math.floor(estimatedMinutes / 60);
+    const minutes = estimatedMinutes % 60;
+    return `${hours}h ${minutes}m left`;
+  }
+};
+
+// Utility function to check if chapter is completed
+export const isChapterCompleted = (progress: ReadingProgress): boolean => {
+  if (!progress) return false;
+
+  const completionThreshold = 0.95; // 95% completion
+  const completionPercentage = progress.currentLine / progress.totalLines;
+
+  return completionPercentage >= completionThreshold;
+};
+
+// Utility function to get reading streak
+export const getReadingStreak = (progressList: ReadingProgress[]): number => {
+  if (!progressList || progressList.length === 0) return 0;
+
+  // Sort by last read date, most recent first
+  const sortedProgress = progressList
+    .filter((p) => p.lastReadAt)
+    .sort((a, b) => new Date(b.lastReadAt!).getTime() - new Date(a.lastReadAt!).getTime());
+
+  let streak = 0;
+  let currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+
+  for (const progress of sortedProgress) {
+    const readDate = new Date(progress.lastReadAt!);
+    readDate.setHours(0, 0, 0, 0);
+
+    const daysDiff = Math.floor(
+      (currentDate.getTime() - readDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysDiff === streak) {
+      streak++;
+      currentDate = readDate;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
 };

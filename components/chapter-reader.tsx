@@ -5,13 +5,20 @@ import type React from 'react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 // @ts-ignore
-import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight, BookOpen, Clock } from 'lucide-react';
 import LoveAnimation from './love-animation';
 import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
 import { useAccount, useWalletClient, usePublicClient, useConnect, useConnectors } from 'wagmi';
 import { Address, Account } from 'viem';
 import { useUser } from '@/providers/UserProvider';
+import {
+  useReadingProgress,
+  useSaveReadingProgress,
+  formatReadingProgress,
+  getLastReadTimestamp
+} from '@/hooks/useReadingProgress';
 
 interface Chapter {
   id: string;
@@ -62,6 +69,18 @@ export default function ChapterReader({
   const [tradeError, setTradeError] = useState<string | null>(null);
   const [tradeSuccess, setTradeSuccess] = useState(false);
 
+  // Reading progress state
+  const [currentLine, setCurrentLine] = useState(0);
+  const [totalLines, setTotalLines] = useState(0);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [isTracking, setIsTracking] = useState(false);
+  const [lastSaveTime, setLastSaveTime] = useState(0);
+
+  // Refs for reading progress tracking
+  const contentRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Get user's chapter tip amount with fallback
   const chapterTipAmount = user?.chapterTipAmount || 0.01;
   const tipAmountDisplay = chapterTipAmount.toFixed(2);
@@ -87,6 +106,107 @@ export default function ChapterReader({
 
   const currentChapter = chapters[currentChapterIndex];
 
+  // Reading progress hooks
+  const { readingProgress, mutate: mutateProgress } = useReadingProgress(
+    user?.id,
+    currentChapter?.id
+  );
+  const { saveProgress } = useSaveReadingProgress();
+
+  // Initialize line tracking
+  const initializeLineTracking = useCallback(() => {
+    if (!contentRef.current) return;
+
+    const content = contentRef.current;
+    const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+    setTotalLines(lines.length);
+
+    // Set up intersection observer for line tracking
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const lineIndex = Array.from(lines).indexOf(entry.target as Element);
+            if (lineIndex !== -1) {
+              setCurrentLine(lineIndex);
+              setScrollPosition(window.scrollY);
+
+              // Throttle saving to avoid too many API calls
+              const now = Date.now();
+              if (now - lastSaveTime > 2000) {
+                // Save every 2 seconds at most
+                debouncedSave(lineIndex, lines.length);
+                setLastSaveTime(now);
+              }
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.5,
+        rootMargin: '-50% 0px -50% 0px' // Track when line is in the middle of viewport
+      }
+    );
+
+    lines.forEach((line) => {
+      observerRef.current?.observe(line);
+    });
+
+    setIsTracking(true);
+  }, [lastSaveTime]);
+
+  // Debounced save function
+  const debouncedSave = useCallback(
+    (lineIndex: number, totalLinesCount: number) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(async () => {
+        if (user?.id && currentChapter?.id) {
+          try {
+            await saveProgress({
+              userId: user.id,
+              chapterId: currentChapter.id,
+              currentLine: lineIndex,
+              totalLines: totalLinesCount,
+              scrollPosition: window.scrollY
+            });
+
+            // Revalidate reading progress
+            mutateProgress();
+          } catch (error) {
+            console.error('Error saving reading progress:', error);
+          }
+        }
+      }, 1000); // Wait 1 second before saving
+    },
+    [user?.id, currentChapter?.id, saveProgress, mutateProgress]
+  );
+
+  // Restore reading position
+  const restoreReadingPosition = useCallback(() => {
+    if (!readingProgress || !contentRef.current) return;
+
+    const content = contentRef.current;
+    const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+
+    if (readingProgress.currentLine < lines.length) {
+      const targetLine = lines[readingProgress.currentLine];
+      if (targetLine) {
+        targetLine.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        setCurrentLine(readingProgress.currentLine);
+      }
+    }
+  }, [readingProgress]);
+
   // Update tipCount when chapter changes
   useEffect(() => {
     if (currentChapter) {
@@ -99,8 +219,31 @@ export default function ChapterReader({
       if (user && user.id) {
         checkIfAlreadyTipped();
       }
+
+      // Initialize line tracking for new chapter
+      if (contentRef.current) {
+        setTimeout(() => {
+          initializeLineTracking();
+        }, 100); // Small delay to ensure content is rendered
+      }
     }
-  }, [currentChapter, user]);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [currentChapter, user, initializeLineTracking]);
+
+  // Restore reading position when reading progress is loaded
+  useEffect(() => {
+    if (readingProgress && currentChapter && contentRef.current) {
+      setTimeout(restoreReadingPosition, 500);
+    }
+  }, [readingProgress, currentChapter, restoreReadingPosition]);
 
   const checkIfAlreadyTipped = async () => {
     if (!user || !user.id || !currentChapter) return;
@@ -217,8 +360,36 @@ export default function ChapterReader({
 
   if (!currentChapter) return null;
 
+  // Calculate progress percentage
+  const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
+
   return (
     <div className="max-w-4xl mx-auto relative">
+      {/* Reading Progress Indicator */}
+      {readingProgress && (
+        <Card className="mb-6 novel-card-dark border-white/10">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-purple-400" />
+                <span className="text-sm text-gray-300">Reading Progress</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Clock className="h-3 w-3" />
+                <span>{getLastReadTimestamp(readingProgress)}</span>
+              </div>
+            </div>
+            <Progress value={progressPercentage} className="mb-2" />
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>{formatReadingProgress(readingProgress)}</span>
+              <span>
+                Line {currentLine + 1} of {totalLines}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="novel-card-dark border-white/10">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -254,6 +425,7 @@ export default function ChapterReader({
         </CardHeader>
         <CardContent>
           <div
+            ref={contentRef}
             className={`prose prose-lg max-w-none leading-relaxed text-gray-300 chapter-content`}
             style={{
               lineHeight: '1.8'
