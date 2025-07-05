@@ -674,15 +674,15 @@ export default function ProfilePage() {
           {/* Enhanced Stats Cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-6">
             <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-green-400/30">
-              <CardContent className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-green-500/20 rounded-full">
-                    <DollarSign className="h-4 w-4 text-green-400" />
+              <CardContent className="p-2 sm:p-3 flex items-center justify-between">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <div className="p-1 sm:p-2 bg-green-500/20 rounded-full">
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
                   </div>
-                  <span className="text-sm text-green-400">Tipped</span>
+                  <span className="text-xs sm:text-sm text-green-400 font-medium">Tipped</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-green-400">
+                  <div className="text-sm sm:text-lg font-bold text-green-400">
                     $
                     {Array.isArray(profile?.tips)
                       ? (profile.tips as TipWithNovel[])
@@ -698,15 +698,15 @@ export default function ProfilePage() {
             </Card>
 
             <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-blue-400/30">
-              <CardContent className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-500/20 rounded-full">
-                    <BookOpen className="h-4 w-4 text-blue-400" />
+              <CardContent className="p-2 sm:p-3 flex items-center justify-between">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <div className="p-1 sm:p-2 bg-blue-500/20 rounded-full">
+                    <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
                   </div>
-                  <span className="text-sm text-blue-400">Saved</span>
+                  <span className="text-xs sm:text-sm text-blue-400 font-medium">Saved</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-blue-400">
+                  <div className="text-sm sm:text-lg font-bold text-blue-400">
                     {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
                   </div>
                 </div>
