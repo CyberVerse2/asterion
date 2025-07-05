@@ -566,8 +566,9 @@ export default function ProfilePage() {
 
   // Consolidated post-approval logic for Farcaster users
   useEffect(() => {
-    if (isFarcasterUser && isApproveTxSuccess && profile?.id) {
+    if (isFarcasterUser && isApproveTxSuccess && profile?.id && approveTxHash) {
       console.log('[Profile] ERC20 approval successful, executing post-approval tasks...');
+      console.log('[Profile] Transaction hash:', approveTxHash);
 
       // Execute all post-approval tasks in parallel
       const tasks = [];
@@ -592,7 +593,8 @@ export default function ProfilePage() {
           walletAddress: profile.walletAddress,
           spendLimit: spendLimit,
           timestamp: Date.now(),
-          approved: true
+          approved: true,
+          transactionHash: approveTxHash
         };
 
         tasks.push(
@@ -602,10 +604,15 @@ export default function ProfilePage() {
             body: JSON.stringify({
               userId: profile.id,
               spendPermission: approvalData,
-              spendPermissionSignature: 'erc20_approved'
+              spendPermissionSignature: approveTxHash
             })
           })
-            .then(() => console.log('[Profile] ERC20 approval data saved'))
+            .then(() =>
+              console.log(
+                '[Profile] ERC20 approval data saved with transaction hash:',
+                approveTxHash
+              )
+            )
             .catch((error) => console.error('[Profile] Error saving approval data:', error))
         );
       }
@@ -625,7 +632,14 @@ export default function ProfilePage() {
           console.error('[Profile] Error in post-approval tasks:', error);
         });
     }
-  }, [isFarcasterUser, isApproveTxSuccess, profile?.id, profile?.walletAddress, spendLimit]);
+  }, [
+    isFarcasterUser,
+    isApproveTxSuccess,
+    profile?.id,
+    profile?.walletAddress,
+    spendLimit,
+    approveTxHash
+  ]);
 
   if (isLoading) {
     return (

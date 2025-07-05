@@ -992,3 +992,5 @@ Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** o
 ### Recently Completed
 
 - **Love/Tip Revert Issue Fix**: Fixed the issue where clicking "love" on a chapter would update the tip count but then revert back to the previous number. The problem was that `fetchChapter` was being called after user state changes and was overriding the optimistic tip count update. Implemented a timestamp-based solution using `recentTipTimestampRef` to prevent `fetchChapter` from overriding the tip count within 5 seconds of a successful tip operation.
+
+- **ERC20 Approval Signature Storage Fix**: Fixed the issue where Farcaster users' ERC20 approvals were storing the hardcoded string `"erc20_approved"` instead of the actual transaction hash. The problem was in the post-approval logic where `spendPermissionSignature` was being set to a static string instead of using the `approveTxHash` from the blockchain transaction. Now properly stores the actual transaction hash for verification and audit purposes.
