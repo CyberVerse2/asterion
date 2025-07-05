@@ -100,24 +100,54 @@ export function UserProvider({ children }: UserProviderProps) {
     console.debug('[UserProvider] context.user:', userObj);
     console.debug('[UserProvider] context.client:', clientObj);
 
-    const fid = (userObj && userObj.fid) || (clientObj && (clientObj.fid || clientObj.clientFid));
+    // Cast to any to access Farcaster-specific properties not in OnchainKit types
+    const fid =
+      (userObj && (userObj as any).fid) ||
+      (clientObj && ((clientObj as any).fid || (clientObj as any).clientFid));
     const username =
-      (userObj && (userObj.username || userObj.displayName || userObj.name)) ||
-      (clientObj && (clientObj.username || clientObj.displayName || clientObj.name));
-    const pfpUrl = (userObj && userObj.pfpUrl) || (clientObj && clientObj.pfpUrl) || '';
+      (userObj &&
+        ((userObj as any).username || (userObj as any).displayName || (userObj as any).name)) ||
+      (clientObj &&
+        ((clientObj as any).username || (clientObj as any).displayName || (clientObj as any).name));
+    const pfpUrl =
+      (userObj && (userObj as any).pfpUrl) || (clientObj && (clientObj as any).pfpUrl) || '';
 
     console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
 
     if (fid && username && !user && !userLoading) {
-      // Farcaster user found - create/fetch with wallet address if available
+      // Farcaster user found - create/fetch (wallet address will be added later if needed)
       const payload = { fid, username, pfpUrl };
-      if (walletAddress) {
-        payload.walletAddress = walletAddress;
-        console.log('[UserProvider] Adding wallet address to Farcaster user:', walletAddress);
-      }
+      console.log('[UserProvider] Creating/fetching Farcaster user:', payload);
       createOrFetchUser(payload);
     }
-  }, [context, user, userLoading, walletAddress]);
+  }, [context, user, userLoading]);
+
+  // Separate effect to update existing Farcaster user with wallet address when it becomes available
+  useEffect(() => {
+    // Only update if:
+    // 1. We have a user (already created/fetched)
+    // 2. User has fid (is a Farcaster user)
+    // 3. User doesn't have wallet address yet
+    // 4. We now have a wallet address
+    if (user && user.fid && !user.walletAddress && walletAddress) {
+      console.log('[UserProvider] Updating existing Farcaster user with wallet address');
+
+      // Update user with wallet address via PATCH API
+      fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, walletAddress })
+      })
+        .then((response) => response.json())
+        .then((updatedUser) => {
+          setUser(updatedUser);
+          console.log('[UserProvider] User updated with wallet address:', updatedUser);
+        })
+        .catch((error) => {
+          console.error('[UserProvider] Error updating user with wallet:', error);
+        });
+    }
+  }, [user, walletAddress]);
 
   // Effect for wallet-only users (fallback when no Farcaster context)
   useEffect(() => {
@@ -132,8 +162,8 @@ export function UserProvider({ children }: UserProviderProps) {
     // Check if we have Farcaster context - if yes, skip wallet-only flow
     const hasFarcasterContext =
       context &&
-      ((context.user && context.user.fid) ||
-        (context.client && (context.client.fid || context.client.clientFid)));
+      ((context.user && (context.user as any).fid) ||
+        (context.client && ((context.client as any).fid || (context.client as any).clientFid)));
 
     if (hasFarcasterContext) {
       console.log('[UserProvider] Farcaster context available, skipping wallet-only flow');

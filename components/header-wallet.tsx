@@ -53,10 +53,12 @@ export default function HeaderWallet() {
     // Farcaster user
     return (
       <div className="flex items-center gap-2">
-        <UIAvatar className="h-6 w-6">
-          <AvatarImage src={user.pfpUrl} alt={user.username} />
-          <AvatarFallback>{user.username?.[0] || 'U'}</AvatarFallback>
-        </UIAvatar>
+        <Link href="/profile">
+          <UIAvatar className="h-6 w-6 cursor-pointer hover:opacity-80 transition-opacity">
+            <AvatarImage src={user.pfpUrl} alt={user.username} />
+            <AvatarFallback>{user.username?.[0] || 'U'}</AvatarFallback>
+          </UIAvatar>
+        </Link>
         <Link href="/profile" className="text-sm font-medium hover:underline hidden sm:block">
           {user.username}
         </Link>
