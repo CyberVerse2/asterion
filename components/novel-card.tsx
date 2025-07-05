@@ -87,17 +87,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
             </div>
           </div>
 
-          {/* Categories */}
-          <div className="flex flex-wrap gap-2">
-            {novel.genres?.map((category: string) => (
-              <span
-                key={category}
-                className="category-tag px-3 py-1 rounded-full text-xs text-gray-300"
-              >
-                {category}
-              </span>
-            ))}
-          </div>
+
 
           <p className="text-sm text-gray-400 line-clamp-3">{novel.summary}</p>
         </CardContent>
