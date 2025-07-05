@@ -96,44 +96,97 @@ export async function POST(req: NextRequest) {
       return !existingUser; // Returns true if wallet address is unique
     };
 
-    // Build search criteria
-    const searchCriteria: any[] = [];
-    if (fid && username) {
-      searchCriteria.push({ fid: Number(fid) }, { username: username });
-    }
-    if (walletAddress) {
-      searchCriteria.push({ walletAddress: walletAddress });
-    }
+    let user = null;
 
-    // Try to find the user by fid, username, or walletAddress with tips included
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: searchCriteria
-      },
-      include: {
-        tips: {
-          include: {
-            novel: {
-              select: {
-                id: true,
-                title: true
+    // First, try to find user by fid if provided (most specific)
+    if (fid) {
+      user = await prisma.user.findUnique({
+        where: { fid: Number(fid) },
+        include: {
+          tips: {
+            include: {
+              novel: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              },
+              chapter: {
+                select: {
+                  id: true,
+                  title: true
+                }
               }
             },
-            chapter: {
-              select: {
-                id: true,
-                title: true
-              }
-            }
-          },
-          orderBy: {
-            date: 'desc'
-          },
-          take: 5
+            orderBy: {
+              date: 'desc'
+            },
+            take: 5
+          }
         }
-      }
-    });
-    console.log('[POST /api/users] Found user:', user);
+      });
+      console.log('[POST /api/users] Found user by fid:', user);
+    }
+
+    // If no user found by fid, try by walletAddress
+    if (!user && walletAddress) {
+      user = await prisma.user.findFirst({
+        where: { walletAddress: walletAddress },
+        include: {
+          tips: {
+            include: {
+              novel: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              },
+              chapter: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              }
+            },
+            orderBy: {
+              date: 'desc'
+            },
+            take: 5
+          }
+        }
+      });
+      console.log('[POST /api/users] Found user by wallet address:', user);
+    }
+
+    // If no user found by fid or walletAddress, try by username as fallback
+    if (!user && username) {
+      user = await prisma.user.findUnique({
+        where: { username: username },
+        include: {
+          tips: {
+            include: {
+              novel: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              },
+              chapter: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              }
+            },
+            orderBy: {
+              date: 'desc'
+            },
+            take: 5
+          }
+        }
+      });
+      console.log('[POST /api/users] Found user by username:', user);
+    }
 
     // Handle existing user without wallet address - update with current wallet
     if (user && !user.walletAddress && walletAddress) {
@@ -185,43 +238,38 @@ export async function POST(req: NextRequest) {
       console.log('[POST /api/users] Updated existing user with wallet address:', user);
     }
 
-    // If not found, create the user
-    if (!user) {
-      const userData: any = {};
+    // If user exists, return them (no need to create)
+    if (user) {
+      console.log('[POST /api/users] Returning existing user:', user);
+      return NextResponse.json(user);
+    }
 
-      // Handle Farcaster user creation
-      if (fid && username) {
-        userData.fid = Number(fid);
-        userData.username = username;
-        if (pfpUrl) userData.pfpUrl = pfpUrl;
-        if (walletAddress) {
-          // Check wallet address uniqueness before creating
-          const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
-          if (!isWalletUnique) {
-            const conflictingUser = await prisma.user.findFirst({
-              where: { walletAddress: walletAddress }
-            });
-            console.log('[POST /api/users] Wallet address conflict during creation');
-            return NextResponse.json(
-              {
-                error: 'This wallet address is already associated with another user',
-                conflictingUser: { id: conflictingUser?.id, username: conflictingUser?.username }
-              },
-              { status: 409 }
-            );
-          }
-          userData.walletAddress = walletAddress;
-        }
+    // If not found, create the user
+    const userData: any = {};
+
+    // Handle Farcaster user creation
+    if (fid && username) {
+      // Double-check that fid doesn't exist before creating
+      const existingUserWithFid = await prisma.user.findUnique({
+        where: { fid: Number(fid) }
+      });
+
+      if (existingUserWithFid) {
+        console.log('[POST /api/users] User with fid already exists, returning existing user');
+        return NextResponse.json(existingUserWithFid);
       }
-      // Handle wallet-only user creation
-      else if (walletAddress) {
+
+      userData.fid = Number(fid);
+      userData.username = username;
+      if (pfpUrl) userData.pfpUrl = pfpUrl;
+      if (walletAddress) {
         // Check wallet address uniqueness before creating
         const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
         if (!isWalletUnique) {
           const conflictingUser = await prisma.user.findFirst({
             where: { walletAddress: walletAddress }
           });
-          console.log('[POST /api/users] Wallet address conflict during wallet-only user creation');
+          console.log('[POST /api/users] Wallet address conflict during creation');
           return NextResponse.json(
             {
               error: 'This wallet address is already associated with another user',
@@ -230,23 +278,44 @@ export async function POST(req: NextRequest) {
             { status: 409 }
           );
         }
-
         userData.walletAddress = walletAddress;
-        // Generate unique username for wallet-only user
-        try {
-          userData.username = await generateUniqueUsername(checkUsernameUniqueness);
-          console.log('[POST /api/users] Generated username for wallet user:', userData.username);
-        } catch (error) {
-          console.error('[POST /api/users] Username generation failed:', error);
-          return NextResponse.json(
-            {
-              error: 'Failed to generate unique username'
-            },
-            { status: 500 }
-          );
-        }
+      }
+    }
+    // Handle wallet-only user creation
+    else if (walletAddress) {
+      // Check wallet address uniqueness before creating
+      const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
+      if (!isWalletUnique) {
+        const conflictingUser = await prisma.user.findFirst({
+          where: { walletAddress: walletAddress }
+        });
+        console.log('[POST /api/users] Wallet address conflict during wallet-only user creation');
+        return NextResponse.json(
+          {
+            error: 'This wallet address is already associated with another user',
+            conflictingUser: { id: conflictingUser?.id, username: conflictingUser?.username }
+          },
+          { status: 409 }
+        );
       }
 
+      userData.walletAddress = walletAddress;
+      // Generate unique username for wallet-only user
+      try {
+        userData.username = await generateUniqueUsername(checkUsernameUniqueness);
+        console.log('[POST /api/users] Generated username for wallet user:', userData.username);
+      } catch (error) {
+        console.error('[POST /api/users] Username generation failed:', error);
+        return NextResponse.json(
+          {
+            error: 'Failed to generate unique username'
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    try {
       const newUser = await prisma.user.create({
         data: userData
       });
@@ -278,6 +347,48 @@ export async function POST(req: NextRequest) {
         }
       });
       console.log('[POST /api/users] Created new user:', user);
+    } catch (error: any) {
+      // Handle unique constraint violations specifically
+      if (error.code === 'P2002' && error.meta?.target?.includes('fid')) {
+        console.log('[POST /api/users] Unique constraint violation on fid, fetching existing user');
+        // If there's a unique constraint violation on fid, fetch the existing user
+        const existingUser = await prisma.user.findUnique({
+          where: { fid: Number(fid) },
+          include: {
+            tips: {
+              include: {
+                novel: {
+                  select: {
+                    id: true,
+                    title: true
+                  }
+                },
+                chapter: {
+                  select: {
+                    id: true,
+                    title: true
+                  }
+                }
+              },
+              orderBy: {
+                date: 'desc'
+              },
+              take: 5
+            }
+          }
+        });
+
+        if (existingUser) {
+          console.log(
+            '[POST /api/users] Returning existing user after constraint violation:',
+            existingUser
+          );
+          return NextResponse.json(existingUser);
+        }
+      }
+
+      // Re-throw if it's not a fid constraint violation or if user still not found
+      throw error;
     }
 
     const response = NextResponse.json(user);
