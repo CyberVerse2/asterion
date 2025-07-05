@@ -57,10 +57,7 @@ export default function HeaderWallet() {
           <AvatarImage src={user.pfpUrl} alt={user.username} />
           <AvatarFallback>{user.username?.[0] || 'U'}</AvatarFallback>
         </UIAvatar>
-        <Link
-          href="/profile"
-          className="text-sm font-medium hover:underline block sm:hidden"
-        >
+        <Link href="/profile" className="text-sm font-medium hover:underline hidden sm:block">
           {user.username}
         </Link>
       </div>

@@ -28,6 +28,7 @@ import {
   spendPermissionManagerAddress,
   USDC_ADDRESS
 } from '@/lib/abi/SpendPermissionManager';
+import { ERC20_ABI } from '@/lib/abi/ERC20';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useRouter } from 'next/navigation';
@@ -61,30 +62,6 @@ interface TipWithNovel {
     title: string;
   };
 }
-
-// Minimal ERC-20 ABI for approve and allowance
-const ERC20_ABI = [
-  {
-    constant: false,
-    inputs: [
-      { name: 'spender', type: 'address' },
-      { name: 'amount', type: 'uint256' }
-    ],
-    name: 'approve',
-    outputs: [{ name: '', type: 'bool' }],
-    type: 'function'
-  },
-  {
-    constant: true,
-    inputs: [
-      { name: 'owner', type: 'address' },
-      { name: 'spender', type: 'address' }
-    ],
-    name: 'allowance',
-    outputs: [{ name: '', type: 'uint256' }],
-    type: 'function'
-  }
-];
 
 // Inline SVG icon components
 const DollarSign = (props: React.SVGProps<SVGSVGElement>) => (
@@ -482,6 +459,42 @@ export default function ProfilePage() {
       hash: approveTxHash
     });
 
+  // Handle Farcaster approval with connector check
+  const handleFarcasterApproval = async () => {
+    if (!account?.address) {
+      console.log('[Profile] No account address, attempting to connect...');
+      try {
+        const connectResult = await connectAsync({ connector: connectors[0] });
+        console.log('[Profile] Connected successfully:', connectResult);
+
+        // Wait a bit for the connection to be established
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Retry the approval after connection
+        if (writeContract) {
+          writeContract({
+            abi: ERC20_ABI,
+            address: usdcAddress as `0x${string}`,
+            functionName: 'approve',
+            args: [spenderAddress as `0x${string}`, approveAmount]
+          });
+        }
+      } catch (error) {
+        console.error('[Profile] Connection failed:', error);
+        setApproveError('Failed to connect wallet. Please try again.');
+      }
+    } else if (writeContract) {
+      writeContract({
+        abi: ERC20_ABI,
+        address: usdcAddress as `0x${string}`,
+        functionName: 'approve',
+        args: [spenderAddress as `0x${string}`, approveAmount]
+      });
+    } else {
+      setApproveError('Wallet not ready. Please refresh and try again.');
+    }
+  };
+
   // Save spendLimit to DB after ERC-20 approve for Farcaster users
   useEffect(() => {
     if (hasFarcasterContext && isApproveTxSuccess && profile?.id) {
@@ -861,15 +874,7 @@ export default function ProfilePage() {
               <div className="pt-4 border-t border-white/10">
                 {hasFarcasterContext ? (
                   <Button
-                    onClick={() =>
-                      writeContract &&
-                      writeContract({
-                        address: usdcAddress,
-                        abi: ERC20_ABI,
-                        functionName: 'approve',
-                        args: [spenderAddress, approveAmount]
-                      })
-                    }
+                    onClick={handleFarcasterApproval}
                     disabled={saving || isApprovePending || isApproveTxLoading || !writeContract}
                     className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-200"
                   >
