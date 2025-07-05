@@ -158,11 +158,21 @@ export default function IndividualChapterPage() {
         }
 
         // Check if user has already tipped this chapter
-        if ((user as any)?.tips) {
+        // But don't override hasLoved if we recently completed a successful tip
+        if ((user as any)?.tips && timeSinceLastTip > 5000) {
           const hasAlreadyTipped = (user as any).tips.some(
             (tip: any) => tip.chapterId === chapterId
           );
           setHasLoved(hasAlreadyTipped);
+        } else if ((user as any)?.tips && !hasLoved) {
+          // Only set hasLoved to true if we find a tip and it's not already true
+          // This prevents overriding a recent successful tip
+          const hasAlreadyTipped = (user as any).tips.some(
+            (tip: any) => tip.chapterId === chapterId
+          );
+          if (hasAlreadyTipped) {
+            setHasLoved(true);
+          }
         }
       } catch (err) {
         console.error('Error fetching chapter:', err);
@@ -177,7 +187,7 @@ export default function IndividualChapterPage() {
         setLoading(false);
       }
     },
-    [chapterId, user]
+    [chapterId, user, hasLoved]
   );
 
   // Fetch navigation data
