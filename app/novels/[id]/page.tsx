@@ -410,7 +410,7 @@ export default function NovelPage() {
             {(novel.genres || []).map((category: string) => (
               <Badge
                 key={category}
-                className="bg-white/10 backdrop-blur-md text-white border-0 text-xs px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer"
+                className="bg-white/10 backdrop-blur-md text-white border-0 text-xs px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer font-normal"
               >
                 {category}
               </Badge>
