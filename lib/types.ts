@@ -6,6 +6,7 @@ export interface User {
   novels: string[];
   bookmarks: string[];
   tips: Tip[];
+  readingProgress?: ReadingProgress[]; // User's reading progress across chapters
   createdAt: Date;
   updatedAt: Date;
   pfpUrl?: string;
@@ -34,6 +35,7 @@ export interface Chapter {
   order: number;
   loves: number;
   novelId: string;
+  readingProgress?: ReadingProgress[]; // Reading progress for this chapter
 }
 
 export interface Tip {
@@ -50,4 +52,17 @@ export interface TipDistribution {
   zoraAmount: number;
   liquidityAmount: number;
   asterionAmount: number;
+}
+
+export interface ReadingProgress {
+  id: string;
+  userId: string;
+  chapterId: string;
+  currentLine: number; // Current line number (0-based)
+  totalLines: number; // Total lines in the chapter
+  progressPercentage: number; // Percentage complete (0-100)
+  scrollPosition: number; // Scroll position in pixels for fallback
+  lastReadAt: Date; // When user last read this chapter
+  createdAt: Date;
+  updatedAt: Date;
 }

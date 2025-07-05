@@ -17,6 +17,7 @@ model User {
   bookmarks  String[] // Array of Novel IDs (as strings)
   novels     String[] // Array of Novel IDs (as strings, for authored novels)
   supporters Supporter[]
+  readingProgress ReadingProgress[] // User's reading progress across chapters
   createdAt  DateTime? @map("createdAt")
   updatedAt  DateTime? @map("updatedAt")
   spendLimit Float    @default(100)
@@ -81,9 +82,31 @@ model Chapter {
   content       String
   tipCount      Int      @default(0)
   tips          Tip[]    // Tips made on this chapter
+  readingProgress ReadingProgress[] // Reading progress for this chapter
   createdAt     DateTime? @map("createdAt")
   updatedAt     DateTime? @map("updatedAt")
 
   @@index([novel, chapterNumber], name: "novel_chapterNumber_idx")
   @@map("chapters")
+}
+
+model ReadingProgress {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String   @db.ObjectId
+  chapter           Chapter  @relation(fields: [chapterId], references: [id])
+  chapterId         String   @db.ObjectId
+  currentLine       Int      @default(0) // Current line number (0-based)
+  totalLines        Int      @default(0) // Total lines in the chapter
+  progressPercentage Float   @default(0.0) // Percentage complete (0-100)
+  scrollPosition    Int      @default(0) // Scroll position in pixels for fallback
+  lastReadAt        DateTime @default(now()) // When user last read this chapter
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, chapterId], name: "user_chapter_progress")
+  @@index([userId], name: "user_progress_idx")
+  @@index([chapterId], name: "chapter_progress_idx")
+  @@index([lastReadAt], name: "last_read_idx")
+  @@map("reading_progress")
 }

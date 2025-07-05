@@ -27,6 +27,18 @@ The app needs to implement proper data caching to prevent unnecessary reloads wh
 4. Optimizing user experience with background revalidation
 5. Reducing API calls and improving perceived performance
 
+**NEW FEATURE - Line-Level Reading Progress Tracking:**
+
+Users want to be able to resume reading exactly where they left off, down to the specific line within a chapter. This feature will:
+
+1. Track the exact line number where the user stopped reading in each chapter
+2. Save reading progress automatically as the user scrolls through chapters
+3. Provide a "Resume Reading" option that jumps to the exact line
+4. Show reading progress indicators (e.g., "45% complete", "Line 127 of 234")
+5. Maintain reading history across devices and sessions
+6. Handle different screen sizes and text wrapping scenarios
+7. Provide visual indicators of reading progress in chapter lists and novel details
+
 # Key Challenges and Analysis
 
 - **Where to Trigger:** The logic should run as soon as the Farcaster user context is available (from MiniKit/Farcaster context), ideally in a provider or onboarding effect.
@@ -67,6 +79,20 @@ The app needs to implement proper data caching to prevent unnecessary reloads wh
 - **Background Revalidation:** Configure when and how data should be revalidated in the background
 - **Optimistic Updates:** Implement optimistic updates for actions like bookmarking and tipping
 - **Performance Monitoring:** Ensure SWR implementation actually improves performance metrics
+
+**NEW CHALLENGES - Line-Level Reading Progress Tracking:**
+
+- **Database Schema:** Need to add ReadingProgress model to track user's reading position per chapter
+- **Line Detection:** Implement reliable line counting that works across different screen sizes and text wrapping
+- **Scroll Tracking:** Track user's scroll position and determine which line is currently visible
+- **Auto-Save Logic:** Implement debounced auto-save to prevent excessive API calls while reading
+- **Progress Calculation:** Calculate reading percentage based on current line vs total lines in chapter
+- **Resume Functionality:** Implement smooth scrolling to resume reading at exact line position
+- **Performance Impact:** Ensure progress tracking doesn't affect reading experience or performance
+- **Cross-Device Sync:** Maintain reading progress across different devices and screen sizes
+- **Text Rendering:** Handle dynamic text rendering and ensure consistent line numbering
+- **Visual Indicators:** Design and implement progress indicators in UI components
+- **Offline Support:** Handle reading progress when user is offline and sync when back online
 
 # High-level Task Breakdown
 
@@ -221,6 +247,56 @@ The app needs to implement proper data caching to prevent unnecessary reloads wh
 
 - [x] Profile Page Mobile UX Optimization - Implement mobile-first layout, responsive spacing, 2-column stats grid, compact tipping history, mobile-optimized forms, and enhanced touch targets
 
+**NEW TASKS - Line-Level Reading Progress Tracking:**
+
+- [ ] **Update Database Schema for Reading Progress**
+
+  - Add ReadingProgress model to Prisma schema
+  - Include fields: userId, chapterId, currentLine, totalLines, progressPercentage, lastReadAt
+  - Add indexes for efficient querying
+  - **Success Criteria:** Database schema supports reading progress tracking
+
+- [ ] **Create Reading Progress API Endpoints**
+
+  - Create `/api/reading-progress` POST endpoint to save progress
+  - Create `/api/reading-progress` GET endpoint to retrieve progress
+  - Implement upsert logic for updating existing progress
+  - **Success Criteria:** API endpoints handle reading progress CRUD operations
+
+- [ ] **Implement Line Tracking in ChapterReader**
+
+  - Add line numbering to chapter content rendering
+  - Implement scroll position tracking with intersection observer
+  - Calculate which line is currently visible on screen
+  - **Success Criteria:** ChapterReader accurately tracks current line position
+
+- [ ] **Add Auto-Save Reading Progress**
+
+  - Implement debounced auto-save (save progress every 2-3 seconds)
+  - Save progress when user navigates away from chapter
+  - Handle offline scenarios with local storage backup
+  - **Success Criteria:** Reading progress is automatically saved without performance impact
+
+- [ ] **Implement Resume Reading Functionality**
+
+  - Add "Resume Reading" button to chapter lists and novel details
+  - Implement smooth scrolling to exact line position
+  - Show last read position in chapter navigation
+  - **Success Criteria:** Users can resume reading at exact line where they left off
+
+- [ ] **Add Progress Indicators to UI**
+
+  - Show reading percentage in chapter headers
+  - Add progress bars to chapter lists
+  - Display "last read" timestamps in novel details
+  - **Success Criteria:** Users can see their reading progress across the app
+
+- [ ] **Test Reading Progress Across Devices**
+  - Test progress sync across different screen sizes
+  - Verify line counting consistency across devices
+  - Test offline/online progress synchronization
+  - **Success Criteria:** Reading progress works reliably across all scenarios
+
 # Project Status Board
 
 - [x] Extract Farcaster user info from MiniKit context
@@ -269,6 +345,56 @@ The app needs to implement proper data caching to prevent unnecessary reloads wh
 **NEW TASKS - Mobile UX Improvements:**
 
 - [x] Profile Page Mobile UX Optimization - Implement mobile-first layout, responsive spacing, 2-column stats grid, compact tipping history, mobile-optimized forms, and enhanced touch targets
+
+**NEW TASKS - Line-Level Reading Progress Tracking:**
+
+- [ ] **Update Database Schema for Reading Progress**
+
+  - Add ReadingProgress model to Prisma schema
+  - Include fields: userId, chapterId, currentLine, totalLines, progressPercentage, lastReadAt
+  - Add indexes for efficient querying
+  - **Success Criteria:** Database schema supports reading progress tracking
+
+- [ ] **Create Reading Progress API Endpoints**
+
+  - Create `/api/reading-progress` POST endpoint to save progress
+  - Create `/api/reading-progress` GET endpoint to retrieve progress
+  - Implement upsert logic for updating existing progress
+  - **Success Criteria:** API endpoints handle reading progress CRUD operations
+
+- [ ] **Implement Line Tracking in ChapterReader**
+
+  - Add line numbering to chapter content rendering
+  - Implement scroll position tracking with intersection observer
+  - Calculate which line is currently visible on screen
+  - **Success Criteria:** ChapterReader accurately tracks current line position
+
+- [ ] **Add Auto-Save Reading Progress**
+
+  - Implement debounced auto-save (save progress every 2-3 seconds)
+  - Save progress when user navigates away from chapter
+  - Handle offline scenarios with local storage backup
+  - **Success Criteria:** Reading progress is automatically saved without performance impact
+
+- [ ] **Implement Resume Reading Functionality**
+
+  - Add "Resume Reading" button to chapter lists and novel details
+  - Implement smooth scrolling to exact line position
+  - Show last read position in chapter navigation
+  - **Success Criteria:** Users can resume reading at exact line where they left off
+
+- [ ] **Add Progress Indicators to UI**
+
+  - Show reading percentage in chapter headers
+  - Add progress bars to chapter lists
+  - Display "last read" timestamps in novel details
+  - **Success Criteria:** Users can see their reading progress across the app
+
+- [ ] **Test Reading Progress Across Devices**
+  - Test progress sync across different screen sizes
+  - Verify line counting consistency across devices
+  - Test offline/online progress synchronization
+  - **Success Criteria:** Reading progress works reliably across all scenarios
 
 # Current Status / Progress Tracking
 
