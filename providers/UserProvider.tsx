@@ -134,7 +134,24 @@ export function UserProvider({ children }: UserProviderProps) {
       clientObj ? Object.keys(clientObj) : 'none'
     );
 
-    if (fid && username && !user && !userLoading) {
+    // CRITICAL: If we have an fid, this is ALWAYS a Farcaster user, regardless of username extraction
+    if (fid && !user && !userLoading) {
+      if (!username) {
+        console.error(
+          '[UserProvider] WARNING: Farcaster user has fid but no extractable username!'
+        );
+        console.error(
+          '[UserProvider] This should not happen - all Farcaster users should have usernames'
+        );
+        console.error('[UserProvider] Available context properties:', {
+          userObj: userObj ? Object.keys(userObj) : 'none',
+          clientObj: clientObj ? Object.keys(clientObj) : 'none'
+        });
+        // Don't proceed without username for Farcaster users
+        setUserError('Farcaster user found but username could not be extracted');
+        return;
+      }
+
       // Farcaster user found - create/fetch (wallet address will be added later if needed)
       const payload = { fid, username, pfpUrl };
       console.log('[UserProvider] Creating/fetching Farcaster user:', payload);
@@ -175,12 +192,12 @@ export function UserProvider({ children }: UserProviderProps) {
     // 1. Wallet is connected
     // 2. No user is currently loaded/loading
     // 3. Farcaster context has been checked (to avoid race conditions)
-    // 4. No Farcaster context available (so this is a wallet-only user)
     if (!isConnected || !walletAddress || user || userLoading || !farcasterContextChecked) {
       return;
     }
 
-    // Check if we have Farcaster context - if yes, skip wallet-only flow
+    // CRITICAL: Check if we have Farcaster context - if yes, skip wallet-only flow
+    // This prevents Farcaster users from being created as wallet-only users
     const hasFarcasterContext =
       context &&
       ((context.user && (context.user as any).fid) ||
@@ -191,10 +208,25 @@ export function UserProvider({ children }: UserProviderProps) {
       return;
     }
 
+    // Double-check: if context exists but no fid, still skip wallet-only flow
+    // This handles edge cases where context exists but fid extraction failed
+    if (context) {
+      console.log(
+        '[UserProvider] Context exists but no fid found, skipping wallet-only flow to avoid conflicts'
+      );
+      return;
+    }
+
     console.log(
-      '[UserProvider] No Farcaster context, creating wallet-only user for address:',
+      '[UserProvider] No Farcaster context detected, creating wallet-only user for address:',
       walletAddress
     );
+    console.log('[UserProvider] Context state:', {
+      contextExists: !!context,
+      contextUser: context && (context as any).user ? 'exists' : 'none',
+      contextClient: context && (context as any).client ? 'exists' : 'none'
+    });
+
     createOrFetchUser({ walletAddress });
   }, [isConnected, walletAddress, user, userLoading, farcasterContextChecked, context]);
 
