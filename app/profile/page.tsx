@@ -154,8 +154,14 @@ export default function ProfilePage() {
   const {
     user: profile,
     userLoading: isLoading,
-    userError
-  } = useUser() as { user: User | null; userLoading: boolean; userError: string | null };
+    userError,
+    refreshUser
+  } = useUser() as {
+    user: User | null;
+    userLoading: boolean;
+    userError: string | null;
+    refreshUser: () => Promise<void>;
+  };
   const [spendLimit, setSpendLimit] = useState(100);
   const [chapterTipAmount, setChapterTipAmount] = useState(0.01);
   const [saving, setSaving] = useState(false);
@@ -568,6 +574,20 @@ export default function ProfilePage() {
       });
     }
   }, [isFarcasterUser, isApproveTxSuccess, profile?.id, spendLimit]);
+
+  // Refresh user data after successful ERC20 approval to update permission status
+  useEffect(() => {
+    if (isFarcasterUser && isApproveTxSuccess && refreshUser) {
+      console.log('[Profile] ERC20 approval successful, refreshing user data...');
+      refreshUser()
+        .then(() => {
+          console.log('[Profile] User data refreshed after ERC20 approval');
+        })
+        .catch((error) => {
+          console.error('[Profile] Error refreshing user data:', error);
+        });
+    }
+  }, [isFarcasterUser, isApproveTxSuccess, refreshUser]);
 
   if (isLoading) {
     return (

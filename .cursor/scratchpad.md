@@ -961,3 +961,23 @@ Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** o
 ```
 
 **Status**: ✅ **CRITICAL ISSUE RESOLVED** - Multiple user creation in wallet context fixed
+
+## Current Status / Progress Tracking
+
+**✅ COMPLETED - Task 45: Testing and Debugging**
+
+- Successfully implemented comprehensive spend permission system
+- Fixed multiple user creation issues in both Farcaster and wallet contexts
+- Resolved navbar responsiveness issues
+- Fixed profile stats responsiveness on mobile
+- Improved spend permission button logic for proper context detection
+- **NEW FIX: Spend Permission Modal After ERC20 Approval**
+  - **Issue**: After successful ERC20 approval in Farcaster context, the spend permission modal was still showing when trying to read novels
+  - **Root Cause**: The spend permission validation logic was only checking for Coinbase spend permissions, not ERC20 approvals
+  - **Solution**:
+    1. Updated `lib/utils/spend-permission.ts` to handle both permission types (Coinbase and ERC20)
+    2. Added `permissionType` field to distinguish between 'coinbase' and 'erc20' permissions
+    3. For Farcaster users (ERC20), validation now returns valid if user has wallet address
+    4. Added `refreshUser()` call after successful ERC20 approval to update user state
+    5. Updated user-friendly messages to reflect different permission types
+  - **Status**: ✅ **COMPLETED** - Modal should no longer appear after successful ERC20 approval

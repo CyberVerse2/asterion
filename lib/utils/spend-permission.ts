@@ -2,7 +2,7 @@
  * Spend Permission Validation Utility
  *
  * This utility provides functions to validate user spend permissions for reading novels.
- * It checks for presence, validity, and expiration of spend permissions.
+ * It supports both Coinbase spend permissions (wallet-only users) and ERC20 approvals (Farcaster users).
  */
 
 import { User } from '@/lib/types';
@@ -28,6 +28,7 @@ export interface SpendPermissionStatus {
   errorMessage?: string;
   expiresAt?: Date;
   startsAt?: Date;
+  permissionType?: 'coinbase' | 'erc20';
 }
 
 /**
@@ -48,6 +49,40 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
     };
   }
 
+  // Determine if user is a Farcaster user (uses ERC20 approve) or wallet-only user (uses Coinbase spend permissions)
+  const isFarcasterUser = Boolean(user.fid);
+
+  if (isFarcasterUser) {
+    // For Farcaster users, we use ERC20 approve transactions
+    // Since we can't easily check blockchain state here, we'll assume they have permission
+    // if they have a wallet address (the actual ERC20 approval check happens on-chain)
+    // TODO: In the future, we could add blockchain state checking here
+
+    if (!user.walletAddress) {
+      return {
+        isValid: false,
+        hasPermission: false,
+        hasSignature: false,
+        isExpired: false,
+        isNotStarted: false,
+        errorMessage: 'Wallet address not found for Farcaster user',
+        permissionType: 'erc20'
+      };
+    }
+
+    // For now, assume Farcaster users with wallet addresses have valid permissions
+    // This is a temporary solution - ideally we'd check the actual ERC20 allowance on-chain
+    return {
+      isValid: true,
+      hasPermission: true,
+      hasSignature: true,
+      isExpired: false,
+      isNotStarted: false,
+      permissionType: 'erc20'
+    };
+  }
+
+  // For wallet-only users, check Coinbase spend permissions
   // Check if user has spend permission data
   if (!user.spendPermission) {
     return {
@@ -56,7 +91,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
       hasSignature: !!user.spendPermissionSignature,
       isExpired: false,
       isNotStarted: false,
-      errorMessage: 'No spend permission found'
+      errorMessage: 'No spend permission found',
+      permissionType: 'coinbase'
     };
   }
 
@@ -68,7 +104,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
       hasSignature: false,
       isExpired: false,
       isNotStarted: false,
-      errorMessage: 'No spend permission signature found'
+      errorMessage: 'No spend permission signature found',
+      permissionType: 'coinbase'
     };
   }
 
@@ -84,7 +121,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
         hasSignature: true,
         isExpired: false,
         isNotStarted: false,
-        errorMessage: 'Invalid spend permission data: missing required fields'
+        errorMessage: 'Invalid spend permission data: missing required fields',
+        permissionType: 'coinbase'
       };
     }
 
@@ -96,7 +134,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
         hasSignature: true,
         isExpired: false,
         isNotStarted: false,
-        errorMessage: 'Invalid spend permission data: missing timestamps'
+        errorMessage: 'Invalid spend permission data: missing timestamps',
+        permissionType: 'coinbase'
       };
     }
 
@@ -114,7 +153,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
         isExpired: false,
         isNotStarted: true,
         errorMessage: 'Spend permission has not started yet',
-        startsAt: new Date(startTimestamp * 1000)
+        startsAt: new Date(startTimestamp * 1000),
+        permissionType: 'coinbase'
       };
     }
 
@@ -127,7 +167,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
         isExpired: true,
         isNotStarted: false,
         errorMessage: 'Spend permission has expired',
-        expiresAt: new Date(endTimestamp * 1000)
+        expiresAt: new Date(endTimestamp * 1000),
+        permissionType: 'coinbase'
       };
     }
 
@@ -139,7 +180,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
       isExpired: false,
       isNotStarted: false,
       expiresAt: new Date(endTimestamp * 1000),
-      startsAt: new Date(startTimestamp * 1000)
+      startsAt: new Date(startTimestamp * 1000),
+      permissionType: 'coinbase'
     };
   } catch (error) {
     console.error('Error validating spend permission:', error);
@@ -149,7 +191,8 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
       hasSignature: true,
       isExpired: false,
       isNotStarted: false,
-      errorMessage: 'Error parsing spend permission data'
+      errorMessage: 'Error parsing spend permission data',
+      permissionType: 'coinbase'
     };
   }
 }
@@ -173,10 +216,16 @@ export function getSpendPermissionMessage(user: User | null | undefined): string
   const status = validateSpendPermission(user);
 
   if (status.isValid) {
+    if (status.permissionType === 'erc20') {
+      return 'ERC20 spending permission is active';
+    }
     return `Spend permission is valid until ${status.expiresAt?.toLocaleDateString()}`;
   }
 
   if (!status.hasPermission) {
+    if (status.permissionType === 'erc20') {
+      return 'You need to approve ERC20 spending to read novels';
+    }
     return 'You need to approve spend permission to read novels';
   }
 

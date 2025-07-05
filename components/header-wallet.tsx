@@ -54,7 +54,7 @@ export default function HeaderWallet() {
     return (
       <div className="flex items-center gap-2">
         <Link href="/profile">
-          <UIAvatar className="h-6 w-6 cursor-pointer hover:opacity-80 transition-opacity">
+          <UIAvatar className="h-8 w-8 sm:h-6 sm:w-6 cursor-pointer hover:opacity-80 transition-opacity border-2 border-purple-400/30 hover:border-purple-400/50">
             <AvatarImage src={user.pfpUrl} alt={user.username} />
             <AvatarFallback>{user.username?.[0] || 'U'}</AvatarFallback>
           </UIAvatar>
