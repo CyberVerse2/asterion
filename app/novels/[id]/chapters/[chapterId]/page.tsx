@@ -60,6 +60,7 @@ export default function IndividualChapterPage() {
   const [totalLines, setTotalLines] = useState(0);
   const [isTracking, setIsTracking] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Love/tip state
   const [hasLoved, setHasLoved] = useState(false);
@@ -74,6 +75,7 @@ export default function IndividualChapterPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationIdRef = useRef(0);
+  const isTrackingRef = useRef(false);
 
   // Reading progress hooks
   const { readingProgress, mutate: mutateProgress } = useReadingProgress(
@@ -156,59 +158,33 @@ export default function IndividualChapterPage() {
     }
   }, [chapterId]);
 
-  // Initialize line tracking
-  const initializeLineTracking = useCallback(() => {
-    if (!contentRef.current) return;
-
-    const content = contentRef.current;
-    const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
-    setTotalLines(lines.length);
-
-    // Set up intersection observer for line tracking
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const lineIndex = Array.from(lines).indexOf(entry.target as Element);
-            if (lineIndex !== -1) {
-              setCurrentLine(lineIndex);
-
-              // Throttle saving to avoid too many API calls
-              const now = Date.now();
-              if (now - lastSaveTime > 2000) {
-                debouncedSave(lineIndex, lines.length);
-                setLastSaveTime(now);
-              }
-            }
-          }
-        });
-      },
-      {
-        threshold: 0.5,
-        rootMargin: '-50% 0px -50% 0px'
-      }
-    );
-
-    lines.forEach((line) => {
-      observerRef.current?.observe(line);
-    });
-
-    setIsTracking(true);
-  }, [lastSaveTime]);
-
-  // Debounced save function
+  // Debounced save function - moved up and memoized properly
   const debouncedSave = useCallback(
     (lineIndex: number, totalLinesCount: number) => {
+      console.log('💾 debouncedSave called:', {
+        lineIndex,
+        totalLinesCount,
+        userId: (user as any)?.id,
+        chapterId,
+        hasUser: !!(user as any)?.id,
+        hasChapterId: !!chapterId,
+        isTracking: isTrackingRef.current
+      });
+
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
 
       saveTimeoutRef.current = setTimeout(async () => {
-        if ((user as any)?.id && chapterId) {
+        if ((user as any)?.id && chapterId && isTrackingRef.current) {
+          console.log('💾 Actually saving progress:', {
+            userId: (user as any).id,
+            chapterId: chapterId,
+            currentLine: lineIndex,
+            totalLines: totalLinesCount,
+            scrollPosition: window.scrollY
+          });
+
           try {
             await saveProgress({
               userId: (user as any).id,
@@ -217,6 +193,8 @@ export default function IndividualChapterPage() {
               totalLines: totalLinesCount,
               scrollPosition: window.scrollY
             });
+
+            console.log('✅ Progress saved successfully');
 
             // Invalidate both individual chapter progress and novel-wide progress caches
             mutateProgress();
@@ -228,13 +206,98 @@ export default function IndividualChapterPage() {
               mutate(`/api/reading-progress?userId=${(user as any).id}&novelId=${novelId}`);
             }
           } catch (error) {
-            console.error('Error saving reading progress:', error);
+            console.error('❌ Error saving reading progress:', error);
           }
+        } else {
+          console.log('⚠️ Cannot save - missing data or not tracking:', {
+            hasUser: !!(user as any)?.id,
+            hasChapterId: !!chapterId,
+            isTracking: isTrackingRef.current,
+            userId: (user as any)?.id,
+            chapterId
+          });
         }
       }, 1000);
     },
     [(user as any)?.id, chapterId, novelId, saveProgress, mutateProgress]
   );
+
+  // Initialize line tracking - fixed to prevent re-initialization loop
+  const initializeLineTracking = useCallback(() => {
+    if (!contentRef.current || !user || isInitialized) {
+      console.log('⏸️ Skipping line tracking init:', {
+        hasContent: !!contentRef.current,
+        hasUser: !!user,
+        isInitialized
+      });
+      return;
+    }
+
+    console.log('🔍 Initializing line tracking for user:', (user as any)?.id);
+
+    const content = contentRef.current;
+    const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+    setTotalLines(lines.length);
+    setIsInitialized(true);
+
+    console.log('📊 Total lines detected:', lines.length);
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const element = entry.target;
+            const lineIndex = Array.from(lines).indexOf(element as Element);
+
+            if (lineIndex !== -1 && lineIndex !== currentLine) {
+              console.log('👁️ Line visibility changed:', {
+                newLine: lineIndex,
+                previousLine: currentLine,
+                totalLines: lines.length,
+                userId: (user as any)?.id,
+                chapterId,
+                isTracking: isTrackingRef.current
+              });
+
+              setCurrentLine(lineIndex);
+
+              // Only start saving after initial delay and when tracking is enabled
+              if (isTrackingRef.current) {
+                console.log('💾 Triggering save for line:', lineIndex);
+                debouncedSave(lineIndex, lines.length);
+              } else {
+                console.log('⏸️ Not saving yet - tracking not started');
+              }
+            }
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0.1
+      }
+    );
+
+    lines.forEach((line) => observerRef.current?.observe(line));
+  }, [user, currentLine, debouncedSave, chapterId, isInitialized]);
+
+  // Start tracking after initial delay - fixed timing
+  useEffect(() => {
+    if (isInitialized && !isTracking) {
+      const timer = setTimeout(() => {
+        console.log('🚀 Starting reading progress tracking');
+        setIsTracking(true);
+        isTrackingRef.current = true;
+      }, 2000); // Start tracking after 2 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [isInitialized, isTracking]);
 
   // Restore reading position
   const restoreReadingPosition = useCallback(() => {
@@ -335,22 +398,8 @@ export default function IndividualChapterPage() {
     fetchNavigation();
   }, [fetchChapter, fetchNavigation]);
 
-  // Ensure browser back button always goes to novel page
   useEffect(() => {
-    // Simple approach: modify browser history to ensure back goes to novel page
-    const novelUrl = `/novels/${novelId}`;
-
-    // Push novel page to history so back button goes there
-    window.history.pushState(null, '', novelUrl);
-
-    // Then immediately push current chapter page back
-    window.history.pushState(null, '', window.location.href);
-
-    // Now when user hits back, they'll go to the novel page
-  }, [novelId]);
-
-  useEffect(() => {
-    if (chapter && contentRef.current) {
+    if (chapter && contentRef.current && !isInitialized) {
       setTimeout(() => {
         initializeLineTracking();
       }, 100);
@@ -364,7 +413,7 @@ export default function IndividualChapterPage() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [chapter, initializeLineTracking]);
+  }, [chapter, initializeLineTracking, isInitialized]);
 
   useEffect(() => {
     if (readingProgress && chapter && contentRef.current) {
@@ -529,6 +578,16 @@ export default function IndividualChapterPage() {
           onComplete={() => removeLoveAnimation(animation.id)}
         />
       ))}
+
+      {/* Floating Back to Novel Button */}
+      <button
+        type="button"
+        onClick={goBackToNovel}
+        className="fixed left-2 top-1/2 transform -translate-y-1/2 z-50 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-2 sm:p-3 text-gray-400 hover:text-white hover:bg-white/20 transition-all duration-300 shadow-lg md:left-4 touch-manipulation"
+        aria-label="Back to Novel"
+      >
+        <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+      </button>
     </div>
   );
 }

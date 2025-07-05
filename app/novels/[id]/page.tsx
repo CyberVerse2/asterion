@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import ChapterReader from '@/components/chapter-reader';
 // @ts-ignore
 import { DollarSign, BookOpen, ArrowLeft, Star, Library, Eye, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -68,10 +67,11 @@ export default function NovelPage() {
 
   // Fetch user's reading progress for this novel
   const { user }: { user: any } = useUser();
-  const { readingProgress, isLoading: progressLoading } = useNovelReadingProgress(
-    user?.id || null,
-    novelId
-  );
+  const {
+    readingProgress,
+    isLoading: progressLoading,
+    mutate: mutateReadingProgress
+  } = useNovelReadingProgress(user?.id || null, novelId);
 
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
@@ -164,6 +164,27 @@ export default function NovelPage() {
     };
   }, [readingProgress, chapters]);
 
+  // Debug reading progress data
+  useEffect(() => {
+    if (user?.id && novelId) {
+      console.log('🔍 Novel Reading Progress Debug:', {
+        userId: user.id,
+        novelId,
+        readingProgress,
+        progressLoading,
+        continueReadingInfo
+      });
+    }
+  }, [user?.id, novelId, readingProgress, progressLoading, continueReadingInfo]);
+
+  // Force revalidation when page loads to ensure fresh data
+  useEffect(() => {
+    if (user?.id && novelId && mutateReadingProgress) {
+      console.log('🔄 Forcing reading progress revalidation on page load');
+      mutateReadingProgress();
+    }
+  }, [user?.id, novelId]);
+
   // Memoized event handlers
   const handleBookmark = useCallback(async () => {
     if (!user || !user.id || !novel) return alert('You must be logged in to bookmark novels.');
@@ -232,10 +253,6 @@ export default function NovelPage() {
 
   const toggleSummary = useCallback(() => {
     setShowSummary((prev) => !prev);
-  }, []);
-
-  const handleBackToNovel = useCallback(() => {
-    setIsReading(false);
   }, []);
 
   const handleChaptersNavigation = useCallback(() => {
@@ -334,103 +351,6 @@ export default function NovelPage() {
             Back to Home
           </Button>
         </Link>
-      </div>
-    );
-  }
-
-  if (isReading) {
-    // Handle cases where chapters are loading or empty
-    if (chaptersLoading) {
-      return (
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <Button
-              onClick={handleBackToNovel}
-              className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-105"
-            >
-              <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-              Back to Novel
-            </Button>
-          </div>
-          <div className="max-w-4xl mx-auto">
-            <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-              <CardContent className="p-8 text-center">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-8 bg-gray-700/50 rounded mb-4 w-1/2 mx-auto"></div>
-                  <div className="h-4 bg-gray-700/50 rounded w-3/4 mx-auto"></div>
-                  <div className="h-4 bg-gray-700/50 rounded w-1/2 mx-auto"></div>
-                  <div className="h-64 bg-gray-700/50 rounded mt-8"></div>
-                </div>
-                <p className="text-gray-400 mt-4">Loading chapters...</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      );
-    }
-
-    // Handle case where no chapters are available
-    if (!Array.isArray(chapters) || chapters.length === 0) {
-      return (
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <Button
-              onClick={handleBackToNovel}
-              className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-105"
-            >
-              <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-              Back to Novel
-            </Button>
-          </div>
-          <div className="max-w-4xl mx-auto">
-            <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-              <CardContent className="p-8 text-center">
-                <BookOpen className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-white mb-4">No Chapters Available</h2>
-                <p className="text-gray-400 mb-6">
-                  This novel doesn't have any chapters available yet. The content might still be
-                  loading or being processed.
-                </p>
-                <div className="space-y-3">
-                  <Button
-                    onClick={() => mutateChapters()}
-                    className="bg-purple-600 hover:bg-purple-700 transition-colors"
-                  >
-                    Refresh Chapters
-                  </Button>
-                  <br />
-                  <Button
-                    onClick={handleBackToNovel}
-                    className="bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
-                  >
-                    Back to Novel Details
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      );
-    }
-
-    // Render ChapterReader only when chapters are available
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button
-            onClick={handleBackToNovel}
-            className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-105"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-            Back to Novel
-          </Button>
-        </div>
-        <ChapterReader
-          chapters={chapters}
-          currentChapterIndex={currentChapterIndex}
-          onChapterChange={setCurrentChapterIndex}
-          onChapterTipped={handleChapterTipped}
-        />
       </div>
     );
   }

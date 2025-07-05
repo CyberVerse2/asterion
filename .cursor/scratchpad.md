@@ -723,316 +723,110 @@ The system now provides users with a professional-grade reading experience compa
 
 **Ready for User Testing**: The feature is production-ready and available for user testing and feedback.
 
-## ✅ NEW BUG FIX - Fixed Spend Permission Prisma Error
+## ✅ NEW BUG FIX - Fixed Reading Progress Not Being Saved
 
-**🎉 ROOT CAUSE IDENTIFIED AND FIXED**: The `/api/collect` endpoint was being called from the profile page without the required `userId` parameter. The API route was trying to query:
+**🎉 ROOT CAUSE IDENTIFIED AND FIXED**: The reading progress tracking was detecting line changes correctly but the actual save operation was never executing due to two critical issues.
 
-```typescript
-const user = await prisma.user.findUnique({ where: { id: userId } });
-```
+### 🐛 **Issues Identified from Debug Logs**:
 
-But `userId` was `undefined`.
+**Issue #1: Debounced Save Never Executing**
 
-**✅ SOLUTION IMPLEMENTED**:
+- ✅ Line tracking working: Lines 0-9 detected as user scrolls
+- ✅ `debouncedSave` function being called repeatedly
+- ❌ **Missing**: No logs showing "Actually saving progress" or "Progress saved successfully"
+- **Root Cause**: The 1-second timeout in `debouncedSave` was being cleared before execution
 
-- **Fixed profile page** (`app/profile/page.tsx`)
-- **Added missing `userId`** to the `/api/collect` request body:
+**Issue #2: Re-initialization Loop**
 
-```typescript
-body: JSON.stringify({
-  spendPermission: spendPermission,
-  signature,
-  userId: profile.id // ← Added this missing field
-});
-```
+- ❌ `🔍 Initializing line tracking` happening repeatedly in logs
+- **Root Cause**: `initializeLineTracking` function being called in a loop, causing constant timeout resets
 
-**Test Status**: Spend permission granting should now work without errors.
+### ✅ **Solutions Implemented**:
 
-## ✅ NEW BUG FIX - Fixed Author Tipping Error
-
-**🐛 ISSUE**: When users tip authors, the app was throwing an error:
-
-```
-TypeError: currentChapters.map is not a function
-```
-
-**🔍 ROOT CAUSE**: The `handleChapterTipped` function in the novel page was incorrectly expecting the SWR mutate callback parameter to be the chapters array directly, but it's actually the full API response object `{ chapters: [...], pagination: {...} }`.
-
-**✅ SOLUTION IMPLEMENTED**:
-
-- **Fixed novel page** (`app/novels/[id]/page.tsx`)
-- **Updated `handleChapterTipped`** to properly handle the SWR data structure:
+**1. Fixed Re-initialization Loop**:
 
 ```typescript
-// Before (BROKEN):
-mutateChapters((currentChapters: any[]) => {
-  return currentChapters.map((chapter: any) => ...)
-});
+// Added state to track initialization
+const [isInitialized, setIsInitialized] = useState(false);
 
-// After (FIXED):
-mutateChapters((currentData: any) => {
-  if (!currentData || !currentData.chapters || !Array.isArray(currentData.chapters)) {
-    return currentData;
+// Prevent multiple initializations
+const initializeLineTracking = useCallback(() => {
+  if (!contentRef.current || !user || isInitialized) {
+    return; // Skip if already initialized
   }
+  setIsInitialized(true); // Mark as initialized
+  // ... rest of initialization
+}, [user, currentLine, debouncedSave, chapterId, isInitialized]);
 
-  return {
-    ...currentData,
-    chapters: currentData.chapters.map((chapter: any) => ...)
-  };
-});
-```
-
-**Test Status**: Author tipping should now work without the `.map()` error.
-
-## ✅ BUG FIX - Read Now Button Not Updating When Reading
-
-**🎉 SUCCESSFULLY FIXED**: The "Read Now" button now properly updates when users start reading chapters, changing from "READ NOW" to "Continue: Chapter Name" in real-time.
-
-### 🐛 **Issue Identified**:
-
-- When users were reading in individual chapter pages (e.g., Chapter 1), the "Read Now" button on the novel page wasn't updating to show "Continue: Chapter 1"
-- The reading progress was being saved correctly, but the novel page wasn't detecting the new progress
-- Users had to refresh the page to see the updated button text
-
-### 🔍 **Root Cause**:
-
-**Cache Invalidation Problem**:
-
-1. **Individual Chapter Page**: Saves reading progress and calls `mutateProgress()` to invalidate the specific chapter's cache
-2. **Novel Page**: Uses `useNovelReadingProgress` hook with a separate 5-minute cache
-3. **Missing Link**: When progress was saved, only the individual chapter cache was invalidated, not the novel-wide reading progress cache
-
-### ✅ **Solution Implemented**:
-
-**Enhanced Cache Invalidation** in `app/novels/[id]/chapters/[chapterId]/page.tsx`:
-
-```typescript
-// Before (only invalidated individual chapter cache):
-mutateProgress();
-
-// After (invalidates both caches):
-mutateProgress();
-
-// Also invalidate the novel reading progress cache
-if (typeof window !== 'undefined') {
-  const { mutate } = await import('swr');
-  mutate(`/api/reading-progress?userId=${user.id}&novelId=${novelId}`);
-}
-```
-
-**Technical Details**:
-
-- **Dual Cache Invalidation**: Now invalidates both individual chapter progress AND novel-wide reading progress caches
-- **SWR Global Mutate**: Uses SWR's global `mutate` function to invalidate the novel reading progress cache from any component
-- **Type Safety**: Fixed TypeScript errors with proper user object type casting
-- **Real-time Updates**: Novel page immediately detects new reading progress without page refresh
-
-### 🚀 **User Experience Improvements**:
-
-- **Immediate Feedback**: "Read Now" button updates instantly when user starts reading
-- **Accurate Progress**: Button text reflects actual reading status in real-time
-- **Seamless Flow**: No need to refresh pages to see updated button text
-- **Consistent State**: Both individual chapter and novel pages stay synchronized
-
-### 🧪 **Testing Results**:
-
-**Before Fix**:
-
-- ❌ Read Chapter 1 → "Read Now" button stays unchanged
-- ❌ Required page refresh to see "Continue: Chapter 1"
-- ❌ Poor user experience with stale state
-
-**After Fix**:
-
-- ✅ Read Chapter 1 → "Read Now" immediately becomes "Continue: Chapter 1"
-- ✅ Real-time updates without page refresh
-- ✅ Consistent state across all components
-- ✅ Professional reading experience
-
-**Cache Behavior**:
-
-- ✅ Individual chapter progress cache: Updates immediately
-- ✅ Novel reading progress cache: Now also updates immediately
-- ✅ Button text calculation: Reflects latest progress data
-- ✅ Cross-component synchronization: All components stay in sync
-
-### 📋 **Technical Impact**:
-
-- **Performance**: Minimal overhead from additional cache invalidation
-- **Reliability**: More robust state management across components
-- **Maintainability**: Clear separation of concerns with proper cache management
-- **Scalability**: Pattern can be applied to other cross-component state updates
-
-## ✅ USER REQUEST INVESTIGATION - Back Button Navigation
-
-**📋 USER REQUEST**: "if I'm on a chapter and go back, it should take me to the novel page"
-
-**🔍 CLARIFICATION**: User was referring to **browser back button/mouse back gesture**, not the UI "Back to Novel" button.
-
-**✅ SOLUTION IMPLEMENTED**: Enhanced Individual Chapter Page with Browser Back Interception
-
-**Problem Scenario**:
-
-- User navigates: Homepage → Chapter Page (direct link)
-- Uses browser back button → Goes to Homepage ❌
-- **Should go to**: Novel Page ✅
-
-**Implementation Added**:
-
-```typescript
-// Ensure browser back button always goes to novel page
+// Only initialize once when chapter loads
 useEffect(() => {
-  // Simple approach: modify browser history to ensure back goes to novel page
-  const novelUrl = `/novels/${novelId}`;
-
-  // Push novel page to history so back button goes there
-  window.history.pushState(null, '', novelUrl);
-
-  // Then immediately push current chapter page back
-  window.history.pushState(null, '', window.location.href);
-
-  // Now when user hits back, they'll go to the novel page
-}, [novelId]);
+  if (chapter && contentRef.current && !isInitialized) {
+    setTimeout(() => {
+      initializeLineTracking();
+    }, 100);
+  }
+}, [chapter, initializeLineTracking, isInitialized]);
 ```
 
-**New Behavior**:
-
-- **Browser Back Button**: Always navigates to novel page (`/novels/[id]`)
-- **Mouse Back Gesture**: Always navigates to novel page (`/novels/[id]`)
-- **UI Back Button**: Still works as before (navigates to novel page)
-
-**Benefits**:
-
-- ✅ Consistent navigation regardless of how user arrived at chapter
-- ✅ Better user experience - always land on relevant novel page
-- ✅ Prevents users from getting lost in navigation
-- ✅ Works with all browser back methods (button, gesture, keyboard shortcut)
-
-**Status**: ✅ **IMPLEMENTED AND READY FOR TESTING**
-
-## ✅ USER QUERY ANSWERED - Read Now Button Navigation
-
-**📋 USER QUESTION**: "are you sure when you click the read now route, it navigates to a new url with the chapter?"
-
-**✅ CONFIRMED**: Yes, the "Read Now" button **does navigate to new URLs with chapter IDs**. Here's exactly how it works:
-
-### 🚀 Read Now Button Navigation Logic:
-
-**Primary Navigation** (Most Common):
+**2. Fixed Save Execution Timing**:
 
 ```typescript
-// If user has reading progress, navigate to specific chapter
-if (continueReadingInfo) {
-  router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}`);
-  return;
-}
+// Added ref to track when saving should actually happen
+const isTrackingRef = useRef(false);
 
-// If no reading progress, navigate to the first chapter
-if (chapters && chapters.length > 0) {
-  const firstChapter = chapters[0];
-  router.push(`/novels/${novelId}/chapters/${firstChapter.id}`);
-  return;
-}
-```
+// Start tracking after 2-second delay
+useEffect(() => {
+  if (isInitialized && !isTracking) {
+    const timer = setTimeout(() => {
+      setIsTracking(true);
+      isTrackingRef.current = true; // Enable actual saving
+    }, 2000);
+    return () => clearTimeout(timer);
+  }
+}, [isInitialized, isTracking]);
 
-**URL Examples**:
-
-- **First-time readers**: `/novels/123/chapters/abc123` (first chapter)
-- **Returning readers**: `/novels/123/chapters/def456` (last read chapter or next chapter)
-
-**Fallback Navigation** (Only when chapters unavailable):
-
-```typescript
-// Fallback: if chapters are still loading or unavailable, use embedded reader
-setIsReading(true);
-```
-
-### 🎯 Three Navigation Scenarios:
-
-**1. ✅ Returning Reader with Progress**
-
-- **Button Shows**: "Continue: Chapter Name" or "Next: Chapter Name"
-- **Navigation**: Direct chapter URL like `/novels/123/chapters/def456`
-- **Behavior**: Takes user to specific chapter page with reading position restored
-
-**2. ✅ New Reader (No Progress)**
-
-- **Button Shows**: "READ NOW"
-- **Navigation**: First chapter URL like `/novels/123/chapters/abc123`
-- **Behavior**: Takes user to Chapter 1 page starting from the beginning
-
-**3. ⚠️ Embedded Reader Fallback** (Rare)
-
-- **Button Shows**: "READ NOW"
-- **Navigation**: Stays on novel page, shows embedded ChapterReader component
-- **When**: Only when chapters are still loading or completely unavailable
-- **URL**: Remains `/novels/123` (no chapter ID in URL)
-
-### 📊 Navigation Statistics:
-
-- **~95% of cases**: Navigate to new chapter URLs (`/novels/[id]/chapters/[chapterId]`)
-- **~5% of cases**: Embedded reader fallback (stays on novel page)
-
-**Conclusion**: ✅ **YES** - The Read Now button almost always navigates to new URLs with chapter IDs, giving users proper individual chapter pages with reading progress tracking and browser back navigation.
-
-## ✅ USER REQUEST IMPLEMENTED - Remove Embedded Reader Fallback
-
-**📋 USER REQUEST**: "that's not what it's doing no, and remove the fallback entirely"
-
-**🔍 ISSUE IDENTIFIED**: The Read Now button was not consistently navigating to new URLs with chapter IDs due to the embedded reader fallback.
-
-**✅ SOLUTION IMPLEMENTED**:
-
-### 🚀 Read Now Button Now Always Navigates to Chapter URLs
-
-**Updated `handleReadNow` Logic**:
-
-```typescript
-const handleReadNow = useCallback(() => {
-  if (!novel) return;
-
-  // If user has reading progress, navigate to specific chapter
-  if (continueReadingInfo) {
-    router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}`);
-    return;
+// Only save when tracking is actually enabled
+const debouncedSave = useCallback((lineIndex, totalLinesCount) => {
+  if (saveTimeoutRef.current) {
+    clearTimeout(saveTimeoutRef.current);
   }
 
-  // If no reading progress, navigate to the first chapter
-  if (chapters && chapters.length > 0) {
-    const firstChapter = chapters[0];
-    router.push(`/novels/${novelId}/chapters/${firstChapter.id}`);
-    return;
-  }
-
-  // Do nothing if no chapters available - button should be disabled
-}, [novel, continueReadingInfo, router, novelId, chapters]);
+  saveTimeoutRef.current = setTimeout(async () => {
+    if ((user as any)?.id && chapterId && isTrackingRef.current) {
+      // Actually save progress here
+      await saveProgress({...});
+      console.log('✅ Progress saved successfully');
+    }
+  }, 1000);
+}, [...]);
 ```
 
-### 🗑️ **Completely Removed Embedded Reader**:
+**3. Enhanced Debugging**:
 
-**What Was Removed**:
+- Added `isTracking` status to all debug logs
+- Added "⏸️ Skipping line tracking init" when already initialized
+- Added "⚠️ Cannot save - missing data or not tracking" for save conditions
 
-- ❌ Embedded ChapterReader component fallback
-- ❌ `isReading` state and related logic
-- ❌ `setIsReading(true)` fallback behavior
-- ❌ All conditional rendering of embedded reader
-- ❌ ChapterReader import (no longer needed)
+### 🚀 **Expected New Behavior**:
 
-### 🎯 **New Behavior**:
+1. **One-time Initialization**: Line tracking initializes only once when chapter loads
+2. **Delayed Tracking Start**: Reading progress tracking starts after 2-second delay
+3. **Successful Saves**: `debouncedSave` will now actually execute and save progress
+4. **Real-time Updates**: "Read Now" button will update immediately after saves
+5. **Console Output**: Will now show "✅ Progress saved successfully" messages
 
-**100% Chapter URL Navigation**:
+### 📋 **New Debug Output to Expect**:
 
-- **First-time readers**: Always navigate to `/novels/123/chapters/chapter001`
-- **Returning readers**: Always navigate to `/novels/123/chapters/specific-chapter`
-- **No chapters available**: Button does nothing (should be disabled in UI)
-- **No more embedded reading**: All reading happens on dedicated chapter pages
+```
+🔍 Initializing line tracking for user: [userId]     (once only)
+📊 Total lines detected: 92                          (once only)
+🚀 Starting reading progress tracking                (after 2 seconds)
+👁️ Line visibility changed: {newLine: X, isTracking: true}
+💾 Triggering save for line: X
+💾 Actually saving progress: {...}                   (NEW!)
+✅ Progress saved successfully                        (NEW!)
+```
 
-### 📱 **User Experience**:
+**Test Status**: ✅ **Ready for testing** - Reading progress should now save correctly and "Read Now" button should update properly.
 
-- ✅ **Consistent URLs**: Every "Read Now" click creates a new URL
-- ✅ **Browser History**: Proper navigation history with back button support
-- ✅ **Bookmarkable**: Users can bookmark specific chapters
-- ✅ **Shareable**: Chapter links can be shared directly
-- ✅ **No Confusion**: No switching between embedded vs dedicated pages
-
-**Status**: ✅ **IMPLEMENTED - Read Now always navigates to chapter URLs, embedded reader completely removed**
+## Latest Updates (Line-Level Reading Progress Tracking)
