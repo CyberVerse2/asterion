@@ -84,6 +84,7 @@ export default function IndividualChapterPage() {
   const userRef = useRef(user);
   const chapterIdRef = useRef(chapterId);
   const novelIdRef = useRef(novelId);
+  const hasRestoredPositionRef = useRef(false);
 
   // Reading progress hooks
   const { readingProgress, mutate: mutateProgress } = useReadingProgress(
@@ -166,10 +167,10 @@ export default function IndividualChapterPage() {
     }
   }, [chapterId]);
 
-  // Debounced save function - moved up and memoized properly
-  const debouncedSave = useCallback(
-    (lineIndex: number, totalLinesCount: number) => {
-      console.log('💾 debouncedSave called:', {
+  // Save function - now immediate, not debounced
+  const saveImmediately = useCallback(
+    async (lineIndex: number, totalLinesCount: number) => {
+      console.log('💾 saveImmediately called:', {
         lineIndex,
         totalLinesCount,
         userId: (user as any)?.id,
@@ -180,98 +181,48 @@ export default function IndividualChapterPage() {
         timestamp: new Date().toISOString()
       });
 
-      // Only set a new timeout if one is not already pending
-      if (saveTimeoutRef.current) {
-        console.log('⏸️ Save already pending, not setting a new timeout');
-        return;
-      }
-
-      console.log('🎯 Setting new save timeout...', {
-        lineIndex,
-        totalLinesCount,
-        timestamp: new Date().toISOString()
-      });
-
-      saveTimeoutRef.current = setTimeout(async () => {
-        console.log('🟢 [GLOBAL] Save timeout callback fired!');
-        const currentUser = userRef.current;
-        const currentChapterId = chapterIdRef.current;
-        const currentNovelId = novelIdRef.current;
-        console.log('⏰ Save timeout executed, checking conditions...', {
-          hasUserId: !!(currentUser as any)?.id,
-          hasChapterId: !!currentChapterId,
-          isTrackingActive: isTrackingRef.current,
-          userId: (currentUser as any)?.id,
-          chapterId: currentChapterId,
-          lineIndex,
-          totalLinesCount
-        });
-
-        if ((currentUser as any)?.id && currentChapterId && isTrackingRef.current) {
-          console.log('💾 Actually saving progress:', {
+      const currentUser = userRef.current;
+      const currentChapterId = chapterIdRef.current;
+      const currentNovelId = novelIdRef.current;
+      if ((currentUser as any)?.id && currentChapterId && isTrackingRef.current) {
+        try {
+          const result = await saveProgress({
             userId: (currentUser as any).id,
             chapterId: currentChapterId,
             currentLine: lineIndex,
             totalLines: totalLinesCount,
-            scrollPosition: window.scrollY,
-            timestamp: new Date().toISOString()
+            scrollPosition: window.scrollY
           });
-
-          try {
-            const result = await saveProgress({
-              userId: (currentUser as any).id,
-              chapterId: currentChapterId,
-              currentLine: lineIndex,
-              totalLines: totalLinesCount,
-              scrollPosition: window.scrollY
-            });
-
-            console.log('✅ Progress saved successfully:', result);
-
-            // Invalidate both individual chapter progress and novel-wide progress caches
-            mutateProgress();
-
-            // Also invalidate the novel reading progress cache to update "Read Now" button
-            if (typeof window !== 'undefined') {
-              // Get SWR cache and invalidate novel reading progress
-              const { mutate } = await import('swr');
-              mutate(
-                `/api/reading-progress?userId=${(currentUser as any).id}&novelId=${currentNovelId}`
-              );
-              console.log('🔄 Cache invalidated for novel reading progress');
-            }
-          } catch (error: any) {
-            console.error('❌ Error saving reading progress:', error);
-            console.error('📋 Error details:', {
-              message: error?.message || String(error),
-              stack: error?.stack,
-              userId: (currentUser as any).id,
-              chapterId: currentChapterId,
-              lineIndex,
-              totalLinesCount
-            });
+          console.log('✅ Progress saved successfully:', result);
+          mutateProgress();
+          if (typeof window !== 'undefined') {
+            const { mutate } = await import('swr');
+            mutate(
+              `/api/reading-progress?userId=${(currentUser as any).id}&novelId=${currentNovelId}`
+            );
+            console.log('🔄 Cache invalidated for novel reading progress');
           }
-        } else {
-          console.log('⚠️ Cannot save - missing data or not tracking:', {
-            hasUser: !!(currentUser as any)?.id,
-            hasChapterId: !!currentChapterId,
-            isTracking: isTrackingRef.current,
-            userId: (currentUser as any)?.id,
+        } catch (error: any) {
+          console.error('❌ Error saving reading progress:', error);
+          console.error('📋 Error details:', {
+            message: error?.message || String(error),
+            stack: error?.stack,
+            userId: (currentUser as any).id,
             chapterId: currentChapterId,
-            debugInfo: 'Save conditions not met'
+            lineIndex,
+            totalLinesCount
           });
         }
-
-        // Clear the timeout ref after execution
-        saveTimeoutRef.current = null;
-      }, 2000);
-
-      console.log('⏳ Save timeout set for 2 seconds from now, ID:', saveTimeoutRef.current);
-
-      // Test timeout to verify setTimeout is working
-      setTimeout(() => {
-        console.log('🧪 Test timeout executed - setTimeout is working');
-      }, 2500);
+      } else {
+        console.log('⚠️ Cannot save - missing data or not tracking:', {
+          hasUser: !!(currentUser as any)?.id,
+          hasChapterId: !!currentChapterId,
+          isTracking: isTrackingRef.current,
+          userId: (currentUser as any)?.id,
+          chapterId: currentChapterId,
+          debugInfo: 'Save conditions not met'
+        });
+      }
     },
     [(user as any)?.id, chapterId, novelId, saveProgress, mutateProgress]
   );
@@ -419,7 +370,7 @@ export default function IndividualChapterPage() {
             console.log('💾 Triggering save - significant progress detected');
             setLastSavedLine(currentReadingLine);
             lastSavedLineRef.current = currentReadingLine;
-            debouncedSave(currentReadingLine, lines.length);
+            saveImmediately(currentReadingLine, lines.length);
           } else {
             console.log('⏸️ Not saving - progress delta too small', {
               needed: saveThreshold,
@@ -525,7 +476,7 @@ export default function IndividualChapterPage() {
               setLastSavedLine(manualCurrentLine);
               // Update ref immediately to prevent duplicate saves
               lastSavedLineRef.current = manualCurrentLine;
-              debouncedSave(manualCurrentLine, currentLines.length);
+              saveImmediately(manualCurrentLine, currentLines.length);
             } else {
               console.log('⏸️ Manual check - not saving, progress too small:', {
                 needed: saveThreshold,
@@ -541,9 +492,20 @@ export default function IndividualChapterPage() {
 
     // Cleanup function to remove scroll listener
     return () => {
+      console.log('🧹 [CLEANUP] initializeLineTracking cleanup running');
       window.removeEventListener('scroll', handleScroll);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      if (saveTimeoutRef.current) {
+        console.log(
+          '🧹 [CLEANUP] Clearing saveTimeoutRef in initializeLineTracking cleanup, ID:',
+          saveTimeoutRef.current
+        );
+        clearTimeout(saveTimeoutRef.current);
+      }
     };
-  }, [user, currentLine, debouncedSave, chapterId, isInitialized]);
+  }, [user, currentLine, saveImmediately, chapterId, isInitialized]);
 
   // Start tracking after initial delay - fixed timing
   useEffect(() => {
@@ -570,28 +532,76 @@ export default function IndividualChapterPage() {
     }
   }, [isInitialized, isTracking, totalLines, user, chapterId]);
 
-  // Restore reading position
-  const restoreReadingPosition = useCallback(() => {
-    if (!readingProgress || !contentRef.current || startFromTop) return;
-
-    const content = contentRef.current;
-    const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
-
-    if (readingProgress.currentLine < lines.length) {
-      const targetLine = lines[readingProgress.currentLine];
-      if (targetLine) {
-        setTimeout(() => {
-          targetLine.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          });
-        }, 500);
-        setCurrentLine(readingProgress.currentLine);
-        setLastSavedLine(readingProgress.currentLine);
-        lastSavedLineRef.current = readingProgress.currentLine;
+  // Only restore position once per chapter load, after both chapter and readingProgress are available
+  useEffect(() => {
+    if (
+      chapter &&
+      readingProgress &&
+      !startFromTop &&
+      !hasRestoredPositionRef.current &&
+      contentRef.current
+    ) {
+      console.log('[ScrollRestore] Attempting to restore position:', {
+        chapterId,
+        currentLine: readingProgress.currentLine,
+        totalLines: totalLines,
+        hasRestored: hasRestoredPositionRef.current
+      });
+      const content = contentRef.current;
+      const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+      let attempts = 0;
+      const maxAttempts = 20;
+      function tryScroll() {
+        attempts++;
+        if (!readingProgress) {
+          console.log('[ScrollRestore] Skipped: readingProgress not loaded (in tryScroll)');
+          return;
+        }
+        if (readingProgress.currentLine < lines.length) {
+          const targetLine = lines[readingProgress.currentLine];
+          if (targetLine) {
+            targetLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            console.log(
+              '[ScrollRestore] Restored to line',
+              readingProgress.currentLine,
+              'on attempt',
+              attempts
+            );
+            setCurrentLine(readingProgress.currentLine);
+            setLastSavedLine(readingProgress.currentLine);
+            lastSavedLineRef.current = readingProgress.currentLine;
+            hasRestoredPositionRef.current = true;
+            return;
+          } else {
+            console.log('[ScrollRestore] Target line not found on attempt', attempts);
+          }
+        } else {
+          console.log(
+            '[ScrollRestore] currentLine out of bounds:',
+            readingProgress.currentLine,
+            lines.length
+          );
+        }
+        if (attempts < maxAttempts) {
+          requestAnimationFrame(tryScroll);
+        } else {
+          console.log('[ScrollRestore] Max attempts reached, giving up.');
+        }
       }
+      tryScroll();
+    } else {
+      if (!chapter) console.log('[ScrollRestore] Skipped: chapter not loaded');
+      if (!readingProgress) console.log('[ScrollRestore] Skipped: readingProgress not loaded');
+      if (startFromTop) console.log('[ScrollRestore] Skipped: startFromTop is true');
+      if (hasRestoredPositionRef.current) console.log('[ScrollRestore] Skipped: already restored');
+      if (!contentRef.current) console.log('[ScrollRestore] Skipped: contentRef not ready');
     }
-  }, [readingProgress, startFromTop]);
+  }, [chapter, readingProgress, startFromTop, totalLines, chapterId]);
+
+  // Reset hasRestoredPositionRef when chapterId changes
+  useEffect(() => {
+    hasRestoredPositionRef.current = false;
+  }, [chapterId]);
 
   // Love/tip handler
   const handleLove = useCallback(
@@ -708,35 +718,35 @@ export default function IndividualChapterPage() {
       }, 500); // Increased delay to allow for full rendering
 
       return () => {
+        console.log('🧹 [CLEANUP] useEffect cleanup running');
         clearTimeout(cleanup);
+        if (observerRef.current) {
+          observerRef.current.disconnect();
+        }
+        if (saveTimeoutRef.current) {
+          console.log(
+            '🧹 [CLEANUP] Clearing saveTimeoutRef in useEffect cleanup, ID:',
+            saveTimeoutRef.current
+          );
+          clearTimeout(saveTimeoutRef.current);
+        }
       };
     }
 
     return () => {
+      console.log('🧹 [CLEANUP] useEffect cleanup running (no chapter/isInitialized)');
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
       if (saveTimeoutRef.current) {
+        console.log(
+          '🧹 [CLEANUP] Clearing saveTimeoutRef in useEffect cleanup (no chapter/isInitialized), ID:',
+          saveTimeoutRef.current
+        );
         clearTimeout(saveTimeoutRef.current);
       }
     };
   }, [chapter, initializeLineTracking, isInitialized]);
-
-  useEffect(() => {
-    if (readingProgress && chapter && contentRef.current) {
-      restoreReadingPosition();
-    }
-  }, [readingProgress, chapter, restoreReadingPosition]);
-
-  // Scroll to top when navigating from next chapter
-  useEffect(() => {
-    if (startFromTop && chapter) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setCurrentLine(0);
-      setLastSavedLine(0);
-      lastSavedLineRef.current = 0;
-    }
-  }, [startFromTop, chapter]);
 
   // Calculate progress percentage
   const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
@@ -908,6 +918,27 @@ export default function IndividualChapterPage() {
       >
         <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
       </button>
+
+      {/* TEST BUTTON FOR TIMEOUT DIAGNOSIS */}
+      <Button
+        onClick={() => {
+          if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+          }
+          saveTimeoutRef.current = setTimeout(() => {
+            console.log('🟢 [TEST BUTTON] Save timeout callback fired!');
+            saveTimeoutRef.current = null;
+          }, 2000);
+          console.log(
+            '⏳ [TEST BUTTON] Save timeout set for 2 seconds from now, ID:',
+            saveTimeoutRef.current
+          );
+        }}
+        className="mt-4 bg-yellow-600 hover:bg-yellow-700"
+      >
+        Test Save Timeout
+      </Button>
+      {/* END TEST BUTTON */}
     </div>
   );
 }

@@ -39,6 +39,11 @@ Users want to be able to resume reading exactly where they left off, down to the
 6. Handle different screen sizes and text wrapping scenarios
 7. Provide visual indicators of reading progress in chapter lists and novel details
 
+## NEW TASK: Fix Scroll Restoration Logic to Prevent Unwanted Jumps
+
+**Motivation:**
+Users report that after reading progress is saved, the page sometimes jumps up or down unexpectedly. This is likely due to the scroll restoration logic running after every save or progress update, rather than only on initial chapter load. This disrupts the reading experience and can be frustrating for users.
+
 # Key Challenges and Analysis
 
 - **Where to Trigger:** The logic should run as soon as the Farcaster user context is available (from MiniKit/Farcaster context), ideally in a provider or onboarding effect.
@@ -93,6 +98,13 @@ Users want to be able to resume reading exactly where they left off, down to the
 - **Text Rendering:** Handle dynamic text rendering and ensure consistent line numbering
 - **Visual Indicators:** Design and implement progress indicators in UI components
 - **Offline Support:** Handle reading progress when user is offline and sync when back online
+
+## Scroll Restoration Issue
+
+- **Current Behavior:** The effect that restores the reading position runs whenever `readingProgress` or `chapter` changes, which can happen after every save or progress update.
+- **Problem:** This causes the scroll position to jump back to the last saved line, even if the user has scrolled further.
+- **Root Cause:** The restore effect is not limited to the initial chapter load; it is triggered by any change in progress data.
+- **Goal:** Only restore the reading position once per chapter load, not after every save or progress update.
 
 # High-level Task Breakdown
 
@@ -314,6 +326,30 @@ Users want to be able to resume reading exactly where they left off, down to the
   - Test progress saving and loading
   - Test navigation between chapters
   - **Success Criteria:** All reading progress features work correctly
+
+## NEW TASK: Fix Scroll Restoration Logic
+
+1. **Add a hasRestoredPosition State**
+
+   - Add a `hasRestoredPosition` state variable (or ref) to track if the position has already been restored for the current chapter.
+   - **Success Criteria:** The scroll restoration logic only runs once per chapter load.
+
+2. **Update Restore Effect**
+
+   - Update the effect that calls `restoreReadingPosition` to check `hasRestoredPosition` and only run if it is false.
+   - Set `hasRestoredPosition` to true after restoring position.
+   - **Success Criteria:** The effect does not run after every save or progress update.
+
+3. **Reset hasRestoredPosition on Chapter Change**
+
+   - When the user navigates to a new chapter, reset `hasRestoredPosition` to false so restoration can occur for the new chapter.
+   - **Success Criteria:** Position is restored on new chapter load, but not on every progress update.
+
+4. **Test Thoroughly**
+   - Test that position is restored only once per chapter load.
+   - Test that unwanted scroll jumps no longer occur after saves.
+   - Test navigation between chapters and direct chapter access.
+   - **Success Criteria:** No more unwanted scroll jumps; restoration is reliable and user-friendly.
 
 # Project Status Board
 
