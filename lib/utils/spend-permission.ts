@@ -245,7 +245,7 @@ export function getSpendPermissionMessage(user: User | null | undefined): string
 }
 
 /**
- * Checks if a spend permission will expire soon (within 7 days)
+ * Checks if a spend permission will expire soon (within 1 day)
  * @param user - The user object to check
  * @returns boolean indicating if permission expires soon
  */
@@ -256,10 +256,10 @@ export function isSpendPermissionExpiringSoon(user: User | null | undefined): bo
     return false;
   }
 
-  const sevenDaysFromNow = new Date();
-  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+  const oneDayFromNow = new Date();
+  oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
 
-  return status.expiresAt <= sevenDaysFromNow;
+  return status.expiresAt <= oneDayFromNow;
 }
 
 /**

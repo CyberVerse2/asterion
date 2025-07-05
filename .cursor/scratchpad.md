@@ -765,7 +765,53 @@ The reading progress tracking feature is now **production-ready** with:
 
 ## Executor's Feedback or Assistance Requests
 
-### Fixed Page Refresh on Tip Issue (Latest)
+### Fixed Spend Permission Expiring Modal Timing (Latest)
+
+**Issue**: The spend permission expiring modal was showing when there were 7 days left to expire, which was too early and annoying for users.
+
+**Root Cause**: The `isSpendPermissionExpiringSoon` function was checking for 7 days instead of 1 day, and the permission guard hook wasn't properly checking for expiring permissions.
+
+**Solution**: Fixed the spend permission expiring logic:
+
+- Changed `isSpendPermissionExpiringSoon` function to only return true when there's 1 day left (instead of 7 days)
+- Updated the spend permission guard hook to show the modal when permission is expiring within 1 day
+- The modal now only appears when: user has no valid permission OR permission expires within 1 day
+
+**Files Modified**:
+
+- `lib/utils/spend-permission.ts` - Updated expiring soon threshold from 7 days to 1 day
+- `hooks/use-spend-permission-guard.ts` - Added expiring soon check to modal logic
+
+**Benefits**:
+
+- Users won't be bothered with expiring warnings until it's actually urgent (1 day left)
+- Modal only shows when action is truly needed
+- Better user experience with less interruption
+
+### Fixed Love Button Visual State Issue
+
+**Issue**: When users clicked the love button to tip a chapter, the tip count would update but the love button would not turn red to indicate it had been loved.
+
+**Root Cause**: The `fetchChapter` function had flawed logic for checking if the user had already tipped a chapter. The condition `!hasLoved` was preventing the state from being properly updated when `hasLoved` was already `true`, but the function needed to verify the actual state from the database.
+
+**Solution**: Fixed the `fetchChapter` function logic to properly handle the `hasLoved` state:
+
+- Changed the condition from `!hasLoved` to `timeSinceLastTip <= 5000` for recent tips
+- Added proper logic to only update `hasLoved` to `true` if the database confirms the tip exists
+- This ensures the visual state (red heart) matches the database state after tipping
+
+**Files Modified**:
+
+- `app/novels/[id]/chapters/[chapterId]/page.tsx` - Updated fetchChapter function logic
+
+**Benefits**:
+
+- Love button now properly turns red when clicked
+- Visual feedback is consistent with database state
+- Users can see immediate confirmation of their tip action
+- No more confusion about whether the tip was successful
+
+### Fixed Page Refresh on Tip Issue
 
 **Issue**: The page was refreshing/reloading every time a user clicked the love button to tip a chapter, causing a disruptive user experience.
 
@@ -804,19 +850,3 @@ The reading progress tracking feature is now **production-ready** with:
 - Better performance by removing redundant scroll event listeners
 - Simplified code maintenance
 - Reduced console logging noise from manual scroll checks
-
-### Fixed Love Button State Issue
-
-**Issue**: When users clicked the love button on a chapter, the button would briefly turn red but then revert to its original state instead of remaining red.
-
-**Root Cause**: The `fetchChapter` function was being called after successful tip operations and was overriding the `hasLoved` state by checking the user's tips array, which might not be immediately updated after the tip operation.
-
-**Solution**: Modified the `fetchChapter` function to preserve the `hasLoved` state when a tip was recently successful:
-
-- Added logic to only update `hasLoved` state if more than 5 seconds have passed since the last tip
-- Added conditional logic to prevent overriding a recent successful tip state
-- This ensures the love button remains red after being clicked
-
-**Files Modified**:
-
-- `app/novels/[id]/chapters/[chapterId]/page.tsx` - Updated fetchChapter function and progress tracking logic

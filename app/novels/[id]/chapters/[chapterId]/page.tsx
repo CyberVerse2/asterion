@@ -163,13 +163,14 @@ export default function IndividualChapterPage() {
             (tip: any) => tip.chapterId === chapterId
           );
           setHasLoved(hasAlreadyTipped);
-        } else if ((user as any)?.tips && !hasLoved) {
-          // Only set hasLoved to true if we find a tip and it's not already true
-          // This prevents overriding a recent successful tip
+        } else if ((user as any)?.tips && timeSinceLastTip <= 5000) {
+          // If we recently tipped, only update hasLoved if the user actually has a tip
+          // This ensures the visual state matches the database state
           const hasAlreadyTipped = (user as any).tips.some(
             (tip: any) => tip.chapterId === chapterId
           );
-          if (hasAlreadyTipped) {
+          // Only update if the database confirms the tip exists
+          if (hasAlreadyTipped && !hasLoved) {
             setHasLoved(true);
           }
         }
