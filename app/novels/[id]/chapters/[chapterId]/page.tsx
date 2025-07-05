@@ -81,6 +81,9 @@ export default function IndividualChapterPage() {
   const isTrackingRef = useRef(false);
   const lastSavedLineRef = useRef(0);
   const lastManualCheckRef = useRef(0);
+  const userRef = useRef(user);
+  const chapterIdRef = useRef(chapterId);
+  const novelIdRef = useRef(novelId);
 
   // Reading progress hooks
   const { readingProgress, mutate: mutateProgress } = useReadingProgress(
@@ -190,20 +193,24 @@ export default function IndividualChapterPage() {
       });
 
       saveTimeoutRef.current = setTimeout(async () => {
+        console.log('🟢 [GLOBAL] Save timeout callback fired!');
+        const currentUser = userRef.current;
+        const currentChapterId = chapterIdRef.current;
+        const currentNovelId = novelIdRef.current;
         console.log('⏰ Save timeout executed, checking conditions...', {
-          hasUserId: !!(user as any)?.id,
-          hasChapterId: !!chapterId,
+          hasUserId: !!(currentUser as any)?.id,
+          hasChapterId: !!currentChapterId,
           isTrackingActive: isTrackingRef.current,
-          userId: (user as any)?.id,
-          chapterId: chapterId,
+          userId: (currentUser as any)?.id,
+          chapterId: currentChapterId,
           lineIndex,
           totalLinesCount
         });
 
-        if ((user as any)?.id && chapterId && isTrackingRef.current) {
+        if ((currentUser as any)?.id && currentChapterId && isTrackingRef.current) {
           console.log('💾 Actually saving progress:', {
-            userId: (user as any).id,
-            chapterId: chapterId,
+            userId: (currentUser as any).id,
+            chapterId: currentChapterId,
             currentLine: lineIndex,
             totalLines: totalLinesCount,
             scrollPosition: window.scrollY,
@@ -212,8 +219,8 @@ export default function IndividualChapterPage() {
 
           try {
             const result = await saveProgress({
-              userId: (user as any).id,
-              chapterId: chapterId,
+              userId: (currentUser as any).id,
+              chapterId: currentChapterId,
               currentLine: lineIndex,
               totalLines: totalLinesCount,
               scrollPosition: window.scrollY
@@ -228,7 +235,9 @@ export default function IndividualChapterPage() {
             if (typeof window !== 'undefined') {
               // Get SWR cache and invalidate novel reading progress
               const { mutate } = await import('swr');
-              mutate(`/api/reading-progress?userId=${(user as any).id}&novelId=${novelId}`);
+              mutate(
+                `/api/reading-progress?userId=${(currentUser as any).id}&novelId=${currentNovelId}`
+              );
               console.log('🔄 Cache invalidated for novel reading progress');
             }
           } catch (error: any) {
@@ -236,19 +245,19 @@ export default function IndividualChapterPage() {
             console.error('📋 Error details:', {
               message: error?.message || String(error),
               stack: error?.stack,
-              userId: (user as any).id,
-              chapterId,
+              userId: (currentUser as any).id,
+              chapterId: currentChapterId,
               lineIndex,
               totalLinesCount
             });
           }
         } else {
           console.log('⚠️ Cannot save - missing data or not tracking:', {
-            hasUser: !!(user as any)?.id,
-            hasChapterId: !!chapterId,
+            hasUser: !!(currentUser as any)?.id,
+            hasChapterId: !!currentChapterId,
             isTracking: isTrackingRef.current,
-            userId: (user as any)?.id,
-            chapterId,
+            userId: (currentUser as any)?.id,
+            chapterId: currentChapterId,
             debugInfo: 'Save conditions not met'
           });
         }
@@ -731,6 +740,17 @@ export default function IndividualChapterPage() {
 
   // Calculate progress percentage
   const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
+
+  // Keep refs up to date
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+  useEffect(() => {
+    chapterIdRef.current = chapterId;
+  }, [chapterId]);
+  useEffect(() => {
+    novelIdRef.current = novelId;
+  }, [novelId]);
 
   if (loading) {
     return (
