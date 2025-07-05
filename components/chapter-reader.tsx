@@ -260,6 +260,8 @@ export default function ChapterReader({
 
   const handleLove = useCallback(
     async (event?: React.MouseEvent) => {
+      if (!currentChapter || !user) return;
+
       if (event) {
         event.preventDefault();
         // Get click coordinates relative to viewport
@@ -330,7 +332,7 @@ export default function ChapterReader({
         setTradePending(false);
       }
     },
-    [currentChapter.id, hasLoved, user, refreshUser, onChapterTipped]
+    [currentChapter?.id, hasLoved, user?.id, refreshUser, onChapterTipped]
   );
 
   const removeLoveAnimation = useCallback((id: number) => {

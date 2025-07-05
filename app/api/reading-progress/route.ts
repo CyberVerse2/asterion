@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     // Upsert reading progress (create or update)
     const readingProgress = await prisma.readingProgress.upsert({
       where: {
-        userId_chapterId: {
+        user_chapter_progress: {
           userId,
           chapterId
         }
@@ -144,7 +144,7 @@ export async function DELETE(request: Request) {
 
     await prisma.readingProgress.delete({
       where: {
-        userId_chapterId: {
+        user_chapter_progress: {
           userId,
           chapterId
         }
