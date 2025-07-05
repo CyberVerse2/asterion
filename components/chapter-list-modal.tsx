@@ -52,7 +52,7 @@ export default function ChapterListModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-      <Card className="bg-gray-900/95 backdrop-blur-sm border-white/10 w-full max-w-2xl max-h-[80vh] overflow-hidden">
+      <Card className="bg-gray-900/95 backdrop-blur-sm border-white/10 w-full max-w-xl max-h-[80vh] overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-xl text-white flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-purple-400" />

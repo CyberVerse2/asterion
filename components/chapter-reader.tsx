@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 // @ts-ignore
-import { Heart, ChevronLeft, ChevronRight, BookOpen, Clock, List } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight, BookOpen, Clock, List, X } from 'lucide-react';
 import LoveAnimation from './love-animation';
 import { USDC_ADDRESS } from '@/lib/abi/SpendPermissionManager';
 import { useAccount, useWalletClient, usePublicClient, useConnect, useConnectors } from 'wagmi';
@@ -529,6 +529,70 @@ export default function ChapterReader({
           onComplete={() => removeLoveAnimation(animation.id)}
         />
       ))}
+
+      {/* Chapter List Modal */}
+      {isChapterListOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+          <Card className="bg-gray-900/95 backdrop-blur-sm border-white/10 w-full max-w-xl max-h-[80vh] overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-xl text-white flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-purple-400" />
+                Chapter List
+              </CardTitle>
+              <Button
+                onClick={() => setIsChapterListOpen(false)}
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-white hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-h-[60vh] overflow-y-auto">
+                <div className="space-y-1 p-4">
+                  {chapters.map((chapter, index) => {
+                    const isCurrent = index === currentChapterIndex;
+
+                    return (
+                      <button
+                        key={chapter.id}
+                        onClick={() => {
+                          onChapterChange(index);
+                          setIsChapterListOpen(false);
+                        }}
+                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
+                          isCurrent
+                            ? 'bg-purple-600/20 border border-purple-500/30'
+                            : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium text-purple-400">
+                                Chapter {chapter.order}
+                              </span>
+                              {isCurrent && (
+                                <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-white font-medium truncate mb-1">
+                              {chapter.title}
+                            </h3>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

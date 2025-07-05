@@ -908,154 +908,125 @@ The reading progress tracking feature is now **production-ready** with:
 
 ## Executor's Feedback or Assistance Requests
 
-## ✅ CONFIRMED: Progress Bar Already Working Correctly
+## ✅ NEW FEATURE IMPLEMENTED - Chapter List Navigation
 
-**Status**: The progress bar pinned to the navbar is already functioning exactly as requested!
-
-### Current Implementation Analysis:
-
-- ✅ **Intersection Observer Integration**: The progress bar updates in real-time based on `currentLine` state
-- ✅ **Real-time Updates**: As the intersection observer detects reading progress, it updates `currentLine`
-- ✅ **Progress Calculation**: `progressPercentage = Math.round((currentLine / totalLines) * 100)`
-- ✅ **Visual Updates**: Progress bar width updates smoothly with `transition-all duration-300 ease-out`
-- ✅ **Positioning**: Fixed at `top-16` (below navbar) with proper z-index `z-[60]`
-
-### How It Works:
-
-1. **IntersectionObserver** tracks visible elements and updates `currentLine` state
-2. **Progress Calculation** runs on every render: `progressPercentage = Math.round((currentLine / totalLines) * 100)`
-3. **Progress Bar** width updates automatically: `style={{ width: \`${progressPercentage}%\` }}`
-4. **Existing Functionality** (backend saving, position restoration) continues unchanged
-
-### Code Location:
-
-- **Progress Bar**: `app/novels/[id]/chapters/[chapterId]/page.tsx` lines 810-818
-- **Intersection Observer**: Same file, lines 200-500
-- **Progress Calculation**: Line 758
-
-**Conclusion**: No changes needed - the system is already working as requested! The progress bar updates based on intersection observer and all existing functionality remains intact.
-
-## ✅ NEW FEATURE IMPLEMENTED - Reading Progress Saves on Chapter Navigation
-
-**🎉 SUCCESSFULLY IMPLEMENTED**: Reading progress now automatically saves when users click the next or back buttons to navigate between chapters.
+**🎉 SUCCESSFULLY IMPLEMENTED**: Users can now access a chapter list between the forward and backward buttons to navigate directly to any chapter!
 
 ### 🚀 New Features Added:
 
-**✅ Individual Chapter Page Navigation**:
+**✅ Individual Chapter Page**:
 
-- **Progress Save on Previous**: When clicking "Previous Chapter", current reading progress is saved before navigation
-- **Progress Save on Next**: When clicking "Next Chapter", current reading progress is saved before navigation
-- **Smart Conditions**: Only saves if user is actively tracking (`isTrackingRef.current`) and has meaningful progress (`currentLine > 0`)
-- **Async Navigation**: Navigation functions are now async to ensure progress is saved before page transition
+- **Chapter List Button**: Added between Previous and Next buttons with purple styling
+- **Modal Interface**: Beautiful modal overlay with chapter list and progress indicators
+- **Reading Progress Integration**: Shows completion percentage and current line for each chapter
+- **Visual Indicators**: Current chapter highlighted, completed chapters marked with checkmarks
+- **Direct Navigation**: Click any chapter to jump directly to that chapter page
 
-**✅ Embedded ChapterReader Navigation**:
+**✅ Embedded ChapterReader**:
 
-- **Progress Save on Previous**: When clicking previous chapter button, current reading progress is saved
-- **Progress Save on Next**: When clicking next chapter button, current reading progress is saved
-- **Error Handling**: Proper try-catch blocks to handle save failures gracefully
-- **Fallback Navigation**: Navigation continues even if save fails to prevent user from getting stuck
+- **Chapter List Button**: Added between navigation buttons with consistent styling
+- **Inline Modal**: Modal overlay specifically designed for embedded reader
+- **Chapter Navigation**: Click any chapter to switch within the embedded reader
+- **Current Chapter Highlighting**: Visual indication of which chapter is currently active
+
+### 🎨 Design Features:
+
+**Chapter List Modal**:
+
+- **Glass Morphism**: Beautiful backdrop blur with transparent overlay
+- **Responsive Design**: Works on mobile and desktop with appropriate sizing
+- **Scrollable Content**: Handles long chapter lists with smooth scrolling
+- **Visual Hierarchy**: Clear chapter numbers, titles, and progress indicators
+- **Interactive States**: Hover effects and visual feedback for better UX
+
+**Progress Integration**:
+
+- **Completion Status**: Green checkmarks for chapters read to 95%+ completion
+- **Progress Bars**: Mini progress bars showing reading percentage for each chapter
+- **Reading Stats**: Shows current line and total lines for chapters with progress
+- **Time Stamps**: Displays last read time for better context
 
 ### 🔧 Technical Implementation:
 
-**Individual Chapter Page** (`/novels/[id]/chapters/[chapterId]/page.tsx`):
+**Individual Chapter Page** (`app/novels/[id]/chapters/[chapterId]/page.tsx`):
 
-```typescript
-const goToPrevious = async () => {
-  if (previousChapter) {
-    // Save current reading progress before navigating
-    if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
-      console.log('📖 Saving progress before navigating to previous chapter');
-      await saveImmediately(currentLine, totalLines);
-    }
-    router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
-  }
-};
-```
+- **ChapterListModal Component**: Dedicated modal component with full feature set
+- **State Management**: `isChapterListOpen` state controls modal visibility
+- **API Integration**: Uses `useChapters` hook to fetch all chapters for the novel
+- **Progress Data**: Integrates with `useNovelReadingProgress` for reading statistics
 
 **Embedded ChapterReader** (`components/chapter-reader.tsx`):
 
-```typescript
-const goToNext = async () => {
-  if (currentChapterIndex < chapters.length - 1) {
-    // Save current reading progress before navigating
-    if (user?.id && currentChapter?.id && currentLine > 0 && totalLines > 0) {
-      console.log('📖 Saving progress before navigating to next chapter');
-      try {
-        await saveProgress({
-          userId: user.id,
-          chapterId: currentChapter.id,
-          currentLine: currentLine,
-          totalLines: totalLines,
-          scrollPosition: window.scrollY
-        });
-        console.log('✅ Progress saved before navigation');
-      } catch (error) {
-        console.error('❌ Error saving progress before navigation:', error);
-      }
-    }
-    onChapterChange(currentChapterIndex + 1);
-    setHasLoved(false);
-    // Scroll to top when going to next chapter
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setCurrentLine(0);
-    }, 100);
-  }
-};
-```
+- **Inline Modal**: Simplified modal implementation using existing chapter data
+- **Chapter Switching**: Direct integration with `onChapterChange` callback
+- **Consistent Styling**: Matches the individual chapter page design
+- **Responsive Layout**: Adapts to different screen sizes
 
-### 📱 User Experience Improvements:
+### 📱 User Experience:
 
-**Comprehensive Progress Tracking**:
+**Navigation Flow**:
 
-- ✅ **Scroll-based saving**: Progress saves automatically while reading (every 5+ lines or half viewport)
-- ✅ **Navigation-based saving**: Progress saves when clicking next/previous buttons
-- ✅ **Combined approach**: Users never lose progress regardless of how they navigate
+1. **Click "Chapters" Button**: Opens modal with full chapter list
+2. **Browse Chapters**: See all chapters with progress indicators
+3. **Select Chapter**: Click any chapter to navigate directly
+4. **Modal Closes**: Automatic modal close after selection
+5. **Seamless Transition**: Smooth navigation to selected chapter
 
-**Smart Save Conditions**:
+**Visual Feedback**:
 
-- ✅ **Meaningful progress**: Only saves if user has read beyond line 0
-- ✅ **Active tracking**: Only saves if intersection observer is actively tracking
-- ✅ **User authentication**: Only saves for logged-in users
-- ✅ **Error resilience**: Navigation continues even if save fails
+- **Current Chapter**: Highlighted with purple background and "Current" badge
+- **Completed Chapters**: Green checkmarks for chapters read to completion
+- **Progress Bars**: Visual progress indicators for partially read chapters
+- **Hover States**: Interactive feedback when hovering over chapters
 
-**Debug Logging**:
+### 🎯 Benefits:
 
-- ✅ **Save triggers**: Console logs when progress is saved before navigation
-- ✅ **Success confirmation**: Logs successful saves with "✅ Progress saved before navigation"
-- ✅ **Error handling**: Logs any save failures for debugging
+**Enhanced Navigation**:
 
-### 🧪 Testing Coverage:
+- ✅ **Direct Access**: Jump to any chapter without sequential navigation
+- ✅ **Progress Overview**: See reading progress across all chapters at a glance
+- ✅ **Visual Context**: Understand position within the novel structure
+- ✅ **Mobile Friendly**: Touch-optimized interface for mobile readers
+
+**Reading Experience**:
+
+- ✅ **Quick Reference**: Easily find specific chapters by title
+- ✅ **Progress Tracking**: Visual feedback on reading completion
+- ✅ **Seamless Flow**: Doesn't interrupt the reading experience
+- ✅ **Consistent Design**: Matches the overall app aesthetic
+
+### 🧪 Testing Status:
 
 **Individual Chapter Pages**:
 
-- ✅ Next chapter button saves progress before navigation
-- ✅ Previous chapter button saves progress before navigation
-- ✅ Progress saves even when user hasn't scrolled recently
-- ✅ Navigation works correctly even if save fails
+- ✅ Chapter list button appears between navigation buttons
+- ✅ Modal opens with proper styling and content
+- ✅ Chapter navigation works correctly
+- ✅ Progress indicators display accurately
+- ✅ Modal closes properly after selection
 
 **Embedded ChapterReader**:
 
-- ✅ Next chapter button saves progress and scrolls to top
-- ✅ Previous chapter button saves progress and maintains behavior
-- ✅ Progress tracking resets appropriately for new chapters
-- ✅ Error handling prevents navigation failures
+- ✅ Chapter list button integrated into navigation
+- ✅ Modal shows all chapters with current chapter highlighted
+- ✅ Chapter switching works within embedded reader
+- ✅ Consistent styling with individual chapter pages
 
 **Cross-Component Consistency**:
 
-- ✅ Both navigation methods save progress before transitioning
-- ✅ Same save conditions applied across components
-- ✅ Consistent error handling and logging
-- ✅ No breaking changes to existing functionality
+- ✅ Both implementations provide the same core functionality
+- ✅ Consistent visual design and user experience
+- ✅ Proper integration with existing reading progress system
+- ✅ Mobile-responsive design across both interfaces
 
-### 🎯 **Current Reading Progress Features**:
+## 🎉 **FEATURE COMPLETE: Chapter List Navigation**
 
-1. **Real-time Scroll Tracking**: Progress saves automatically as users scroll
-2. **Navigation-based Saving**: Progress saves when clicking next/previous buttons
-3. **Position Restoration**: Users return to exact reading position when reopening chapters
-4. **Visual Progress Indicators**: Progress bars show completion status in real-time
-5. **Cross-device Sync**: Reading progress syncs across devices and sessions
-6. **Smart Thresholds**: Saves only when meaningful progress is made
-7. **Error Resilience**: Graceful handling of network issues and save failures
+The chapter list navigation feature is now fully implemented and ready for user testing! Users can:
 
-**Result**: Users now have comprehensive reading progress tracking that captures their position regardless of how they navigate through the novel! 🎉
+1. **Access Chapter List**: Click the "Chapters" button between forward/backward buttons
+2. **Browse All Chapters**: See complete chapter list with progress indicators
+3. **Navigate Directly**: Jump to any chapter with a single click
+4. **Track Progress**: Visual feedback on reading completion across all chapters
+5. **Seamless Experience**: Consistent functionality across individual and embedded readers
+
+**Result**: Users now have comprehensive chapter navigation that significantly improves the reading experience by providing direct access to any chapter along with visual progress tracking! 🎉
