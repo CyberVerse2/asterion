@@ -564,60 +564,65 @@ export default function ProfilePage() {
     }
   };
 
-  // Save spendLimit to DB after ERC-20 approve for Farcaster users
+  // Consolidated post-approval logic for Farcaster users
   useEffect(() => {
     if (isFarcasterUser && isApproveTxSuccess && profile?.id) {
-      fetch('/api/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: profile.id, spendLimit })
-      });
-    }
-  }, [isFarcasterUser, isApproveTxSuccess, profile?.id, spendLimit]);
+      console.log('[Profile] ERC20 approval successful, executing post-approval tasks...');
 
-  // Refresh user data after successful ERC20 approval to update permission status
-  useEffect(() => {
-    if (isFarcasterUser && isApproveTxSuccess && refreshUser) {
-      console.log('[Profile] ERC20 approval successful, refreshing user data...');
-      refreshUser()
+      // Execute all post-approval tasks in parallel
+      const tasks = [];
+
+      // Task 1: Save spendLimit to DB
+      if (spendLimit !== profile.spendLimit) {
+        tasks.push(
+          fetch('/api/users', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: profile.id, spendLimit })
+          })
+            .then(() => console.log('[Profile] Spend limit saved'))
+            .catch((error) => console.error('[Profile] Error saving spend limit:', error))
+        );
+      }
+
+      // Task 2: Save spend permission data
+      if (profile.walletAddress) {
+        const approvalData = {
+          type: 'erc20_approval',
+          walletAddress: profile.walletAddress,
+          spendLimit: spendLimit,
+          timestamp: Date.now(),
+          approved: true
+        };
+
+        tasks.push(
+          fetch('/api/users', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: profile.id,
+              spendPermission: approvalData,
+              spendPermissionSignature: 'erc20_approved'
+            })
+          })
+            .then(() => console.log('[Profile] ERC20 approval data saved'))
+            .catch((error) => console.error('[Profile] Error saving approval data:', error))
+        );
+      }
+
+      // Task 3: Refresh user data after other tasks complete
+      Promise.all(tasks)
+        .then(() => {
+          console.log('[Profile] All post-approval tasks completed, refreshing user data...');
+          if (refreshUser) {
+            return refreshUser();
+          }
+        })
         .then(() => {
           console.log('[Profile] User data refreshed after ERC20 approval');
         })
         .catch((error) => {
-          console.error('[Profile] Error refreshing user data:', error);
-        });
-    }
-  }, [isFarcasterUser, isApproveTxSuccess, refreshUser]);
-
-  // Save spend permission data for Farcaster users after successful ERC20 approval
-  useEffect(() => {
-    if (isFarcasterUser && isApproveTxSuccess && profile?.id && profile?.walletAddress) {
-      console.log('[Profile] Saving ERC20 approval data for spend permission validation...');
-
-      // Create a simple approval record to indicate the user has approved ERC20 spending
-      const approvalData = {
-        type: 'erc20_approval',
-        walletAddress: profile.walletAddress,
-        spendLimit: spendLimit,
-        timestamp: Date.now(),
-        approved: true
-      };
-
-      // Save the approval data so the validation logic can detect it
-      fetch('/api/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: profile.id,
-          spendPermission: approvalData,
-          spendPermissionSignature: 'erc20_approved' // Simple flag to indicate approval
-        })
-      })
-        .then(() => {
-          console.log('[Profile] ERC20 approval data saved successfully');
-        })
-        .catch((error) => {
-          console.error('[Profile] Error saving ERC20 approval data:', error);
+          console.error('[Profile] Error in post-approval tasks:', error);
         });
     }
   }, [isFarcasterUser, isApproveTxSuccess, profile?.id, profile?.walletAddress, spendLimit]);

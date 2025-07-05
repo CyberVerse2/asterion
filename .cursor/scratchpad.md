@@ -964,93 +964,31 @@ Ready to proceed with **Task 40: Implement Permission Approval Redirect Flow** o
 
 ## Current Status / Progress Tracking
 
-**✅ COMPLETED - Task 45: Testing and Debugging**
+### Project Status Board
 
-- Successfully implemented comprehensive spend permission system
-- Fixed multiple user creation issues in both Farcaster and wallet contexts
-- Resolved navbar responsiveness issues
-- Fixed profile stats responsiveness on mobile
-- Improved spend permission button logic for proper context detection
-- **NEW FIX: Spend Permission Modal After ERC20 Approval**
-  - **Issue**: After successful ERC20 approval in Farcaster context, the spend permission modal was still showing when trying to read novels
-  - **Root Cause**: The spend permission validation logic was only checking for Coinbase spend permissions, not ERC20 approvals
-  - **Solution**:
-    1. Updated `lib/utils/spend-permission.ts` to handle both Coinbase and ERC20 permission types
-    2. Added `refreshUser()` call after successful ERC20 approval to update user data
-    3. Fixed validation logic to properly check ERC20 approval status
-  - **Files Modified**: `lib/utils/spend-permission.ts`, `app/profile/page.tsx`
-  - **Status**: ✅ **FIXED** - Spend permission modal no longer shows after successful ERC20 approval
+- [x] Task 35: Create spend permission validation utility
+- [x] Task 36: Create permission requirement UI components
+- [x] Task 37: Create permission guard hook
+- [x] Task 38: Integrate permission checks into reading flow
+- [x] Task 39: Add permission verification to chapter navigation
+- [x] Task 40: Add permission checks to chapter list modal
+- [x] Task 41: Test permission system end-to-end
+- [x] Task 42: Handle edge cases and error scenarios
+- [x] Task 43: Optimize performance and UX
+- [x] Task 44: Add comprehensive logging and monitoring
+- [x] Task 45: Final integration testing and deployment prep
+- [x] Fix mobile responsiveness issues in spend permission modal
+- [x] Fix Wagmi connector errors in Farcaster context
+- [x] Fix username display issues for Farcaster users
+- [x] Fix multiple user creation issue in Farcaster context
+- [x] Fix profile image navigation and username generation
+- [x] Fix spend permission button logic for Farcaster users
+- [x] Fix multiple user creation in wallet context
+- [x] Fix navbar logo and profile stats responsiveness
+- [x] Fix username generation for Farcaster users
+- [x] Fix race condition in Farcaster context loading
+- [x] Fix love/tip revert issue in Farcaster context
 
-**NEW FIX: Spend Permission Validation Logic Issue**:
+### Recently Completed
 
-- **Issue**: The spend permission validation logic was incorrectly assuming ALL Farcaster users had valid permissions just because they had a wallet address
-- **Root Cause**: In `lib/utils/spend-permission.ts`, the validation was always returning `isValid: true` for Farcaster users with wallet addresses, regardless of actual ERC20 approval status
-- **Solution**:
-  1. **Fixed Validation Logic**: Updated `validateSpendPermission()` to check if Farcaster users have approval data before marking them as valid
-  2. **Added Approval Data Saving**: Added effect in profile page to save spend permission data after successful ERC20 approval
-  3. **Proper Permission Check**: Now checks for `spendPermission` or `spendPermissionSignature` data to determine if user has completed approval
-- **Files Modified**: `lib/utils/spend-permission.ts`, `app/profile/page.tsx`
-- **Changes Made**:
-
-  ```typescript
-  // Before (WRONG):
-  return {
-    isValid: true, // Always returned true!
-    hasPermission: true
-    // ...
-  };
-
-  // After (CORRECT):
-  const hasApprovalData = user.spendPermission || user.spendPermissionSignature;
-  if (!hasApprovalData) {
-    return {
-      isValid: false,
-      hasPermission: false,
-      errorMessage: 'ERC20 spending approval required'
-      // ...
-    };
-  }
-  ```
-
-- **Result**: ✅ Now properly validates ERC20 approval status for Farcaster users
-
-### 🔧 **CRITICAL FIX - Race Condition in Farcaster Context Loading - COMPLETED**
-
-**Issue**: The app was creating wallet-only users with generated usernames even when running in Farcaster context, due to a race condition where wallet-only user creation happened before Farcaster context became available.
-
-**Root Cause Analysis**:
-
-- The `farcasterContextChecked` flag was being set to `true` immediately when context was `null`
-- However, the Farcaster context might still be loading and become available later
-- This caused the wallet-only user creation to trigger before the Farcaster context was fully loaded
-- Result: Generated username like "BraveRanger820" instead of using the actual Farcaster username "thecyberverse"
-
-**Timeline from logs**:
-
-1. Context is `null` → `farcasterContextChecked` set to `true`
-2. Wallet-only user created with generated username "BraveRanger820"
-3. Later, Farcaster context becomes available with real data (fid: 656588, username: 'thecyberverse')
-4. But user already exists, so Farcaster user creation is skipped
-
-**Solution Implemented**:
-
-1. **Added Timeout Mechanism**: Instead of immediately marking `farcasterContextChecked` as `true` when context is `null`, we now set a 2-second timeout
-2. **Proper Context State Management**: Added `contextLoadingTimeout` state to track the timeout
-3. **Timeout Cleanup**: Proper cleanup of timeouts to prevent memory leaks
-4. **Delayed Wallet-Only Fallback**: Wallet-only user creation only happens after the timeout expires
-
-**Key Changes**:
-
-- Added `contextLoadingTimeout` state variable
-- When context is `null`, set a 2-second timeout before marking as checked
-- Clear timeout when context becomes available
-- Proper cleanup on unmount
-- Updated logging to show "after timeout" for wallet-only creation
-
-**Expected Behavior**:
-
-- In Farcaster context: Wait for context to load, then create Farcaster user with real username
-- In wallet-only context: After 2-second timeout, create wallet-only user with generated username
-- No more race conditions or incorrect user type creation
-
-This fix ensures that username generation ONLY happens for actual wallet-only users, never for Farcaster users who are just slow to load their context.
+- **Love/Tip Revert Issue Fix**: Fixed the issue where clicking "love" on a chapter would update the tip count but then revert back to the previous number. The problem was that `fetchChapter` was being called after user state changes and was overriding the optimistic tip count update. Implemented a timestamp-based solution using `recentTipTimestampRef` to prevent `fetchChapter` from overriding the tip count within 5 seconds of a successful tip operation.

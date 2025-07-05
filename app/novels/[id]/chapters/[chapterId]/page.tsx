@@ -95,6 +95,7 @@ export default function IndividualChapterPage() {
   const chapterIdRef = useRef(chapterId);
   const novelIdRef = useRef(novelId);
   const hasRestoredPositionRef = useRef(false);
+  const recentTipTimestampRef = useRef<number>(0);
 
   // Reading progress hooks
   const { readingProgress, mutate: mutateProgress } = useReadingProgress(
@@ -147,7 +148,13 @@ export default function IndividualChapterPage() {
 
         const chapterData = await response.json();
         setChapter(chapterData);
-        setTipCount(chapterData.tipCount || 0);
+
+        // Only update tipCount if we haven't recently completed a successful tip (within last 5 seconds)
+        // This prevents the count from reverting after a successful tip operation
+        const timeSinceLastTip = Date.now() - recentTipTimestampRef.current;
+        if (timeSinceLastTip > 5000) {
+          setTipCount(chapterData.tipCount || 0);
+        }
 
         // Check if user has already tipped this chapter
         if ((user as any)?.tips) {
@@ -670,6 +677,8 @@ export default function IndividualChapterPage() {
           // Update with actual count from server (in case of discrepancy)
           setTipCount(data.tipCount);
           setTradeSuccess(true);
+          // Mark the timestamp of successful tip to prevent fetchChapter from overriding
+          recentTipTimestampRef.current = Date.now();
         } else {
           // Revert on failure
           setHasLoved(false);
