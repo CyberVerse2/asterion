@@ -61,6 +61,9 @@ export default function IndividualChapterPage() {
   const [isTracking, setIsTracking] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [topVisibleLine, setTopVisibleLine] = useState(0);
+  const [bottomVisibleLine, setBottomVisibleLine] = useState(0);
+  const [lastSavedLine, setLastSavedLine] = useState(0);
 
   // Love/tip state
   const [hasLoved, setHasLoved] = useState(false);
@@ -168,25 +171,36 @@ export default function IndividualChapterPage() {
         chapterId,
         hasUser: !!(user as any)?.id,
         hasChapterId: !!chapterId,
-        isTracking: isTrackingRef.current
+        isTracking: isTrackingRef.current,
+        timestamp: new Date().toISOString()
       });
 
       if (saveTimeoutRef.current) {
+        console.log('🔄 Clearing previous save timeout');
         clearTimeout(saveTimeoutRef.current);
       }
 
       saveTimeoutRef.current = setTimeout(async () => {
+        console.log('⏰ Save timeout executed, checking conditions...', {
+          hasUserId: !!(user as any)?.id,
+          hasChapterId: !!chapterId,
+          isTrackingActive: isTrackingRef.current,
+          userId: (user as any)?.id,
+          chapterId: chapterId
+        });
+
         if ((user as any)?.id && chapterId && isTrackingRef.current) {
           console.log('💾 Actually saving progress:', {
             userId: (user as any).id,
             chapterId: chapterId,
             currentLine: lineIndex,
             totalLines: totalLinesCount,
-            scrollPosition: window.scrollY
+            scrollPosition: window.scrollY,
+            timestamp: new Date().toISOString()
           });
 
           try {
-            await saveProgress({
+            const result = await saveProgress({
               userId: (user as any).id,
               chapterId: chapterId,
               currentLine: lineIndex,
@@ -194,7 +208,7 @@ export default function IndividualChapterPage() {
               scrollPosition: window.scrollY
             });
 
-            console.log('✅ Progress saved successfully');
+            console.log('✅ Progress saved successfully:', result);
 
             // Invalidate both individual chapter progress and novel-wide progress caches
             mutateProgress();
@@ -204,9 +218,18 @@ export default function IndividualChapterPage() {
               // Get SWR cache and invalidate novel reading progress
               const { mutate } = await import('swr');
               mutate(`/api/reading-progress?userId=${(user as any).id}&novelId=${novelId}`);
+              console.log('🔄 Cache invalidated for novel reading progress');
             }
-          } catch (error) {
+          } catch (error: any) {
             console.error('❌ Error saving reading progress:', error);
+            console.error('📋 Error details:', {
+              message: error?.message || String(error),
+              stack: error?.stack,
+              userId: (user as any).id,
+              chapterId,
+              lineIndex,
+              totalLinesCount
+            });
           }
         } else {
           console.log('⚠️ Cannot save - missing data or not tracking:', {
@@ -214,10 +237,13 @@ export default function IndividualChapterPage() {
             hasChapterId: !!chapterId,
             isTracking: isTrackingRef.current,
             userId: (user as any)?.id,
-            chapterId
+            chapterId,
+            debugInfo: 'Save conditions not met'
           });
         }
       }, 1000);
+
+      console.log('⏳ Save timeout set for 1 second from now');
     },
     [(user as any)?.id, chapterId, novelId, saveProgress, mutateProgress]
   );
@@ -237,10 +263,33 @@ export default function IndividualChapterPage() {
 
     const content = contentRef.current;
     const lines = content.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+
+    // Validate that elements have proper dimensions
+    let validElements = 0;
+    lines.forEach((line, index) => {
+      const rect = line.getBoundingClientRect();
+      if (rect.height > 0) {
+        validElements++;
+      }
+      if (index < 3) {
+        console.log(`📏 Element ${index} dimensions:`, {
+          tagName: line.tagName,
+          height: rect.height,
+          top: rect.top,
+          bottom: rect.bottom
+        });
+      }
+    });
+
+    console.log(`📊 Total lines detected: ${lines.length}, Valid elements: ${validElements}`);
+
+    if (validElements === 0) {
+      console.log('❌ No valid elements found, aborting initialization');
+      return;
+    }
+
     setTotalLines(lines.length);
     setIsInitialized(true);
-
-    console.log('📊 Total lines detected:', lines.length);
 
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -248,77 +297,76 @@ export default function IndividualChapterPage() {
 
     // Test observer configuration
     const observerConfig = {
-      root: null,
-      rootMargin: '-20% 0px -70% 0px',
-      threshold: 0.1
+      root: null, // Use viewport as root
+      rootMargin: '10px', // Small buffer to catch elements just entering/leaving
+      threshold: [0, 0.01, 0.1, 0.25, 0.5, 0.75, 1.0] // More granular thresholds
     };
     console.log('🎛️ Observer configuration:', observerConfig);
 
     observerRef.current = new IntersectionObserver((entries) => {
       console.log('🔍 IntersectionObserver callback triggered with', entries.length, 'entries');
-      console.log('📋 Observer config check:', {
-        root: observerRef.current?.root,
-        rootMargin: observerRef.current?.rootMargin,
-        thresholds: observerRef.current?.thresholds
-      });
 
-      entries.forEach((entry, index) => {
-        console.log(`📋 Entry ${index} details:`, {
-          isIntersecting: entry.isIntersecting,
-          target: entry.target.tagName,
-          boundingClientRect: {
-            top: entry.boundingClientRect.top,
-            bottom: entry.boundingClientRect.bottom,
-            height: entry.boundingClientRect.height
-          },
-          intersectionRatio: entry.intersectionRatio,
-          intersectionRect: {
-            top: entry.intersectionRect.top,
-            bottom: entry.intersectionRect.bottom,
-            height: entry.intersectionRect.height
-          },
-          rootBounds: entry.rootBounds
-            ? {
-                top: entry.rootBounds.top,
-                bottom: entry.rootBounds.bottom,
-                height: entry.rootBounds.height
-              }
-            : null
-        });
+      let visibleElements = [];
+      let topMostVisible = Infinity;
+      let bottomMostVisible = -1;
 
-        if (entry.isIntersecting) {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0) {
           const element = entry.target;
           const lineIndex = Array.from(lines).indexOf(element as Element);
 
-          console.log('🎯 Found intersecting element:', {
-            lineIndex,
-            tagName: element.tagName,
-            currentLine,
-            isTracking: isTrackingRef.current
-          });
-
-          if (lineIndex !== -1 && lineIndex !== currentLine) {
-            console.log('👁️ Line visibility changed:', {
-              newLine: lineIndex,
-              previousLine: currentLine,
-              totalLines: lines.length,
-              userId: (user as any)?.id,
-              chapterId,
-              isTracking: isTrackingRef.current
+          if (lineIndex !== -1) {
+            visibleElements.push({
+              lineIndex,
+              intersectionRatio: entry.intersectionRatio,
+              element
             });
 
-            setCurrentLine(lineIndex);
-
-            // Only start saving after initial delay and when tracking is enabled
-            if (isTrackingRef.current) {
-              console.log('💾 Triggering save for line:', lineIndex);
-              debouncedSave(lineIndex, lines.length);
-            } else {
-              console.log('⏸️ Not saving yet - tracking not started');
+            // Track the topmost and bottommost visible elements
+            if (lineIndex < topMostVisible) {
+              topMostVisible = lineIndex;
+            }
+            if (lineIndex > bottomMostVisible) {
+              bottomMostVisible = lineIndex;
             }
           }
         }
       });
+
+      console.log(
+        `👁️ Visible elements: ${visibleElements.length}, Top: ${topMostVisible}, Bottom: ${bottomMostVisible}`
+      );
+
+      if (visibleElements.length > 0 && topMostVisible !== Infinity) {
+        // Update visible range
+        setTopVisibleLine(topMostVisible);
+        setBottomVisibleLine(bottomMostVisible);
+
+        // Calculate current reading position (use the middle of visible area)
+        const currentReadingLine = Math.floor((topMostVisible + bottomMostVisible) / 2);
+        setCurrentLine(currentReadingLine);
+
+        // Check if we should save progress
+        if (isTrackingRef.current) {
+          const progressDelta = Math.abs(currentReadingLine - lastSavedLine);
+          const visibleAreaSize = bottomMostVisible - topMostVisible + 1;
+          const saveThreshold = Math.max(5, Math.floor(visibleAreaSize / 2)); // At least 5 lines or half the visible area
+
+          console.log('📊 Progress check:', {
+            currentReadingLine,
+            lastSavedLine,
+            progressDelta,
+            saveThreshold,
+            shouldSave: progressDelta >= saveThreshold
+          });
+
+          if (progressDelta >= saveThreshold) {
+            console.log('💾 Triggering save - significant progress detected');
+            setLastSavedLine(currentReadingLine);
+            debouncedSave(currentReadingLine, lines.length);
+          }
+        }
+      }
     }, observerConfig);
 
     console.log('🎯 Setting up observer for', lines.length, 'elements');
@@ -341,31 +389,19 @@ export default function IndividualChapterPage() {
 
     // Add scroll event listener for debugging
     const handleScroll = () => {
-      console.log('📜 Scroll event detected:', {
-        scrollY: window.scrollY,
-        scrollX: window.scrollX,
-        documentHeight: document.documentElement.scrollHeight,
-        windowHeight: window.innerHeight,
-        observerActive: !!observerRef.current
-      });
+      // Reduced logging frequency - only log every 50th scroll event to reduce spam
+      if (Math.random() < 0.02) {
+        console.log('📜 Scroll event detected:', {
+          scrollY: window.scrollY,
+          scrollX: window.scrollX,
+          documentHeight: document.documentElement.scrollHeight,
+          windowHeight: window.innerHeight,
+          observerActive: !!observerRef.current
+        });
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
-
-    // Test initial intersection detection
-    setTimeout(() => {
-      console.log('🧪 Testing initial intersections after 1 second...');
-      if (lines.length > 0) {
-        const firstElement = lines[0];
-        const rect = firstElement.getBoundingClientRect();
-        console.log('🔍 First element position check:', {
-          top: rect.top,
-          bottom: rect.bottom,
-          height: rect.height,
-          visible: rect.top < window.innerHeight && rect.bottom > 0
-        });
-      }
-    }, 1000);
 
     // Cleanup function to remove scroll listener
     return () => {
@@ -403,6 +439,7 @@ export default function IndividualChapterPage() {
           });
         }, 500);
         setCurrentLine(readingProgress.currentLine);
+        setLastSavedLine(readingProgress.currentLine);
       }
     }
   }, [readingProgress, startFromTop]);
@@ -487,14 +524,39 @@ export default function IndividualChapterPage() {
 
   useEffect(() => {
     if (chapter && contentRef.current && !isInitialized) {
+      // Wait longer for content to be fully rendered and styled
       const cleanup = setTimeout(() => {
-        const cleanupFn = initializeLineTracking();
+        // Double-check that content still exists and has proper dimensions
+        if (contentRef.current) {
+          const contentRect = contentRef.current.getBoundingClientRect();
+          console.log('📐 Content container dimensions before init:', {
+            width: contentRect.width,
+            height: contentRect.height,
+            top: contentRect.top,
+            bottom: contentRect.bottom
+          });
 
-        // Store cleanup function for later
-        if (cleanupFn && typeof cleanupFn === 'function') {
-          return cleanupFn;
+          if (contentRect.height > 0) {
+            const cleanupFn = initializeLineTracking();
+
+            // Store cleanup function for later
+            if (cleanupFn && typeof cleanupFn === 'function') {
+              return cleanupFn;
+            }
+          } else {
+            console.log('⚠️ Content not ready yet, retrying...');
+            // Retry after another delay if content isn't ready
+            setTimeout(() => {
+              if (!isInitialized) {
+                const retryCleanupFn = initializeLineTracking();
+                if (retryCleanupFn && typeof retryCleanupFn === 'function') {
+                  return retryCleanupFn;
+                }
+              }
+            }, 1000);
+          }
         }
-      }, 100);
+      }, 500); // Increased delay to allow for full rendering
 
       return () => {
         clearTimeout(cleanup);
@@ -634,20 +696,6 @@ export default function IndividualChapterPage() {
           <div className="text-sm text-gray-400">Chapter {chapter.chapterNumber}</div>
         </CardHeader>
         <CardContent>
-          {/* Temporary Test Button for Save Functionality */}
-          <div className="mb-4 p-4 bg-yellow-900/20 border border-yellow-600/30 rounded">
-            <p className="text-yellow-400 text-sm mb-2">🧪 Debug: Test Save Functionality</p>
-            <button
-              onClick={() => {
-                console.log('🧪 Manual save test triggered');
-                debouncedSave(5, totalLines);
-              }}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm"
-            >
-              Test Save Progress (Line 5)
-            </button>
-          </div>
-
           <div
             ref={contentRef}
             className="prose prose-lg max-w-none leading-relaxed text-gray-300"
