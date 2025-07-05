@@ -76,11 +76,14 @@ export default function IndividualChapterPage() {
   const animationIdRef = useRef(0);
 
   // Reading progress hooks
-  const { readingProgress, mutate: mutateProgress } = useReadingProgress(user?.id, chapterId);
+  const { readingProgress, mutate: mutateProgress } = useReadingProgress(
+    (user as any)?.id,
+    chapterId
+  );
   const { saveProgress } = useSaveReadingProgress();
 
   // Get user's chapter tip amount with fallback
-  const chapterTipAmount = user?.chapterTipAmount || 0.01;
+  const chapterTipAmount = (user as any)?.chapterTipAmount || 0.01;
   const tipAmountDisplay = chapterTipAmount.toFixed(2);
 
   // Fetch chapter data
@@ -109,8 +112,10 @@ export default function IndividualChapterPage() {
         setTipCount(chapterData.tipCount || 0);
 
         // Check if user has already tipped this chapter
-        if (user?.tips) {
-          const hasAlreadyTipped = user.tips.some((tip: any) => tip.chapterId === chapterId);
+        if ((user as any)?.tips) {
+          const hasAlreadyTipped = (user as any).tips.some(
+            (tip: any) => tip.chapterId === chapterId
+          );
           setHasLoved(hasAlreadyTipped);
         }
       } catch (err) {
@@ -126,7 +131,7 @@ export default function IndividualChapterPage() {
         setLoading(false);
       }
     },
-    [chapterId, user?.tips]
+    [chapterId, user]
   );
 
   // Fetch navigation data
@@ -203,24 +208,32 @@ export default function IndividualChapterPage() {
       }
 
       saveTimeoutRef.current = setTimeout(async () => {
-        if (user?.id && chapterId) {
+        if ((user as any)?.id && chapterId) {
           try {
             await saveProgress({
-              userId: user.id,
+              userId: (user as any).id,
               chapterId: chapterId,
               currentLine: lineIndex,
               totalLines: totalLinesCount,
               scrollPosition: window.scrollY
             });
 
+            // Invalidate both individual chapter progress and novel-wide progress caches
             mutateProgress();
+
+            // Also invalidate the novel reading progress cache to update "Read Now" button
+            if (typeof window !== 'undefined') {
+              // Get SWR cache and invalidate novel reading progress
+              const { mutate } = await import('swr');
+              mutate(`/api/reading-progress?userId=${(user as any).id}&novelId=${novelId}`);
+            }
           } catch (error) {
             console.error('Error saving reading progress:', error);
           }
         }
       }, 1000);
     },
-    [user?.id, chapterId, saveProgress, mutateProgress]
+    [(user as any)?.id, chapterId, novelId, saveProgress, mutateProgress]
   );
 
   // Restore reading position
@@ -268,12 +281,12 @@ export default function IndividualChapterPage() {
         setTradeSuccess(false);
 
         try {
-          if (!user.id) throw new Error('User not logged in');
+          if (!(user as any)?.id) throw new Error('User not logged in');
 
           const response = await fetch('/api/tip-chapter', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chapterId: chapter.id, userId: user.id })
+            body: JSON.stringify({ chapterId: chapter.id, userId: (user as any).id })
           });
 
           const data = await response.json();

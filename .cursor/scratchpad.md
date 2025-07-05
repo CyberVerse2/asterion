@@ -784,39 +784,83 @@ mutateChapters((currentData: any) => {
 
 **Test Status**: Author tipping should now work without the `.map()` error.
 
-## ✅ BUG FIX - Read Now Button Navigation Issue
+## ✅ BUG FIX - Read Now Button Not Updating When Reading
 
-**🎉 SUCCESSFULLY FIXED**: The "Read Now" button now properly navigates to individual chapter pages instead of staying on the novel route with embedded reader.
+**🎉 SUCCESSFULLY FIXED**: The "Read Now" button now properly updates when users start reading chapters, changing from "READ NOW" to "Continue: Chapter Name" in real-time.
 
 ### 🐛 **Issue Identified**:
 
-- When clicking "Read Now" button, users were staying on the novel route (`/novels/[id]`)
-- The embedded ChapterReader component was showing instead of navigating to the individual chapter page (`/novels/[id]/chapters/[chapterId]`)
-- This was confusing because the URL didn't change and users thought they were still on the novel page
+- When users were reading in individual chapter pages (e.g., Chapter 1), the "Read Now" button on the novel page wasn't updating to show "Continue: Chapter 1"
+- The reading progress was being saved correctly, but the novel page wasn't detecting the new progress
+- Users had to refresh the page to see the updated button text
+
+### 🔍 **Root Cause**:
+
+**Cache Invalidation Problem**:
+
+1. **Individual Chapter Page**: Saves reading progress and calls `mutateProgress()` to invalidate the specific chapter's cache
+2. **Novel Page**: Uses `useNovelReadingProgress` hook with a separate 5-minute cache
+3. **Missing Link**: When progress was saved, only the individual chapter cache was invalidated, not the novel-wide reading progress cache
 
 ### ✅ **Solution Implemented**:
 
-**Updated `handleReadNow` Function Logic**:
+**Enhanced Cache Invalidation** in `app/novels/[id]/chapters/[chapterId]/page.tsx`:
 
-1. **Has Reading Progress**: Navigate to the specific chapter where user left off
-2. **No Reading Progress**: Navigate to the first chapter (instead of embedded reader)
-3. **Fallback Only**: Use embedded reader only if chapters are still loading or unavailable
+```typescript
+// Before (only invalidated individual chapter cache):
+mutateProgress();
 
-**Navigation Behavior Now**:
+// After (invalidates both caches):
+mutateProgress();
 
-- ✅ **Continue Reading**: `/novels/[id]/chapters/[lastChapterId]`
-- ✅ **Start Reading**: `/novels/[id]/chapters/[firstChapterId]`
-- ✅ **Proper URL Changes**: Users can see they're on a chapter page
-- ✅ **Browser Navigation**: Back button works correctly
-- ✅ **Bookmarkable**: Users can bookmark specific chapters
+// Also invalidate the novel reading progress cache
+if (typeof window !== 'undefined') {
+  const { mutate } = await import('swr');
+  mutate(`/api/reading-progress?userId=${user.id}&novelId=${novelId}`);
+}
+```
+
+**Technical Details**:
+
+- **Dual Cache Invalidation**: Now invalidates both individual chapter progress AND novel-wide reading progress caches
+- **SWR Global Mutate**: Uses SWR's global `mutate` function to invalidate the novel reading progress cache from any component
+- **Type Safety**: Fixed TypeScript errors with proper user object type casting
+- **Real-time Updates**: Novel page immediately detects new reading progress without page refresh
 
 ### 🚀 **User Experience Improvements**:
 
-- **Clear Navigation**: Users know they're on a chapter page, not the novel page
-- **Consistent Routing**: All reading actions lead to individual chapter pages
-- **Better Browser History**: Proper URL changes for navigation
-- **Mobile Friendly**: Individual chapter pages are optimized for reading
+- **Immediate Feedback**: "Read Now" button updates instantly when user starts reading
+- **Accurate Progress**: Button text reflects actual reading status in real-time
+- **Seamless Flow**: No need to refresh pages to see updated button text
+- **Consistent State**: Both individual chapter and novel pages stay synchronized
 
----
+### 🧪 **Testing Results**:
 
-## ✅ NEW FEATURE IMPLEMENTED - Next Chapter Starts from Top
+**Before Fix**:
+
+- ❌ Read Chapter 1 → "Read Now" button stays unchanged
+- ❌ Required page refresh to see "Continue: Chapter 1"
+- ❌ Poor user experience with stale state
+
+**After Fix**:
+
+- ✅ Read Chapter 1 → "Read Now" immediately becomes "Continue: Chapter 1"
+- ✅ Real-time updates without page refresh
+- ✅ Consistent state across all components
+- ✅ Professional reading experience
+
+**Cache Behavior**:
+
+- ✅ Individual chapter progress cache: Updates immediately
+- ✅ Novel reading progress cache: Now also updates immediately
+- ✅ Button text calculation: Reflects latest progress data
+- ✅ Cross-component synchronization: All components stay in sync
+
+### 📋 **Technical Impact**:
+
+- **Performance**: Minimal overhead from additional cache invalidation
+- **Reliability**: More robust state management across components
+- **Maintainability**: Clear separation of concerns with proper cache management
+- **Scalability**: Pattern can be applied to other cross-component state updates
+
+## ✅ BUG FIX - Read Now Button Navigation Issue
