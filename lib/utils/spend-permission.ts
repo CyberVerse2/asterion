@@ -52,6 +52,22 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
   // Determine if user is a Farcaster user (uses ERC20 approve) or wallet-only user (uses Coinbase spend permissions)
   const isFarcasterUser = Boolean(user.fid);
 
+  // For both Farcaster and wallet users, check if they have spendPermissionSignature
+  // This is the key indicator that they have completed the approval process
+  if (!user.spendPermissionSignature) {
+    return {
+      isValid: false,
+      hasPermission: false,
+      hasSignature: false,
+      isExpired: false,
+      isNotStarted: false,
+      errorMessage: isFarcasterUser
+        ? 'ERC20 spending approval required'
+        : 'Spend permission signature required',
+      permissionType: isFarcasterUser ? 'erc20' : 'coinbase'
+    };
+  }
+
   if (isFarcasterUser) {
     // For Farcaster users, we use ERC20 approve transactions
     // Check if they have a wallet address
@@ -67,31 +83,7 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
       };
     }
 
-    // For Farcaster users, we need to check if they have actually approved ERC20 spending
-    // Since we can't easily check blockchain state synchronously here, we'll check if they have
-    // completed the approval process by looking for a success indicator
-    //
-    // The user should have either:
-    // 1. A stored spend permission (indicating they've gone through the approval process)
-    // 2. OR we should check the blockchain directly (future enhancement)
-
-    // For now, we'll check if they have any spend permission data stored
-    // This indicates they've at least attempted the approval process
-    const hasApprovalData = user.spendPermission || user.spendPermissionSignature;
-
-    if (!hasApprovalData) {
-      return {
-        isValid: false,
-        hasPermission: false,
-        hasSignature: false,
-        isExpired: false,
-        isNotStarted: false,
-        errorMessage: 'ERC20 spending approval required',
-        permissionType: 'erc20'
-      };
-    }
-
-    // If they have approval data, assume it's valid
+    // If they have spendPermissionSignature, assume the ERC20 approval is valid
     // TODO: In the future, we could add blockchain state checking here to verify the actual allowance
     return {
       isValid: true,
@@ -109,23 +101,10 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
     return {
       isValid: false,
       hasPermission: false,
-      hasSignature: !!user.spendPermissionSignature,
+      hasSignature: true, // They have signature but no permission data
       isExpired: false,
       isNotStarted: false,
       errorMessage: 'No spend permission found',
-      permissionType: 'coinbase'
-    };
-  }
-
-  // Check if user has spend permission signature
-  if (!user.spendPermissionSignature) {
-    return {
-      isValid: false,
-      hasPermission: true,
-      hasSignature: false,
-      isExpired: false,
-      isNotStarted: false,
-      errorMessage: 'No spend permission signature found',
       permissionType: 'coinbase'
     };
   }
