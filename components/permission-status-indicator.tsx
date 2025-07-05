@@ -51,7 +51,7 @@ export default function PermissionStatusIndicator({
       return (
         <Badge variant="secondary" className={`${bgClass} ${textClass}`}>
           {showIcon && getStatusIcon()}
-          {showIcon && <span className="ml-1">}</span>}
+          {showIcon && <span className="ml-1"></span>}
           {isExpiringSoon ? 'Expiring Soon' : 'Valid'}
         </Badge>
       );
@@ -59,7 +59,7 @@ export default function PermissionStatusIndicator({
       return (
         <Badge variant="secondary" className="bg-red-900/20 text-red-400 border-red-400/20">
           {showIcon && getStatusIcon()}
-          {showIcon && <span className="ml-1">}</span>}
+          {showIcon && <span className="ml-1"></span>}
           Expired
         </Badge>
       );
@@ -67,7 +67,7 @@ export default function PermissionStatusIndicator({
       return (
         <Badge variant="secondary" className="bg-yellow-900/20 text-yellow-400 border-yellow-400/20">
           {showIcon && getStatusIcon()}
-          {showIcon && <span className="ml-1">}</span>}
+          {showIcon && <span className="ml-1"></span>}
           Not Started
         </Badge>
       );
@@ -75,7 +75,7 @@ export default function PermissionStatusIndicator({
       return (
         <Badge variant="secondary" className="bg-orange-900/20 text-orange-400 border-orange-400/20">
           {showIcon && getStatusIcon()}
-          {showIcon && <span className="ml-1">}</span>}
+          {showIcon && <span className="ml-1"></span>}
           Required
         </Badge>
       );

@@ -765,88 +765,28 @@ The reading progress tracking feature is now **production-ready** with:
 
 ## Executor's Feedback or Assistance Requests
 
-### Fixed Spend Permission Expiring Modal Timing (Latest)
+### Fixed validateSpendPermission Import Error (Latest)
 
-**Issue**: The spend permission expiring modal was showing when there were 7 days left to expire, which was too early and annoying for users.
+**Issue**: When users clicked "Read More", they got an error: `validateSpendPermission is not a function`, preventing the spend permission check from working.
 
-**Root Cause**: The `isSpendPermissionExpiringSoon` function was checking for 7 days instead of 1 day, and the permission guard hook wasn't properly checking for expiring permissions.
+**Root Cause**: TypeScript syntax errors in `components/permission-status-indicator.tsx` were causing webpack module compilation to fail. The errors were in JSX spans with incorrect closing brackets: `{showIcon && <span className="ml-1">}</span>}` (extra `}` at the end).
 
-**Solution**: Fixed the spend permission expiring logic:
+**Solution**: Fixed the syntax errors by correcting the JSX spans:
 
-- Changed `isSpendPermissionExpiringSoon` function to only return true when there's 1 day left (instead of 7 days)
-- Updated the spend permission guard hook to show the modal when permission is expiring within 1 day
-- The modal now only appears when: user has no valid permission OR permission expires within 1 day
-
-**Files Modified**:
-
-- `lib/utils/spend-permission.ts` - Updated expiring soon threshold from 7 days to 1 day
-- `hooks/use-spend-permission-guard.ts` - Added expiring soon check to modal logic
-
-**Benefits**:
-
-- Users won't be bothered with expiring warnings until it's actually urgent (1 day left)
-- Modal only shows when action is truly needed
-- Better user experience with less interruption
-
-### Fixed Love Button Visual State Issue
-
-**Issue**: When users clicked the love button to tip a chapter, the tip count would update but the love button would not turn red to indicate it had been loved.
-
-**Root Cause**: The `fetchChapter` function had flawed logic for checking if the user had already tipped a chapter. The condition `!hasLoved` was preventing the state from being properly updated when `hasLoved` was already `true`, but the function needed to verify the actual state from the database.
-
-**Solution**: Fixed the `fetchChapter` function logic to properly handle the `hasLoved` state:
-
-- Changed the condition from `!hasLoved` to `timeSinceLastTip <= 5000` for recent tips
-- Added proper logic to only update `hasLoved` to `true` if the database confirms the tip exists
-- This ensures the visual state (red heart) matches the database state after tipping
+- Changed `{showIcon && <span className="ml-1">}</span>}` to `{showIcon && <span className="ml-1"></span>}`
+- Fixed 4 instances of this error in the getStatusBadge function
 
 **Files Modified**:
 
-- `app/novels/[id]/chapters/[chapterId]/page.tsx` - Updated fetchChapter function logic
+- `components/permission-status-indicator.tsx` - Fixed JSX syntax errors
 
 **Benefits**:
 
-- Love button now properly turns red when clicked
-- Visual feedback is consistent with database state
-- Users can see immediate confirmation of their tip action
-- No more confusion about whether the tip was successful
+- Spend permission validation now works correctly
+- "Read More" button properly checks permissions before allowing access
+- No more webpack module compilation errors
+- Users can now access reading functionality with proper permission checks
 
-### Fixed Page Refresh on Tip Issue
+**Testing**: The fix resolves the import error and allows the spend permission guard to function properly.
 
-**Issue**: The page was refreshing/reloading every time a user clicked the love button to tip a chapter, causing a disruptive user experience.
-
-**Root Cause**: The `fetchChapter` function had `hasLoved` in its dependency array, which caused the function to be recreated every time the love button was clicked (since `hasLoved` changes from false to true). This triggered the useEffect that calls `fetchChapter()`, causing the page to refresh.
-
-**Solution**: Removed `hasLoved` from the `fetchChapter` useCallback dependency array:
-
-- Changed dependencies from `[chapterId, user, hasLoved]` to `[chapterId, user]`
-- The function now only recreates when `chapterId` or `user` changes, not when tipping
-- This prevents the unnecessary page refresh while maintaining proper function behavior
-
-**Files Modified**:
-
-- `app/novels/[id]/chapters/[chapterId]/page.tsx` - Updated fetchChapter dependency array
-
-**Benefits**:
-
-- Smooth tipping experience without page interruption
-- Love button animation and state changes work properly
-- No disruption to reading flow when tipping chapters
-
-### Simplified Progress Bar Updates
-
-**Issue**: The progress bar was updating through both Intersection Observer and a redundant manual scroll event listener, causing unnecessary complexity and potential conflicts.
-
-**Solution**: Removed the manual scroll event listener and simplified the progress tracking system:
-
-- Removed the `handleScroll` function and its associated manual visibility checks
-- Removed the `lastManualCheckRef` that was only used for manual scroll tracking
-- Simplified the cleanup function to only handle the Intersection Observer
-- Progress bar now updates purely through the Intersection Observer as intended
-
-**Benefits**:
-
-- Cleaner, more predictable progress tracking
-- Better performance by removing redundant scroll event listeners
-- Simplified code maintenance
-- Reduced console logging noise from manual scroll checks
+### Fixed Spend Permission Expiring Modal Timing (Previously Fixed)
