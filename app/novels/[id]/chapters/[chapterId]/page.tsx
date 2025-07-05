@@ -246,44 +246,131 @@ export default function IndividualChapterPage() {
       observerRef.current.disconnect();
     }
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const element = entry.target;
-            const lineIndex = Array.from(lines).indexOf(element as Element);
+    // Test observer configuration
+    const observerConfig = {
+      root: null,
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0.1
+    };
+    console.log('🎛️ Observer configuration:', observerConfig);
 
-            if (lineIndex !== -1 && lineIndex !== currentLine) {
-              console.log('👁️ Line visibility changed:', {
-                newLine: lineIndex,
-                previousLine: currentLine,
-                totalLines: lines.length,
-                userId: (user as any)?.id,
-                chapterId,
-                isTracking: isTrackingRef.current
-              });
+    observerRef.current = new IntersectionObserver((entries) => {
+      console.log('🔍 IntersectionObserver callback triggered with', entries.length, 'entries');
+      console.log('📋 Observer config check:', {
+        root: observerRef.current?.root,
+        rootMargin: observerRef.current?.rootMargin,
+        thresholds: observerRef.current?.thresholds
+      });
 
-              setCurrentLine(lineIndex);
-
-              // Only start saving after initial delay and when tracking is enabled
-              if (isTrackingRef.current) {
-                console.log('💾 Triggering save for line:', lineIndex);
-                debouncedSave(lineIndex, lines.length);
-              } else {
-                console.log('⏸️ Not saving yet - tracking not started');
+      entries.forEach((entry, index) => {
+        console.log(`📋 Entry ${index} details:`, {
+          isIntersecting: entry.isIntersecting,
+          target: entry.target.tagName,
+          boundingClientRect: {
+            top: entry.boundingClientRect.top,
+            bottom: entry.boundingClientRect.bottom,
+            height: entry.boundingClientRect.height
+          },
+          intersectionRatio: entry.intersectionRatio,
+          intersectionRect: {
+            top: entry.intersectionRect.top,
+            bottom: entry.intersectionRect.bottom,
+            height: entry.intersectionRect.height
+          },
+          rootBounds: entry.rootBounds
+            ? {
+                top: entry.rootBounds.top,
+                bottom: entry.rootBounds.bottom,
+                height: entry.rootBounds.height
               }
+            : null
+        });
+
+        if (entry.isIntersecting) {
+          const element = entry.target;
+          const lineIndex = Array.from(lines).indexOf(element as Element);
+
+          console.log('🎯 Found intersecting element:', {
+            lineIndex,
+            tagName: element.tagName,
+            currentLine,
+            isTracking: isTrackingRef.current
+          });
+
+          if (lineIndex !== -1 && lineIndex !== currentLine) {
+            console.log('👁️ Line visibility changed:', {
+              newLine: lineIndex,
+              previousLine: currentLine,
+              totalLines: lines.length,
+              userId: (user as any)?.id,
+              chapterId,
+              isTracking: isTrackingRef.current
+            });
+
+            setCurrentLine(lineIndex);
+
+            // Only start saving after initial delay and when tracking is enabled
+            if (isTrackingRef.current) {
+              console.log('💾 Triggering save for line:', lineIndex);
+              debouncedSave(lineIndex, lines.length);
+            } else {
+              console.log('⏸️ Not saving yet - tracking not started');
             }
           }
-        });
-      },
-      {
-        root: null,
-        rootMargin: '-20% 0px -70% 0px',
-        threshold: 0.1
-      }
-    );
+        }
+      });
+    }, observerConfig);
 
-    lines.forEach((line) => observerRef.current?.observe(line));
+    console.log('🎯 Setting up observer for', lines.length, 'elements');
+
+    // Test first few elements to see their initial positions
+    lines.forEach((line, index) => {
+      if (index < 5) {
+        const rect = line.getBoundingClientRect();
+        console.log(`📍 Element ${index} initial position:`, {
+          tagName: line.tagName,
+          text: line.textContent?.substring(0, 30),
+          top: rect.top,
+          bottom: rect.bottom,
+          height: rect.height,
+          inViewport: rect.top >= 0 && rect.bottom <= window.innerHeight
+        });
+      }
+      observerRef.current?.observe(line);
+    });
+
+    // Add scroll event listener for debugging
+    const handleScroll = () => {
+      console.log('📜 Scroll event detected:', {
+        scrollY: window.scrollY,
+        scrollX: window.scrollX,
+        documentHeight: document.documentElement.scrollHeight,
+        windowHeight: window.innerHeight,
+        observerActive: !!observerRef.current
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    // Test initial intersection detection
+    setTimeout(() => {
+      console.log('🧪 Testing initial intersections after 1 second...');
+      if (lines.length > 0) {
+        const firstElement = lines[0];
+        const rect = firstElement.getBoundingClientRect();
+        console.log('🔍 First element position check:', {
+          top: rect.top,
+          bottom: rect.bottom,
+          height: rect.height,
+          visible: rect.top < window.innerHeight && rect.bottom > 0
+        });
+      }
+    }, 1000);
+
+    // Cleanup function to remove scroll listener
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [user, currentLine, debouncedSave, chapterId, isInitialized]);
 
   // Start tracking after initial delay - fixed timing
@@ -400,9 +487,18 @@ export default function IndividualChapterPage() {
 
   useEffect(() => {
     if (chapter && contentRef.current && !isInitialized) {
-      setTimeout(() => {
-        initializeLineTracking();
+      const cleanup = setTimeout(() => {
+        const cleanupFn = initializeLineTracking();
+
+        // Store cleanup function for later
+        if (cleanupFn && typeof cleanupFn === 'function') {
+          return cleanupFn;
+        }
       }, 100);
+
+      return () => {
+        clearTimeout(cleanup);
+      };
     }
 
     return () => {
@@ -538,6 +634,20 @@ export default function IndividualChapterPage() {
           <div className="text-sm text-gray-400">Chapter {chapter.chapterNumber}</div>
         </CardHeader>
         <CardContent>
+          {/* Temporary Test Button for Save Functionality */}
+          <div className="mb-4 p-4 bg-yellow-900/20 border border-yellow-600/30 rounded">
+            <p className="text-yellow-400 text-sm mb-2">🧪 Debug: Test Save Functionality</p>
+            <button
+              onClick={() => {
+                console.log('🧪 Manual save test triggered');
+                debouncedSave(5, totalLines);
+              }}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm"
+            >
+              Test Save Progress (Line 5)
+            </button>
+          </div>
+
           <div
             ref={contentRef}
             className="prose prose-lg max-w-none leading-relaxed text-gray-300"
