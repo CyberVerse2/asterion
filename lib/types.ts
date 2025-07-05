@@ -12,6 +12,8 @@ export interface User {
   pfpUrl?: string;
   spendLimit?: number;
   chapterTipAmount?: number; // Amount in USDC to tip per chapter
+  spendPermission?: any; // JSON object containing spend permission data
+  spendPermissionSignature?: string; // Signature for the spend permission
 }
 
 export interface Novel {

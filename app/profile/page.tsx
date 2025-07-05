@@ -857,19 +857,6 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {!saving &&
-                (spendLimit !== profile?.spendLimit ||
-                  chapterTipAmount !== profile?.chapterTipAmount) && (
-                  <div className="flex items-center gap-3 text-sm text-green-400 bg-green-500/10 border border-green-400/20 p-3 rounded-lg">
-                    <div className="h-4 w-4 rounded-full bg-green-400 flex items-center justify-center">
-                      <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
-                        <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
-                      </svg>
-                    </div>
-                    <span>Settings updated successfully!</span>
-                  </div>
-                )}
-
               {/* Action Button */}
               <div className="pt-4 border-t border-white/10">
                 {hasFarcasterContext ? (
@@ -898,7 +885,7 @@ export default function ProfilePage() {
                             <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
                           </svg>
                         </div>
-                        <span>Permission Granted</span>
+                        <span className="text-white">Permission Granted</span>
                       </div>
                     ) : (
                       'Approve Spend Permission'
