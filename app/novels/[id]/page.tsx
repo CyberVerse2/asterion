@@ -137,11 +137,18 @@ export default function NovelPage() {
   const handleChapterTipped = useCallback(
     (chapterId: string, newTipCount: number) => {
       // Update chapters data and revalidate
-      mutateChapters((currentChapters: any[]) => {
-        if (!currentChapters) return currentChapters;
-        return currentChapters.map((chapter: any) =>
-          chapter.id === chapterId ? { ...chapter, tipCount: newTipCount } : chapter
-        );
+      mutateChapters((currentData: any) => {
+        // currentData is the full API response: { chapters: [...], pagination: {...} }
+        if (!currentData || !currentData.chapters || !Array.isArray(currentData.chapters)) {
+          return currentData;
+        }
+
+        return {
+          ...currentData,
+          chapters: currentData.chapters.map((chapter: any) =>
+            chapter.id === chapterId ? { ...chapter, tipCount: newTipCount } : chapter
+          )
+        };
       }, false);
     },
     [mutateChapters]

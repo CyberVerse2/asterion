@@ -605,13 +605,7 @@ The system now provides users with a professional-grade reading experience compa
 
 ## ✅ NEW BUG FIX - Fixed Spend Permission Prisma Error
 
-**🐛 ISSUE**: When users grant spend permissions, the app was throwing a Prisma error:
-
-```
-PrismaClientValidationError: Argument 'where' of type UserWhereUniqueInput needs at least one of 'id', 'fid' or 'username' arguments.
-```
-
-**🔍 ROOT CAUSE**: The `/api/collect` endpoint was being called from the profile page without the required `userId` parameter. The API route was trying to query:
+**🎉 ROOT CAUSE IDENTIFIED AND FIXED**: The `/api/collect` endpoint was being called from the profile page without the required `userId` parameter. The API route was trying to query:
 
 ```typescript
 const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -633,3 +627,39 @@ body: JSON.stringify({
 ```
 
 **Test Status**: Spend permission granting should now work without errors.
+
+## ✅ NEW BUG FIX - Fixed Author Tipping Error
+
+**🐛 ISSUE**: When users tip authors, the app was throwing an error:
+
+```
+TypeError: currentChapters.map is not a function
+```
+
+**🔍 ROOT CAUSE**: The `handleChapterTipped` function in the novel page was incorrectly expecting the SWR mutate callback parameter to be the chapters array directly, but it's actually the full API response object `{ chapters: [...], pagination: {...} }`.
+
+**✅ SOLUTION IMPLEMENTED**:
+
+- **Fixed novel page** (`app/novels/[id]/page.tsx`)
+- **Updated `handleChapterTipped`** to properly handle the SWR data structure:
+
+```typescript
+// Before (BROKEN):
+mutateChapters((currentChapters: any[]) => {
+  return currentChapters.map((chapter: any) => ...)
+});
+
+// After (FIXED):
+mutateChapters((currentData: any) => {
+  if (!currentData || !currentData.chapters || !Array.isArray(currentData.chapters)) {
+    return currentData;
+  }
+
+  return {
+    ...currentData,
+    chapters: currentData.chapters.map((chapter: any) => ...)
+  };
+});
+```
+
+**Test Status**: Author tipping should now work without the `.map()` error.
