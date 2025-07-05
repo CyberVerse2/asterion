@@ -589,6 +589,39 @@ export default function ProfilePage() {
     }
   }, [isFarcasterUser, isApproveTxSuccess, refreshUser]);
 
+  // Save spend permission data for Farcaster users after successful ERC20 approval
+  useEffect(() => {
+    if (isFarcasterUser && isApproveTxSuccess && profile?.id && profile?.walletAddress) {
+      console.log('[Profile] Saving ERC20 approval data for spend permission validation...');
+
+      // Create a simple approval record to indicate the user has approved ERC20 spending
+      const approvalData = {
+        type: 'erc20_approval',
+        walletAddress: profile.walletAddress,
+        spendLimit: spendLimit,
+        timestamp: Date.now(),
+        approved: true
+      };
+
+      // Save the approval data so the validation logic can detect it
+      fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: profile.id,
+          spendPermission: approvalData,
+          spendPermissionSignature: 'erc20_approved' // Simple flag to indicate approval
+        })
+      })
+        .then(() => {
+          console.log('[Profile] ERC20 approval data saved successfully');
+        })
+        .catch((error) => {
+          console.error('[Profile] Error saving ERC20 approval data:', error);
+        });
+    }
+  }, [isFarcasterUser, isApproveTxSuccess, profile?.id, profile?.walletAddress, spendLimit]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-4 sm:py-8">

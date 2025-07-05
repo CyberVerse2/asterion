@@ -54,10 +54,7 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
 
   if (isFarcasterUser) {
     // For Farcaster users, we use ERC20 approve transactions
-    // Since we can't easily check blockchain state here, we'll assume they have permission
-    // if they have a wallet address (the actual ERC20 approval check happens on-chain)
-    // TODO: In the future, we could add blockchain state checking here
-
+    // Check if they have a wallet address
     if (!user.walletAddress) {
       return {
         isValid: false,
@@ -70,8 +67,32 @@ export function validateSpendPermission(user: User | null | undefined): SpendPer
       };
     }
 
-    // For now, assume Farcaster users with wallet addresses have valid permissions
-    // This is a temporary solution - ideally we'd check the actual ERC20 allowance on-chain
+    // For Farcaster users, we need to check if they have actually approved ERC20 spending
+    // Since we can't easily check blockchain state synchronously here, we'll check if they have
+    // completed the approval process by looking for a success indicator
+    //
+    // The user should have either:
+    // 1. A stored spend permission (indicating they've gone through the approval process)
+    // 2. OR we should check the blockchain directly (future enhancement)
+
+    // For now, we'll check if they have any spend permission data stored
+    // This indicates they've at least attempted the approval process
+    const hasApprovalData = user.spendPermission || user.spendPermissionSignature;
+
+    if (!hasApprovalData) {
+      return {
+        isValid: false,
+        hasPermission: false,
+        hasSignature: false,
+        isExpired: false,
+        isNotStarted: false,
+        errorMessage: 'ERC20 spending approval required',
+        permissionType: 'erc20'
+      };
+    }
+
+    // If they have approval data, assume it's valid
+    // TODO: In the future, we could add blockchain state checking here to verify the actual allowance
     return {
       isValid: true,
       hasPermission: true,
