@@ -1,21 +1,33 @@
 'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
+import { User } from '@/lib/types';
 
-const UserContext = createContext({
+interface UserContextType {
+  user: User | null;
+  userLoading: boolean;
+  userError: string | null;
+  refreshUser: () => Promise<void>;
+}
+
+interface UserProviderProps {
+  children: ReactNode;
+}
+
+const UserContext = createContext<UserContextType>({
   user: null,
   userLoading: false,
   userError: null,
-  refreshUser: () => {}
+  refreshUser: async () => {}
 });
 
-export function UserProvider({ children }) {
+export function UserProvider({ children }: UserProviderProps) {
   const { context } = useMiniKit();
   const { address: walletAddress, isConnected } = useAccount();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(false);
-  const [userError, setUserError] = useState(null);
+  const [userError, setUserError] = useState<string | null>(null);
 
   // Function to refresh user data (fetch fresh data from API)
   const refreshUser = async () => {
@@ -34,7 +46,7 @@ export function UserProvider({ children }) {
       const refreshedUser = await response.json();
       setUser(refreshedUser);
       console.log('[UserProvider] User data refreshed:', refreshedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[UserProvider] Error refreshing user:', error);
       setUserError(error.message);
     } finally {
@@ -43,15 +55,15 @@ export function UserProvider({ children }) {
   };
 
   // Helper function to create or fetch user
-  const createOrFetchUser = async (payload) => {
+  const createOrFetchUser = async (payload: any) => {
     console.log('[UserProvider] Creating/fetching user with payload:', payload);
-        setUserLoading(true);
-        setUserError(null);
+    setUserLoading(true);
+    setUserError(null);
 
     try {
       const response = await fetch('/api/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -59,14 +71,14 @@ export function UserProvider({ children }) {
       if (!response.ok) {
         const err = await response.json();
         console.error('[UserProvider] /api/users error response:', err);
-              throw new Error(err.error || 'Unknown error');
-            }
+        throw new Error(err.error || 'Unknown error');
+      }
 
       const userData = await response.json();
       setUser(userData);
       console.debug('[UserProvider] User created/fetched:', userData);
-    } catch (err) {
-            setUserError(err.message);
+    } catch (err: any) {
+      setUserError(err.message);
       console.error('[UserProvider] User onboarding error:', err);
     } finally {
       setUserLoading(false);

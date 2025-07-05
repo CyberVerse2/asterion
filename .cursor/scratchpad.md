@@ -443,13 +443,42 @@ Users report that after reading progress is saved, the page sometimes jumps up o
     - Integrated with existing validation utility functions
   - **Success Criteria Met:** ✅ UI components provide clear messaging and redirect functionality
 
-- ⏳ **Task 37: Create Permission Guard Hook** - READY TO START
+- ✅ **Task 37: Create Permission Guard Hook** - COMPLETED
 
-- ⏳ **Task 38: Integrate Permission Checks in Novel Reading Flow** - NOT STARTED
+  - Status: ✅ **COMPLETED** - Hook successfully implemented and tested
+  - Dependencies: ✅ Task 35 (validation utility) - COMPLETED, ✅ Task 36 (UI components) - COMPLETED
+  - Implementation Details:
+    - Created `hooks/use-spend-permission-guard.ts` with state management
+    - Implemented `checkPermissionAndProceed()` function for flow control
+    - Hook manages modal state and orchestrates permission validation
+    - Provides clean API for integration across components
+  - **Success Criteria Met:** ✅ Hook successfully manages permission state and provides clean API
 
-- ⏳ **Task 39: Integrate Permission Checks in Chapter Navigation** - NOT STARTED
+- ✅ **Task 38: Integrate Permission Checks in Novel Reading Flow** - COMPLETED
 
-- ⏳ **Task 40: Implement Permission Approval Redirect Flow** - NOT STARTED
+  - Status: ✅ **COMPLETED** - Permission checks integrated into novel reading flow
+  - Dependencies: ✅ Task 35 (validation utility) - COMPLETED, ✅ Task 37 (permission guard hook) - COMPLETED
+  - Implementation Details:
+    - Updated `app/novels/[id]/page.tsx` to check permissions on "Read Now" button click
+    - Added SpendPermissionRequired modal to novel page
+    - Integrated permission guard hook with proper user flow
+    - Modal redirects users to profile page for spend permission approval
+    - Updated UserProvider with proper TypeScript types
+  - **Success Criteria Met:** ✅ Permission checks work with existing UI and don't disrupt user experience
+
+- ✅ **Task 39: Integrate Permission Checks in Chapter Navigation** - COMPLETED
+
+  - Status: ✅ **COMPLETED** - Permission checks integrated into chapter navigation
+  - Dependencies: ✅ Task 35 (validation utility) - COMPLETED, ✅ Task 37 (permission guard hook) - COMPLETED
+  - Implementation Details:
+    - Updated `app/novels/[id]/chapters/[chapterId]/page.tsx` with permission checks
+    - Added permission verification on page load for direct chapter access
+    - Protected Previous/Next chapter navigation with permission checks
+    - Updated `components/chapter-list-modal.tsx` with permission checks for chapter links
+    - Added SpendPermissionRequired modals to all chapter navigation paths
+  - **Success Criteria Met:** ✅ All reading entry points protected with permission checks
+
+- ⏳ **Task 40: Implement Permission Approval Redirect Flow** - READY TO START
 
 - ⏳ **Task 41: Add Permission Status Indicators** - NOT STARTED
 
@@ -748,7 +777,7 @@ The reading progress tracking feature is now **production-ready** with:
    - Dynamic status detection with appropriate messaging for each state
    - Visual status indicators with color-coded badges (Valid, Expired, Not Started, Required)
    - Step-by-step guidance for users on how to approve permissions
-   - "Approve Permission" button with redirect to profile page
+   - "Approve Permission" button with redirect to profile
    - Loading states and redirect feedback
    - Responsive design with glass morphism styling matching app theme
    - Support for all permission states: missing, expired, not started, valid, expiring soon

@@ -8,6 +8,8 @@ import { useChapters } from '@/hooks/useNovels';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/providers/UserProvider';
 import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
+import { useSpendPermissionGuard } from '@/hooks/use-spend-permission-guard';
+import SpendPermissionRequired from '@/components/spend-permission-required';
 
 interface ChapterListModalProps {
   isOpen: boolean;
@@ -33,9 +35,21 @@ export default function ChapterListModal({
   const { chapters, isLoading } = useChapters(novelId);
   const { readingProgress } = useNovelReadingProgress((user as any)?.id, novelId);
 
+  // Spend permission guard hook
+  const {
+    isModalOpen: isPermissionModalOpen,
+    checkPermissionAndProceed,
+    closeModal: closePermissionModal
+  } = useSpendPermissionGuard();
+
   const handleChapterClick = (chapterId: string) => {
-    router.push(`/novels/${novelId}/chapters/${chapterId}`);
-    onClose();
+    const proceedWithNavigation = () => {
+      router.push(`/novels/${novelId}/chapters/${chapterId}`);
+      onClose();
+    };
+
+    // Check permission before navigating
+    checkPermissionAndProceed(user, proceedWithNavigation);
   };
 
   const getChapterProgress = (chapterId: string) => {
@@ -111,7 +125,6 @@ export default function ChapterListModal({
                               </span>
                             )}
                           </div>
-                          
                         </div>
                         {progress && (
                           <div className="ml-3 flex-shrink-0">
@@ -137,6 +150,13 @@ export default function ChapterListModal({
           </div>
         </CardContent>
       </Card>
+
+      {/* Spend Permission Required Modal */}
+      <SpendPermissionRequired
+        isOpen={isPermissionModalOpen}
+        onClose={closePermissionModal}
+        user={user}
+      />
     </div>
   );
 }

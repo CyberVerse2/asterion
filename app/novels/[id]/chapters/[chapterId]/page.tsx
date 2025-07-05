@@ -13,6 +13,8 @@ import {
   formatReadingProgress,
   getLastReadTimestamp
 } from '@/hooks/useReadingProgress';
+import { useSpendPermissionGuard } from '@/hooks/use-spend-permission-guard';
+import SpendPermissionRequired from '@/components/spend-permission-required';
 import LoveAnimation from '@/components/love-animation';
 import ChapterListModal from '@/components/chapter-list-modal';
 
@@ -45,10 +47,14 @@ export default function IndividualChapterPage() {
   const chapterId = params.chapterId as string;
   const startFromTop = searchParams.get('startFromTop') === 'true';
 
+  // Spend permission guard hook
+  const { isModalOpen, checkPermissionAndProceed, closeModal } = useSpendPermissionGuard();
+
   // Chapter state
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [permissionChecked, setPermissionChecked] = useState(false);
 
   // Navigation state
   const [previousChapter, setPreviousChapter] = useState<{ id: string; title: string } | null>(
@@ -100,6 +106,23 @@ export default function IndividualChapterPage() {
   // Get user's chapter tip amount with fallback
   const chapterTipAmount = (user as any)?.chapterTipAmount || 0.01;
   const tipAmountDisplay = chapterTipAmount.toFixed(2);
+
+  // Check spend permission on page load
+  useEffect(() => {
+    if (!permissionChecked && user !== undefined) {
+      const proceedWithReading = () => {
+        setPermissionChecked(true);
+        // Continue with normal chapter loading
+      };
+
+      const hasValidPermission = checkPermissionAndProceed(user, proceedWithReading);
+      if (!hasValidPermission) {
+        // Permission check failed, modal will be shown
+        setPermissionChecked(true);
+        return;
+      }
+    }
+  }, [user, permissionChecked, checkPermissionAndProceed]);
 
   // Fetch chapter data
   const fetchChapter = useCallback(
@@ -672,23 +695,33 @@ export default function IndividualChapterPage() {
   // Navigation handlers
   const goToPrevious = async () => {
     if (previousChapter) {
-      // Save current reading progress before navigating
-      if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
-        console.log('📖 Saving progress before navigating to previous chapter');
-        await saveImmediately(currentLine, totalLines);
-      }
-      router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
+      const proceedWithNavigation = async () => {
+        // Save current reading progress before navigating
+        if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
+          console.log('📖 Saving progress before navigating to previous chapter');
+          await saveImmediately(currentLine, totalLines);
+        }
+        router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
+      };
+
+      // Check permission before navigating
+      checkPermissionAndProceed(user, proceedWithNavigation);
     }
   };
 
   const goToNext = async () => {
     if (nextChapter) {
-      // Save current reading progress before navigating
-      if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
-        console.log('📖 Saving progress before navigating to next chapter');
-        await saveImmediately(currentLine, totalLines);
-      }
-      router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
+      const proceedWithNavigation = async () => {
+        // Save current reading progress before navigating
+        if (isTrackingRef.current && currentLine > 0 && totalLines > 0) {
+          console.log('📖 Saving progress before navigating to next chapter');
+          await saveImmediately(currentLine, totalLines);
+        }
+        router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
+      };
+
+      // Check permission before navigating
+      checkPermissionAndProceed(user, proceedWithNavigation);
     }
   };
 
@@ -698,9 +731,12 @@ export default function IndividualChapterPage() {
 
   // Effects
   useEffect(() => {
-    fetchChapter();
-    fetchNavigation();
-  }, [fetchChapter, fetchNavigation]);
+    // Only fetch chapter data after permission is verified
+    if (permissionChecked) {
+      fetchChapter();
+      fetchNavigation();
+    }
+  }, [fetchChapter, fetchNavigation, permissionChecked]);
 
   useEffect(() => {
     if (chapter && contentRef.current && !isInitialized) {
@@ -949,6 +985,9 @@ export default function IndividualChapterPage() {
         novelId={novelId}
         currentChapterId={chapterId}
       />
+
+      {/* Spend Permission Required Modal */}
+      <SpendPermissionRequired isOpen={isModalOpen} onClose={closeModal} user={user} />
     </div>
   );
 }
