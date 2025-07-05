@@ -215,70 +215,114 @@ export default function IndividualChapterPage() {
   // Save function - now immediate, not debounced
   const saveImmediately = useCallback(
     async (lineIndex: number, totalLinesCount: number) => {
-      console.log('💾 saveImmediately called:', {
-        lineIndex,
-        totalLinesCount,
-        userId: (user as any)?.id,
-        chapterId,
-        hasUser: !!(user as any)?.id,
-        hasChapterId: !!chapterId,
-        isTracking: isTrackingRef.current,
-        timestamp: new Date().toISOString()
-      });
-
       const currentUser = userRef.current;
       const currentChapterId = chapterIdRef.current;
       const currentNovelId = novelIdRef.current;
-      if ((currentUser as any)?.id && currentChapterId && isTrackingRef.current) {
-        try {
-          const result = await saveProgress({
+
+      console.log('💾 saveImmediately called:', {
+        lineIndex,
+        totalLinesCount,
+        userId: (currentUser as any)?.id,
+        chapterId: currentChapterId,
+        novelId: currentNovelId,
+        hasUser: !!(currentUser as any)?.id,
+        hasChapterId: !!currentChapterId,
+        isTracking: isTrackingRef.current,
+        userType: currentUser ? 'loaded' : 'not loaded',
+        timestamp: new Date().toISOString()
+      });
+
+      // Enhanced condition checking with detailed logging
+      if (!(currentUser as any)?.id) {
+        console.error('❌ Cannot save - User ID not available:', {
+          currentUser,
+          userFromHook: (user as any)?.id,
+          userRef: userRef.current,
+          debugInfo: 'User data not loaded or missing ID'
+        });
+        return;
+      }
+
+      if (!currentChapterId) {
+        console.error('❌ Cannot save - Chapter ID not available:', {
+          currentChapterId,
+          chapterIdFromParams: chapterId,
+          chapterIdRef: chapterIdRef.current,
+          debugInfo: 'Chapter ID not available'
+        });
+        return;
+      }
+
+      if (!isTrackingRef.current) {
+        console.error('❌ Cannot save - Tracking not active:', {
+          isTrackingRef: isTrackingRef.current,
+          isTrackingState: isTracking,
+          isInitialized,
+          debugInfo: 'Tracking not started yet'
+        });
+        return;
+      }
+
+      // All conditions met, proceed with save
+      console.log('✅ All conditions met, proceeding with save:', {
+        userId: (currentUser as any).id,
+        chapterId: currentChapterId,
+        lineIndex,
+        totalLinesCount
+      });
+
+      try {
+        const result = await saveProgress({
+          userId: (currentUser as any).id,
+          chapterId: currentChapterId,
+          currentLine: lineIndex,
+          totalLines: totalLinesCount,
+          scrollPosition: window.scrollY
+        });
+        console.log('✅ Progress saved successfully:', result);
+
+        // Update local cache
+        mutateProgress();
+
+        // Invalidate novel reading progress cache
+        if (typeof window !== 'undefined') {
+          const { mutate } = await import('swr');
+          mutate(
+            `/api/reading-progress?userId=${(currentUser as any).id}&novelId=${currentNovelId}`
+          );
+          console.log('🔄 Cache invalidated for novel reading progress');
+        }
+      } catch (error: any) {
+        console.error('❌ Error saving reading progress:', error);
+        console.error('📋 Error details:', {
+          message: error?.message || String(error),
+          stack: error?.stack,
+          userId: (currentUser as any).id,
+          chapterId: currentChapterId,
+          lineIndex,
+          totalLinesCount,
+          requestData: {
             userId: (currentUser as any).id,
             chapterId: currentChapterId,
             currentLine: lineIndex,
             totalLines: totalLinesCount,
             scrollPosition: window.scrollY
-          });
-          console.log('✅ Progress saved successfully:', result);
-          mutateProgress();
-          if (typeof window !== 'undefined') {
-            const { mutate } = await import('swr');
-            mutate(
-              `/api/reading-progress?userId=${(currentUser as any).id}&novelId=${currentNovelId}`
-            );
-            console.log('🔄 Cache invalidated for novel reading progress');
           }
-        } catch (error: any) {
-          console.error('❌ Error saving reading progress:', error);
-          console.error('📋 Error details:', {
-            message: error?.message || String(error),
-            stack: error?.stack,
-            userId: (currentUser as any).id,
-            chapterId: currentChapterId,
-            lineIndex,
-            totalLinesCount
-          });
-        }
-      } else {
-        console.log('⚠️ Cannot save - missing data or not tracking:', {
-          hasUser: !!(currentUser as any)?.id,
-          hasChapterId: !!currentChapterId,
-          isTracking: isTrackingRef.current,
-          userId: (currentUser as any)?.id,
-          chapterId: currentChapterId,
-          debugInfo: 'Save conditions not met'
         });
       }
     },
-    [(user as any)?.id, chapterId, novelId, saveProgress, mutateProgress]
+    [user, chapterId, novelId, saveProgress, mutateProgress, isTracking, isInitialized]
   );
 
   // Initialize line tracking - fixed to prevent re-initialization loop
   const initializeLineTracking = useCallback(() => {
-    if (!contentRef.current || !user || isInitialized) {
+    if (!contentRef.current || !user || !(user as any)?.id || isInitialized) {
       console.log('⏸️ Skipping line tracking init:', {
         hasContent: !!contentRef.current,
         hasUser: !!user,
-        isInitialized
+        hasUserId: !!(user as any)?.id,
+        isInitialized,
+        debugInfo: 'Missing required data for tracking initialization'
       });
       return;
     }
@@ -314,6 +358,11 @@ export default function IndividualChapterPage() {
 
     setTotalLines(lines.length);
     setIsInitialized(true);
+
+    // Update refs with current values
+    userRef.current = user;
+    chapterIdRef.current = chapterId;
+    novelIdRef.current = novelId;
 
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -466,8 +515,18 @@ export default function IndividualChapterPage() {
 
   // Start tracking after initial delay - fixed timing
   useEffect(() => {
-    if (isInitialized && !isTracking) {
+    if (isInitialized && !isTracking && user && (user as any)?.id) {
       console.log('⏰ Setting up tracking timer...');
+      console.log('🔧 Pre-tracking validation:', {
+        isInitialized,
+        isTracking,
+        hasUser: !!user,
+        userId: (user as any)?.id,
+        totalLines,
+        chapterId,
+        observerActive: !!observerRef.current
+      });
+
       const timer = setTimeout(() => {
         console.log('🚀 Starting reading progress tracking');
         console.log('🔧 Tracking context:', {
@@ -475,8 +534,16 @@ export default function IndividualChapterPage() {
           totalLines,
           userId: (user as any)?.id,
           chapterId,
-          observerActive: !!observerRef.current
+          observerActive: !!observerRef.current,
+          userRefCurrent: userRef.current,
+          chapterIdRefCurrent: chapterIdRef.current
         });
+
+        // Ensure refs are up to date
+        userRef.current = user;
+        chapterIdRef.current = chapterId;
+        novelIdRef.current = novelId;
+
         setIsTracking(true);
         isTrackingRef.current = true;
         console.log('✅ Tracking started - isTrackingRef.current =', isTrackingRef.current);
@@ -486,8 +553,17 @@ export default function IndividualChapterPage() {
         console.log('🧹 Cleaning up tracking timer');
         clearTimeout(timer);
       };
+    } else {
+      console.log('⏸️ Tracking conditions not met:', {
+        isInitialized,
+        isTracking,
+        hasUser: !!user,
+        userId: (user as any)?.id,
+        totalLines,
+        chapterId
+      });
     }
-  }, [isInitialized, isTracking, totalLines, user, chapterId]);
+  }, [isInitialized, isTracking, totalLines, user, chapterId, novelId]);
 
   // Only restore position once per chapter load, after both chapter and readingProgress are available
   useEffect(() => {

@@ -749,97 +749,108 @@ export default function ProfilePage() {
           </div>
 
           {/* Enhanced Profile Header with Background */}
-          <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-3 border border-white/10 shadow-sm">
+          <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10 shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 rounded-2xl opacity-50"></div>
-            <div className="relative flex items-center gap-2 sm:gap-4">
-              {isWalletOnly ? (
-                <>
-                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
-                    <AvatarImage
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.walletAddress}`}
-                      alt="Profile Avatar"
-                    />
-                    <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
-                      {typeof profile?.username === 'string' && profile.username.length > 0
-                        ? profile.username.charAt(0).toUpperCase()
-                        : '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 px-2">
-                    <div className="text-lg sm:text-xl font-bold truncate text-white">
-                      {typeof profile?.username === 'string' ? profile.username : 'unknown'}
-                    </div>
-                    <div className="text-sm text-gray-400">Reader</div>
+            <div className="relative flex items-center gap-4 sm:gap-6">
+              {/* Avatar Section */}
+              <div className="relative">
+                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 flex-shrink-0 ring-2 ring-purple-400/30 shadow-lg">
+                  <AvatarImage
+                    src={
+                      isWalletOnly
+                        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.walletAddress}`
+                        : typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
+                        ? profile.pfpUrl
+                        : '/placeholder.svg'
+                    }
+                    alt="Profile Avatar"
+                  />
+                  <AvatarFallback className="text-xl sm:text-2xl md:text-3xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white font-bold">
+                    {typeof profile?.username === 'string' && profile.username.length > 0
+                      ? profile.username.charAt(0).toUpperCase()
+                      : '?'}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Status indicator */}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-black/40 shadow-sm"></div>
+              </div>
+
+              {/* User Info Section */}
+              <div className="flex-1 min-w-0 space-y-1 sm:space-y-2">
+                {/* Username */}
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate text-white">
+                    {typeof profile?.username === 'string' ? profile.username : 'Unknown User'}
+                  </h1>
+                  {!isWalletOnly && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-purple-500/20 text-purple-300 border-purple-400/30 text-xs px-2 py-1"
+                    >
+                      Farcaster
+                    </Badge>
+                  )}
+                </div>
+
+                {/* User Type & Stats */}
+                <div className="flex items-center gap-3 text-sm text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="h-4 w-4" />
+                    Reader
+                  </span>
+                  {profile?.fid && (
+                    <span className="flex items-center gap-1">
+                      <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                      FID: {profile.fid}
+                    </span>
+                  )}
+                  {profile?.walletAddress && (
+                    <span className="flex items-center gap-1 max-w-[120px] sm:max-w-[200px]">
+                      <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                      <span className="truncate font-mono text-xs">
+                        {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)}
+                      </span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Quick Stats */}
+                <div className="flex items-center gap-4 sm:gap-6 pt-1">
+                  <div className="flex items-center gap-1 text-green-400">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      $
+                      {Array.isArray(profile?.tips)
+                        ? (profile.tips as TipWithNovel[])
+                            .reduce(
+                              (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
+                              0
+                            )
+                            .toFixed(2)
+                        : '0.00'}
+                    </span>
                   </div>
-                </>
-              ) : (
-                <>
-                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 ring-2 ring-purple-400/30">
-                    <AvatarImage
-                      src={
-                        typeof profile?.pfpUrl === 'string' && profile.pfpUrl.length > 0
-                          ? profile.pfpUrl
-                          : '/placeholder.svg'
-                      }
-                    />
-                    <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
-                      {typeof profile?.username === 'string' && profile.username.length > 0
-                        ? profile.username.charAt(0).toUpperCase()
-                        : '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-lg sm:text-xl font-bold mb-1 truncate text-white">
-                      {typeof profile?.username === 'string' ? profile.username : 'unknown'}
-                    </div>
-                    <div className="text-sm text-gray-400">Reader</div>
+                  <div className="flex items-center gap-1 text-blue-400">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0} saved
+                    </span>
                   </div>
-                </>
-              )}
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="flex-shrink-0 hidden sm:block">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all duration-200"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </div>
             </div>
-          </div>
-
-          {/* Enhanced Stats Cards */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-6">
-            <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-green-400/30">
-              <CardContent className="p-2 sm:p-3 flex items-center justify-between">
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <div className="p-1 sm:p-2 bg-green-500/20 rounded-full">
-                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
-                  </div>
-                  <span className="text-xs sm:text-sm text-green-400 font-medium">Tipped</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm sm:text-lg font-bold text-green-400">
-                    $
-                    {Array.isArray(profile?.tips)
-                      ? (profile.tips as TipWithNovel[])
-                          .reduce(
-                            (sum, tip) => sum + (typeof tip.amount === 'number' ? tip.amount : 0),
-                            0
-                          )
-                          .toFixed(2)
-                      : '0.00'}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 novel-card-dark border-blue-400/30">
-              <CardContent className="p-2 sm:p-3 flex items-center justify-between">
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <div className="p-1 sm:p-2 bg-blue-500/20 rounded-full">
-                    <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
-                  </div>
-                  <span className="text-xs sm:text-sm text-blue-400 font-medium">Saved</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm sm:text-lg font-bold text-blue-400">
-                    {Array.isArray(profile?.bookmarks) ? profile.bookmarks.length : 0}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Visual Divider */}
