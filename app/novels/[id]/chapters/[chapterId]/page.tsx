@@ -285,7 +285,7 @@ export default function IndividualChapterPage() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [chapter, user, chapterId, saveProgress]);
+  }, [chapter, user, chapterId, saveProgress, readingProgress]);
 
   // Reset tracking state when chapter or user changes
   useEffect(() => {
@@ -314,33 +314,51 @@ export default function IndividualChapterPage() {
 
   // Simplified scroll restore effect
   useEffect(() => {
-    if (!chapter || !readingProgress || hasRestoredRef.current || !contentRef.current) return;
+    if (!chapter || !readingProgress || hasRestoredRef.current) {
+      console.log('[ScrollRestore] skipping – no chapter or no progress or already done');
+      return;
+    }
 
-    const lines = contentRef.current.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+    const maxAttempts = 30;
     let attempts = 0;
 
-    function tryScroll() {
-      if (!readingProgress) return;
-
-      const idx = readingProgress.currentLine;
-      if (idx < lines.length) {
-        lines[idx].scrollIntoView({ block: 'center', behavior: 'auto' });
-        hasRestoredRef.current = true;
-        setCurrentLine(idx);
-        lastSavedLineRef.current = idx;
-        console.log('[ScrollRestore] Restored to line', idx);
+    function tryRestore() {
+      attempts++;
+      const container = contentRef.current;
+      if (!container) {
+        if (attempts < maxAttempts) return requestAnimationFrame(tryRestore);
+        console.warn('[ScrollRestore] giving up – no contentRef');
         return;
       }
 
-      if (attempts++ < 20) {
-        requestAnimationFrame(tryScroll);
-      } else {
-        console.log('[ScrollRestore] Giving up after', attempts, 'attempts');
+      const lines = container.querySelectorAll<HTMLElement>('p, div, h1, h2, h3, h4, h5, h6');
+      if (lines.length === 0) {
+        if (attempts < maxAttempts) {
+          console.log(`[ScrollRestore] attempt ${attempts}: no lines yet, retrying…`);
+          return requestAnimationFrame(tryRestore);
+        }
+        console.warn('[ScrollRestore] giving up – no lines found');
+        return;
       }
+
+      const idx = readingProgress?.currentLine ?? 0;
+      if (idx < 0 || idx >= lines.length) {
+        console.warn('[ScrollRestore] saved index out of range', idx, 'of', lines.length);
+        return;
+      }
+
+      // Jump exactly to that element, centered
+      lines[idx].scrollIntoView({ block: 'center', behavior: 'auto' });
+      console.log('[ScrollRestore] scrolled to line', idx);
+
+      hasRestoredRef.current = true;
+      setCurrentLine(idx);
+      lastSavedLineRef.current = idx;
     }
 
-    tryScroll();
-  }, [chapter, readingProgress, totalLines, chapterId]);
+    // kick it off
+    tryRestore();
+  }, [chapter, readingProgress]);
 
   // Love/tip handler
   const handleLove = useCallback(
@@ -605,7 +623,7 @@ export default function IndividualChapterPage() {
         </button>
         <button
           type="button"
-          onClick={handleLove}
+          onClick={(event) => handleLove(event)}
           disabled={hasLoved || tradePending}
           className={`focus:outline-none bg-white/5 backdrop-blur-sm border border-white/10 rounded-full p-2 md:p-3 text-gray-400 hover:text-red-500 hover:bg-red-100/20 active:bg-red-100/30 focus:bg-red-100/20 transition-all duration-300 shadow-lg ${
             hasLoved ? 'text-red-500 bg-red-100/20' : ''
