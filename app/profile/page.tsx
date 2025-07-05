@@ -500,36 +500,33 @@ export default function ProfilePage() {
     console.log('[Profile] 🎯 User type check:', { isFarcasterUser, profileFid: profile?.fid });
 
     if (!account?.address) {
-      console.log('[Profile] No account address, attempting to connect...');
-      try {
-        const connectResult = await connectAsync({ connector: connectors[0] });
-        console.log('[Profile] Connected successfully:', connectResult);
+      console.log('[Profile] No account address in Farcaster context');
+      setApproveError('Wallet not connected. Please connect your wallet in Farcaster first.');
+      return;
+    }
 
-        // Wait a bit for the connection to be established
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!writeContract) {
+      console.log('[Profile] writeContract not available');
+      setApproveError('Wallet not ready. Please refresh and try again.');
+      return;
+    }
 
-        // Retry the approval after connection
-        if (writeContract) {
-          writeContract({
-            abi: ERC20_ABI,
-            address: usdcAddress as `0x${string}`,
-            functionName: 'approve',
-            args: [spenderAddress as `0x${string}`, approveAmount]
-          });
-        }
-      } catch (error) {
-        console.error('[Profile] Connection failed:', error);
-        setApproveError('Failed to connect wallet. Please try again.');
-      }
-    } else if (writeContract) {
+    try {
+      console.log('[Profile] 🎯 Calling ERC20 approve with:', {
+        contract: usdcAddress,
+        spender: spenderAddress,
+        amount: approveAmount.toString()
+      });
+
       writeContract({
         abi: ERC20_ABI,
         address: usdcAddress as `0x${string}`,
         functionName: 'approve',
         args: [spenderAddress as `0x${string}`, approveAmount]
       });
-    } else {
-      setApproveError('Wallet not ready. Please refresh and try again.');
+    } catch (error) {
+      console.error('[Profile] ERC20 approve failed:', error);
+      setApproveError('Failed to approve spending. Please try again.');
     }
   };
 
