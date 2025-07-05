@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import ChapterReader from '@/components/chapter-reader';
 import { DollarSign, BookOpen, ArrowLeft, Star, Library, Eye, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/providers/UserProvider';
+import { useNovel, useChapters } from '@/hooks/useNovels';
 
 interface Novel {
   id: string;
@@ -44,13 +45,26 @@ interface Novel {
   coin: string;
 }
 
+// Utility function for number formatting
+const formatNumber = (num: number | string): string => {
+  const numValue = typeof num === 'string' ? parseInt(num.replace(/[^0-9]/g, '')) : num;
+  if (numValue > 1000000) {
+    return (numValue / 1000000).toFixed(1) + 'M';
+  } else if (numValue > 1000) {
+    return (numValue / 1000).toFixed(1) + 'K';
+  }
+  return numValue.toLocaleString();
+};
+
 export default function NovelPage() {
   const params = useParams();
   const router = useRouter();
-  const [novel, setNovel] = useState<Novel | null>(null);
-  const [chapters, setChapters] = useState<any[]>([]);
-  const [chaptersLoading, setChaptersLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const novelId = params.id as string;
+
+  // Use SWR hooks for data fetching
+  const { novel, isLoading, error, mutate: mutateNovel } = useNovel(novelId);
+  const { chapters, isLoading: chaptersLoading, mutate: mutateChapters } = useChapters(novelId);
+
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isReading, setIsReading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -69,40 +83,28 @@ export default function NovelPage() {
   const randomReviews = useMemo(() => Math.floor(Math.random() * 991) + 10, []);
   const stableRating = useMemo(() => (4.0 + Math.random() * 1.0).toFixed(1), []);
 
-  useEffect(() => {
-    const fetchNovel = async () => {
-      try {
-        const response = await fetch(`/api/novels/${params.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setNovel(data);
-        }
-      } catch (error) {
-        console.error('Error fetching novel:', error);
-      } finally {
-        setIsLoading(false);
-      }
+  // Memoized formatted numbers
+  const formattedStats = useMemo(() => {
+    if (!novel) return { chapters: '0', views: '0', bookmarks: '0', reviews: '0' };
+
+    const chaptersNum = Number(novel.totalChapters);
+    const chaptersCount =
+      !isNaN(chaptersNum) && chaptersNum > 0
+        ? chaptersNum
+        : Array.isArray(chapters)
+        ? chapters.length
+        : 0;
+
+    return {
+      chapters: formatNumber(chaptersCount),
+      views: formatNumber(novel.views || '0'),
+      bookmarks: formatNumber(novel.bookmarks || '0'),
+      reviews: formatNumber(randomReviews)
     };
-    if (params.id) {
-      fetchNovel();
-    }
-  }, [params.id]);
+  }, [novel, chapters.length, randomReviews]);
 
-  useEffect(() => {
-    if (showSummary && summaryRef.current) {
-      setSummaryHeight(summaryRef.current.scrollHeight);
-    } else {
-      setSummaryHeight(undefined);
-    }
-  }, [showSummary, novel?.summary]);
-
-  useEffect(() => {
-    if (user && user.bookmarks && Array.isArray(user.bookmarks) && novel) {
-      setIsBookmarked(user.bookmarks.includes(novel.id));
-    }
-  }, [user, novel && novel.id]);
-
-  const handleBookmark = async () => {
+  // Memoized event handlers
+  const handleBookmark = useCallback(async () => {
     if (!user || !user.id || !novel) return alert('You must be logged in to bookmark novels.');
     setBookmarking(true);
     try {
@@ -117,71 +119,68 @@ export default function NovelPage() {
       }
       const updatedUser = await res.json();
       setIsBookmarked(true);
-      // Optionally update user context here if needed
     } catch (err: any) {
       alert(err.message || 'Failed to bookmark');
     } finally {
       setBookmarking(false);
     }
-  };
+  }, [user, novel]);
 
-  const handleReadNow = async () => {
-    setChaptersLoading(true);
-    try {
-      if (!novel) return;
-      const chaptersRes = await fetch(`/api/chapters?novelId=${novel.id}`);
-      if (chaptersRes.ok) {
-        const chaptersData = await chaptersRes.json();
-        setChapters(chaptersData);
-        setIsReading(true);
-      } else {
-        setChapters([]);
-      }
-    } catch (error) {
-      setChapters([]);
-      console.error('Error fetching chapters:', error);
-    } finally {
-      setChaptersLoading(false);
-    }
-  };
+  const handleReadNow = useCallback(() => {
+    if (!novel) return;
+    // Chapters are already loaded via SWR
+    setIsReading(true);
+  }, [novel]);
 
-  const handleChapterTipped = (chapterId: string, newTipCount: number) => {
-    // Update the chapters state with new tip count
-    setChapters((prevChapters) =>
-      prevChapters.map((chapter) =>
-        chapter.id === chapterId ? { ...chapter, tipCount: newTipCount } : chapter
-      )
-    );
-  };
+  const handleChapterTipped = useCallback(
+    (chapterId: string, newTipCount: number) => {
+      // Update chapters data and revalidate
+      mutateChapters((currentChapters: any[]) => {
+        if (!currentChapters) return currentChapters;
+        return currentChapters.map((chapter: any) =>
+          chapter.id === chapterId ? { ...chapter, tipCount: newTipCount } : chapter
+        );
+      }, false);
+    },
+    [mutateChapters]
+  );
 
-  // Fetch chapters if not loaded when expanding the list
-  const handleShowChapters = async () => {
-    if (!showChaptersList && chapters.length === 0 && novel) {
-      setChaptersLoading(true);
-      try {
-        const chaptersRes = await fetch(`/api/chapters?novelId=${novel.id}`);
-        if (chaptersRes.ok) {
-          const chaptersData = await chaptersRes.json();
-          setChapters(chaptersData);
-        } else {
-          setChapters([]);
-        }
-      } catch (error) {
-        setChapters([]);
-        console.error('Error fetching chapters:', error);
-      } finally {
-        setChaptersLoading(false);
-      }
-    }
+  const handleShowChapters = useCallback(() => {
     setShowChaptersList((prev) => !prev);
-  };
+  }, []);
+
+  const toggleSummary = useCallback(() => {
+    setShowSummary((prev) => !prev);
+  }, []);
+
+  const handleBackToNovel = useCallback(() => {
+    setIsReading(false);
+  }, []);
+
+  const handleChaptersNavigation = useCallback(() => {
+    router.push(`/novels/${params.id}/chapters`);
+  }, [router, params.id]);
+
+  useEffect(() => {
+    if (showSummary && summaryRef.current) {
+      setSummaryHeight(summaryRef.current.scrollHeight);
+    } else {
+      setSummaryHeight(undefined);
+    }
+  }, [showSummary, novel?.summary]);
+
+  useEffect(() => {
+    if (user && user.bookmarks && Array.isArray(user.bookmarks) && novel) {
+      setIsBookmarked(user.bookmarks.includes(novel.id));
+    }
+  }, [user, novel?.id]);
 
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-md">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-700/50 rounded mb-4 w-1/3"></div>
-          <div className="aspect-[3/4] bg-gray-700/50 rounded-lg mb-6 w-full mx-auto"></div>
+          <div className="aspect-[4/3] bg-gray-700/50 rounded-lg mb-6 w-full mx-auto"></div>
           <div className="space-y-4">
             <div className="h-6 bg-gray-700/50 rounded"></div>
             <div className="h-4 bg-gray-700/50 rounded w-2/3 mx-auto"></div>
@@ -192,10 +191,13 @@ export default function NovelPage() {
     );
   }
 
-  if (!novel) {
+  if (error || !novel) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-white">Novel not found</h1>
+        <h1 className="text-2xl font-bold mb-4 text-white">
+          {error ? 'Error loading novel' : 'Novel not found'}
+        </h1>
+        {error && <p className="text-red-400 mb-4">{error.message}</p>}
         <Link href="/">
           <Button className="bg-purple-600 hover:bg-purple-700 transition-colors">
             Back to Home
@@ -210,7 +212,7 @@ export default function NovelPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button
-            onClick={() => setIsReading(false)}
+            onClick={handleBackToNovel}
             className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-105"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
@@ -245,6 +247,10 @@ export default function NovelPage() {
             alt={novel.title}
             fill
             className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
           />
 
           {/* Bottom overlay with enhanced gradient - seamless blend */}
@@ -306,75 +312,28 @@ export default function NovelPage() {
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-purple-400" />
-                <span className="text-base font-medium text-white">
-                  {(() => {
-                    const chaptersNum = Number(novel.totalChapters);
-                    if (!isNaN(chaptersNum) && chaptersNum > 0) {
-                      return chaptersNum > 1000
-                        ? (chaptersNum / 1000).toFixed(1) + 'K'
-                        : chaptersNum.toLocaleString();
-                    }
-                    const chaptersCount = Array.isArray(chapters) ? chapters.length : 0;
-                    if (chaptersCount > 0) {
-                      return chaptersCount > 1000
-                        ? (chaptersCount / 1000).toFixed(1) + 'K'
-                        : chaptersCount.toLocaleString();
-                    }
-                    return '0';
-                  })()}
-                </span>
+                <span className="text-base font-medium text-white">{formattedStats.chapters}</span>
               </div>
               <span className="text-xs text-gray-400">Chapters</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5 text-blue-400" />
-                <span className="text-base font-medium text-white">
-                  {(() => {
-                    const views = novel.views || '0';
-                    const viewsNum = parseInt(views.replace(/[^0-9]/g, ''));
-                    if (viewsNum > 1000000) {
-                      return (viewsNum / 1000000).toFixed(1) + 'M';
-                    } else if (viewsNum > 1000) {
-                      return (viewsNum / 1000).toFixed(1) + 'K';
-                    }
-                    return viewsNum.toLocaleString();
-                  })()}
-                </span>
+                <span className="text-base font-medium text-white">{formattedStats.views}</span>
               </div>
               <span className="text-xs text-gray-400">Views</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <Library className="h-5 w-5 text-green-400" />
-                <span className="text-base font-medium text-white">
-                  {(() => {
-                    const bookmarks = novel.bookmarks || '0';
-                    const bookmarksNum = parseInt(bookmarks.replace(/[^0-9]/g, ''));
-                    if (bookmarksNum > 1000000) {
-                      return (bookmarksNum / 1000000).toFixed(1) + 'M';
-                    } else if (bookmarksNum > 1000) {
-                      return (bookmarksNum / 1000).toFixed(1) + 'K';
-                    }
-                    return bookmarksNum.toLocaleString();
-                  })()}
-                </span>
+                <span className="text-base font-medium text-white">{formattedStats.bookmarks}</span>
               </div>
               <span className="text-xs text-gray-400">Library</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-orange-400" />
-                <span className="text-base font-medium text-white">
-                  {(() => {
-                    if (randomReviews > 1000000) {
-                      return (randomReviews / 1000000).toFixed(1) + 'M';
-                    } else if (randomReviews > 1000) {
-                      return (randomReviews / 1000).toFixed(1) + 'K';
-                    }
-                    return randomReviews.toLocaleString();
-                  })()}
-                </span>
+                <span className="text-base font-medium text-white">{formattedStats.reviews}</span>
               </div>
               <span className="text-xs text-gray-400">Reviews</span>
             </div>
@@ -387,7 +346,7 @@ export default function NovelPage() {
             <h3 className="text-white font-semibold text-lg">Synopsis</h3>
             <Button
               className="bg-transparent text-gray-400 hover:text-white hover:bg-white/10 p-2 transition-all duration-200"
-              onClick={() => setShowSummary((prev) => !prev)}
+              onClick={toggleSummary}
             >
               {showSummary ? 'LESS ↑' : 'MORE →'}
             </Button>
@@ -429,7 +388,7 @@ export default function NovelPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {novel.supporters.map((supporter, index) => (
+                {novel.supporters.map((supporter: any, index: number) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer"
@@ -485,7 +444,7 @@ export default function NovelPage() {
               {/* Chapters Button */}
               <Button
                 className="flex items-center justify-center gap-2 text-gray-400 hover:text-white hover:bg-white/20 bg-white/10 border-white/20 py-4 transition-all duration-200 hover:scale-105 shadow-lg"
-                onClick={() => router.push(`/novels/${params.id}/chapters`)}
+                onClick={handleChaptersNavigation}
               >
                 <BookOpen className="h-5 w-5" />
                 <span className="text-sm font-medium">Chapters</span>
