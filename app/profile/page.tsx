@@ -499,11 +499,36 @@ export default function ProfilePage() {
     console.log('[Profile] 🎯 handleFarcasterApproval called - This should be ERC20 approve');
     console.log('[Profile] 🎯 User type check:', { isFarcasterUser, profileFid: profile?.fid });
 
-    if (!account?.address) {
-      console.log('[Profile] No account address in Farcaster context');
+    // Debug wallet address availability
+    console.log('[Profile] 🔍 Wallet address debug:', {
+      accountAddress: account?.address,
+      profileWalletAddress: profile?.walletAddress,
+      accountConnected: account?.isConnected,
+      contextAvailable: !!context
+    });
+
+    // Try to get wallet address from multiple sources
+    let walletAddress = account?.address || profile?.walletAddress;
+
+    // If no wallet address found, try to get from Farcaster context
+    if (!walletAddress && context) {
+      const contextUser = (context as any).user;
+      const contextClient = (context as any).client;
+      walletAddress = contextUser?.walletAddress || contextClient?.walletAddress;
+      console.log('[Profile] 🔍 Trying to get wallet from Farcaster context:', {
+        contextUser: contextUser,
+        contextClient: contextClient,
+        foundWalletAddress: walletAddress
+      });
+    }
+
+    if (!walletAddress) {
+      console.log('[Profile] ❌ No wallet address found from any source');
       setApproveError('Wallet not connected. Please connect your wallet in Farcaster first.');
       return;
     }
+
+    console.log('[Profile] ✅ Using wallet address:', walletAddress);
 
     if (!writeContract) {
       console.log('[Profile] writeContract not available');
@@ -515,7 +540,8 @@ export default function ProfilePage() {
       console.log('[Profile] 🎯 Calling ERC20 approve with:', {
         contract: usdcAddress,
         spender: spenderAddress,
-        amount: approveAmount.toString()
+        amount: approveAmount.toString(),
+        walletAddress: walletAddress
       });
 
       writeContract({
