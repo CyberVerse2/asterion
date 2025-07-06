@@ -48,15 +48,13 @@ export default function NovelCard({ novel }: NovelCardProps) {
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
-            // Count completed chapters (95% or more read)
-            let completedChapters = 0;
+            // Find the highest chapter number that has been read
+            let highestChapterRead = 0;
 
             data.forEach((progress: any) => {
-              if (progress.currentLine && progress.totalLines) {
-                const completionPercentage = progress.currentLine / progress.totalLines;
-                if (completionPercentage >= 0.95) {
-                  completedChapters++;
-                }
+              const chapterNumber = progress.chapterNumber || 0;
+              if (chapterNumber > highestChapterRead) {
+                highestChapterRead = chapterNumber;
               }
             });
 
@@ -64,7 +62,7 @@ export default function NovelCard({ novel }: NovelCardProps) {
             const totalChapters = Number(novel.totalChapters) || novel.chapters?.length || 0;
 
             if (totalChapters > 0) {
-              setReadingProgress(Math.round((completedChapters / totalChapters) * 100));
+              setReadingProgress(Math.round((highestChapterRead / totalChapters) * 100));
             } else {
               setReadingProgress(null);
             }
@@ -109,15 +107,6 @@ export default function NovelCard({ novel }: NovelCardProps) {
               </Badge>
             </div>
 
-            {/* Reading Progress Badge - Show if user has progress */}
-            {readingProgress !== null && (
-              <div className="absolute top-12 right-2 z-10">
-                <Badge className="bg-purple-600/90 backdrop-blur-sm text-white border-0 text-xs">
-                  {readingProgress}% Read
-                </Badge>
-              </div>
-            )}
-
             {/* Genre tags */}
             {novel.genres && novel.genres.length > 0 && (
               <div className="absolute top-12 left-2 z-10 flex flex-wrap gap-1">
@@ -160,31 +149,6 @@ export default function NovelCard({ novel }: NovelCardProps) {
               <p className="text-sm text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-200 transition-colors duration-300">
                 {novel.summary}
               </p>
-
-              {/* Reading Progress Bar - Show if user has progress */}
-              {readingProgress !== null && (
-                <div className="mb-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-gray-300">Progress</span>
-                    <span className="text-xs font-medium text-purple-400">
-                      {(() => {
-                        const totalChapters =
-                          Number(novel.totalChapters) || novel.chapters?.length || 0;
-                        const completedChapters = Math.round(
-                          (readingProgress / 100) * totalChapters
-                        );
-                        return `${completedChapters} / ${totalChapters} chapters`;
-                      })()}
-                    </span>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-1">
-                    <div
-                      className="bg-purple-400 h-1 rounded-full transition-all duration-300"
-                      style={{ width: `${readingProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
 
               {/* Stats with better spacing */}
               <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
