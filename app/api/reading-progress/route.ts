@@ -15,44 +15,29 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    let filter: any = { userId };
+    let filter: any = { userId: userId };
 
     if (chapterId) {
       // Get progress for a specific chapter
       filter.chapterId = chapterId;
     } else if (novelId) {
-      // Get progress for all chapters in a novel
-      // First, get all chapter IDs for this novel
-      console.log('[ReadingProgress API] Fetching chapters for novelId:', novelId);
+
 
       // Debug: Let's see what collections exist
       const collections = await prisma.$runCommandRaw({
         listCollections: 1
       });
-      console.log(
-        '[ReadingProgress API] Available collections:',
-        JSON.stringify(collections, null, 2)
-      );
 
       // Debug: Let's see what chapters exist and their novelId format
       const allChapters = await prisma.$runCommandRaw({
         find: 'chapter',
         limit: 5
       });
-      console.log(
-        '[ReadingProgress API] Sample chapters:',
-        (allChapters as any).cursor?.firstBatch
-      );
-
       // Try alternative collection names
       const chaptersAlt = await prisma.$runCommandRaw({
         find: 'chapters',
         limit: 5
       });
-      console.log(
-        '[ReadingProgress API] Sample chapters (alt collection):',
-        (chaptersAlt as any).cursor?.firstBatch
-      );
 
       const chapters = await prisma.$runCommandRaw({
         find: 'chapters',
@@ -60,18 +45,17 @@ export async function GET(request: Request) {
         projection: { _id: 1, novel: 1 }
       });
 
-      const chapterIds = (chapters as any).cursor?.firstBatch?.map((ch: any) => ch._id) || [];
+      const chapterIds =
+        (chapters as any).cursor?.firstBatch?.map((ch: any) => ch._id.$oid || ch._id) || [];
 
-      console.log('[ReadingProgress API] Found chapter IDs:', chapterIds);
+
 
       if (chapterIds.length === 0) {
-        console.log('[ReadingProgress API] No chapters found for novelId:', novelId);
         return NextResponse.json([]);
       }
 
       // Then get reading progress for those chapter IDs
       filter.chapterId = { $in: chapterIds };
-      console.log('[ReadingProgress API] Final filter for reading progress:', filter);
     }
 
     // Use raw MongoDB collection for now to bypass Prisma client issue
@@ -81,7 +65,26 @@ export async function GET(request: Request) {
       sort: { lastReadAt: -1 }
     });
 
-    console.log('[ReadingProgress API] GET result:', readingProgress);
+    // Debug: Let's also check if there's ANY reading progress data for this user
+    const allUserProgress = await prisma.$runCommandRaw({
+      find: 'reading_progress',
+      filter: { userId: userId },
+      limit: 5
+    });
+    console.log(
+      '[ReadingProgress API] All progress for user:',
+      (allUserProgress as any).cursor?.firstBatch
+    );
+
+    // Debug: Let's check if there's ANY reading progress data at all
+    const allProgress = await prisma.$runCommandRaw({
+      find: 'reading_progress',
+      limit: 5
+    });
+    console.log(
+      '[ReadingProgress API] All progress in database:',
+      (allProgress as any).cursor?.firstBatch
+    );
 
     // Extract the documents from the cursor
     const documents = (readingProgress as any).cursor?.firstBatch || [];
@@ -148,8 +151,8 @@ export async function POST(request: Request) {
     // Use raw MongoDB upsert to bypass Prisma client issue
     const now = new Date();
     const progressData = {
-      userId,
-      chapterId,
+      userId: userId,
+      chapterId: chapterId,
       currentLine: currentLine || 0,
       totalLines: totalLines || 0,
       progressPercentage: calculatedProgressPercentage,
@@ -158,11 +161,13 @@ export async function POST(request: Request) {
       updatedAt: now
     };
 
+    console.log('[ReadingProgress API] Saving progress data:', progressData);
+
     const result = await prisma.$runCommandRaw({
       update: 'reading_progress',
       updates: [
         {
-          q: { userId, chapterId },
+          q: { userId: userId, chapterId: chapterId },
           u: { $set: progressData },
           upsert: true
         }
@@ -170,6 +175,17 @@ export async function POST(request: Request) {
     });
 
     console.log('[ReadingProgress API] Successfully saved progress:', result);
+
+    // Debug: Let's verify what was actually saved
+    const savedProgress = await prisma.$runCommandRaw({
+      find: 'reading_progress',
+      filter: { userId: userId, chapterId: chapterId },
+      limit: 1
+    });
+    console.log(
+      '[ReadingProgress API] Verified saved progress:',
+      (savedProgress as any).cursor?.firstBatch
+    );
 
     return NextResponse.json({
       status: 'success',
