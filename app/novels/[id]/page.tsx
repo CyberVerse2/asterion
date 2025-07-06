@@ -193,6 +193,18 @@ export default function NovelPage() {
     }
   }, [user?.id, novelId]);
 
+  // Revalidate reading progress when the page becomes visible (e.g., after returning from a chapter)
+  useEffect(() => {
+    if (!mutateReadingProgress) return;
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        mutateReadingProgress();
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [mutateReadingProgress]);
+
   // Memoized event handlers
   const handleBookmark = useCallback(async () => {
     if (!user || !user.id || !novel) return alert('You must be logged in to bookmark novels.');

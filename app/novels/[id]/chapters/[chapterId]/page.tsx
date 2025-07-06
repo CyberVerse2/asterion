@@ -115,21 +115,9 @@ export default function IndividualChapterPage() {
   );
   const { saveProgress } = useSaveReadingProgress();
 
-  // Debug reading progress hook
-  useEffect(() => {
-    console.log('[ReadingProgress] Hook state:', {
-      userId: (user as any)?.id,
-      chapterId,
-      readingProgress,
-      hasUser: !!user,
-      hasUserId: !!(user as any)?.id
-    });
-  }, [(user as any)?.id, chapterId, readingProgress]);
-
   // Force revalidation when user becomes available
   useEffect(() => {
     if ((user as any)?.id && chapterId && mutateProgress) {
-      console.log('[ReadingProgress] User available, forcing revalidation');
       mutateProgress();
     }
   }, [(user as any)?.id, chapterId, mutateProgress]);
@@ -169,25 +157,8 @@ export default function IndividualChapterPage() {
           setTipCount(chapterData.tipCount || 0);
         }
 
-        // Check if user has already tipped this chapter
-        // But don't override hasLoved if we recently completed a successful tip
-        const currentUser = userRef.current; // Use ref instead of dependency
-        if ((currentUser as any)?.tips && timeSinceLastTip > 5000) {
-          const hasAlreadyTipped = (currentUser as any).tips.some(
-            (tip: any) => tip.chapterId === chapterId
-          );
-          setHasLoved(hasAlreadyTipped);
-        } else if ((currentUser as any)?.tips && timeSinceLastTip <= 5000) {
-          // If we recently tipped, only update hasLoved if the user actually has a tip
-          // This ensures the visual state matches the database state
-          const hasAlreadyTipped = (currentUser as any).tips.some(
-            (tip: any) => tip.chapterId === chapterId
-          );
-          // Only update if the database confirms the tip exists
-          if (hasAlreadyTipped && !hasLoved) {
-            setHasLoved(true);
-          }
-        }
+        // Note: Love button state is now handled by a dedicated effect
+        // to ensure proper synchronization with user's tips
       } catch (err) {
         console.error('Error fetching chapter:', err);
         if (retryCount < 2 && err instanceof Error && !err.message.includes('not found')) {
@@ -201,7 +172,7 @@ export default function IndividualChapterPage() {
         setLoading(false);
       }
     },
-    [chapterId, hasLoved] // Removed mutateProgress dependency
+    [chapterId]
   );
 
   // Fetch navigation data
@@ -229,126 +200,137 @@ export default function IndividualChapterPage() {
   // Initialize scroll-based reading progress tracking
   useEffect(() => {
     if (!contentRef.current || !user || !(user as any)?.id || !chapter) {
-      console.log('⏸️ Skipping scroll tracking init:', {
-        hasContent: !!contentRef.current,
-        hasUser: !!user,
-        hasUserId: !!(user as any)?.id,
-        hasChapter: !!chapter,
-        debugInfo: 'Missing required data for tracking initialization'
-      });
       return;
     }
 
-    console.log('🔍 Initializing scroll-based reading progress for user:', (user as any)?.id);
-
-    // 1) Collect line elements and their offsets
-    const lineEls = Array.from(
-      contentRef.current.querySelectorAll<HTMLElement>('p, div, h1, h2, h3, h4, h5, h6')
-    );
-    const offsets = lineEls.map((el) => el.offsetTop);
-    lineOffsetsRef.current = offsets;
-    setTotalLines(offsets.length);
-
-    console.log('📏 Collected', offsets.length, 'line offsets');
-
-    // 2) Scroll handler - find the line at the middle of viewport
-    const onScroll = throttle(() => {
-      const mid = window.scrollY + window.innerHeight / 2;
-
-      // Find the last offset ≤ mid
-      let idx = offsets.findIndex((top, i) =>
-        i === offsets.length - 1 ? top <= mid : top <= mid && offsets[i + 1] > mid
+    // Add a small delay to ensure content is fully rendered
+    const initTracking = () => {
+      // 1) Collect line elements and their offsets
+      const lineEls = Array.from(
+        contentRef.current!.querySelectorAll<HTMLElement>('p, div, h1, h2, h3, h4, h5, h6')
       );
 
-      if (idx === -1) idx = 0;
+      const offsets = lineEls.map((el) => el.offsetTop);
+      lineOffsetsRef.current = offsets;
+      setTotalLines(offsets.length);
 
-      setCurrentLine(idx);
+      // 2) Scroll handler - find the line at the middle of viewport
+      const onScroll = throttle(() => {
+        const mid = window.scrollY + window.innerHeight / 2;
 
-      // Auto-save if moved far enough
-      const delta = Math.abs(idx - lastSavedLineRef.current);
-      const threshold = Math.max(2, Math.min(10, Math.floor(offsets.length / 20)));
+        // Find the last offset ≤ mid
+        let idx = offsets.findIndex((top, i) =>
+          i === offsets.length - 1 ? top <= mid : top <= mid && offsets[i + 1] > mid
+        );
 
-      console.log('[SaveProgress] Check:', {
-        idx,
-        lastSaved: lastSavedLineRef.current,
-        delta,
-        threshold,
-        willSave: delta >= threshold,
-        totalLines: offsets.length
-      });
+        if (idx === -1) idx = 0;
 
-      if (delta >= threshold) {
-        console.log('💾 Auto-saving progress:', idx, 'of', offsets.length);
-        lastSavedLineRef.current = idx;
+        setCurrentLine(idx);
 
-        // Clear existing timeout
+        // Auto-save if moved far enough
+        const delta = Math.abs(idx - lastSavedLineRef.current);
+        const threshold = Math.max(2, Math.min(10, Math.floor(offsets.length / 20)));
+
+        if (delta >= threshold) {
+          lastSavedLineRef.current = idx;
+
+          // Clear existing timeout
+          if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+          }
+
+          // Set new timeout
+          saveTimeoutRef.current = setTimeout(() => {
+            if (!(user as any)?.id) {
+              console.error('[SaveProgress] No user ID available for saving');
+              return;
+            }
+
+            saveProgress({
+              userId: (user as any)?.id,
+              chapterId,
+              currentLine: idx,
+              totalLines: offsets.length,
+              scrollPosition: idx
+            })
+              .then((result) => {
+                console.log('[SaveProgress] Successfully saved progress:', result);
+              })
+              .catch((error) => {
+                console.error('[SaveProgress] Failed to save progress:', error);
+              });
+          }, 100); // Reduced from 500ms to 100ms
+        }
+      }, 200);
+
+      // 3) Hook up scroll listener
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      // Fire once to set initial position
+      onScroll();
+
+      // Return cleanup function
+      return () => {
+        window.removeEventListener('scroll', onScroll);
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current);
         }
+      };
+    };
 
-        // Set new timeout
-        saveTimeoutRef.current = setTimeout(() => {
-          console.log('[SaveProgress] Timeout callback executed!');
-          console.log('[SaveProgress] Attempting to save:', {
-            userId: (user as any)?.id,
-            chapterId,
-            currentLine: idx,
-            totalLines: offsets.length,
-            scrollPosition: idx
-          });
+    // Use requestAnimationFrame to ensure DOM is ready
+    let scrollCleanup: (() => void) | null = null;
+    const cleanup = requestAnimationFrame(() => {
+      setTimeout(() => {
+        scrollCleanup = initTracking();
+      }, 100); // Small delay to ensure content is rendered
+    });
 
-          if (!(user as any)?.id) {
-            console.error('[SaveProgress] No user ID available for saving');
-            return;
-          }
-
-          console.log('[SaveProgress] About to call saveProgress function');
-
-          saveProgress({
-            userId: (user as any)?.id,
-            chapterId,
-            currentLine: idx,
-            totalLines: offsets.length,
-            scrollPosition: idx
-          })
-            .then((result) => {
-              console.log('[SaveProgress] Successfully saved progress:', result);
-            })
-            .catch((error) => {
-              console.error('[SaveProgress] Failed to save progress:', error);
-            });
-        }, 100); // Reduced from 500ms to 100ms
-      }
-    }, 200);
-
-    // 3) Hook up scroll listener
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    // Fire once to set initial position
-    onScroll();
-
-    // Cleanup
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+      if (cleanup) {
+        cancelAnimationFrame(cleanup);
+      }
+      if (scrollCleanup) {
+        scrollCleanup();
       }
     };
-  }, [chapter?.id, (user as any)?.id, chapterId]); // Removed saveProgress dependency
+  }, [chapter?.id, (user as any)?.id, chapterId]);
 
   // Reset tracking state when chapter or user changes
   useEffect(() => {
-    setCurrentLine(0);
-    setTotalLines(0);
-    lastSavedLineRef.current = 0;
-    lineOffsetsRef.current = [];
-    hasRestoredRef.current = false;
+    if (chapter?.id && (user as any)?.id) {
+      setCurrentLine(0);
+      // Don't reset totalLines here - let the scroll tracking set it
+      lastSavedLineRef.current = 0;
+      lineOffsetsRef.current = [];
+      hasRestoredRef.current = false;
 
-    console.log('🔄 Reset tracking state for new chapter/user');
+      // Reset love button state when chapter changes
+      setHasLoved(false);
+      setTradePending(false);
+      setTradeError(null);
+      setTradeSuccess(false);
+    }
   }, [chapter?.id, (user as any)?.id]);
 
   // Calculate progress percentage
   const progressPercentage = totalLines > 0 ? Math.round((currentLine / totalLines) * 100) : 0;
+
+  // Fallback: Set totalLines if it's still 0 after content is loaded
+  useEffect(() => {
+    if (totalLines === 0 && contentRef.current && chapter) {
+      const timer = setTimeout(() => {
+        const lineEls = Array.from(
+          contentRef.current!.querySelectorAll<HTMLElement>('p, div, h1, h2, h3, h4, h5, h6')
+        );
+        if (lineEls.length > 0) {
+          setTotalLines(lineEls.length);
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [totalLines, chapter]);
 
   // Keep refs up to date
   useEffect(() => {
@@ -361,15 +343,32 @@ export default function IndividualChapterPage() {
     novelIdRef.current = novelId;
   }, [novelId]);
 
+  // Sync love button state with user's tips
+  useEffect(() => {
+    if (!user || !chapterId) {
+      setHasLoved(false);
+      return;
+    }
+
+    const timeSinceLastTip = Date.now() - recentTipTimestampRef.current;
+
+    // Don't override hasLoved if we recently completed a successful tip (within last 5 seconds)
+    if (timeSinceLastTip <= 5000) {
+      return;
+    }
+
+    // Check if user has already tipped this chapter
+    const hasAlreadyTipped = (user as any)?.tips?.some((tip: any) => tip.chapterId === chapterId);
+
+    setHasLoved(!!hasAlreadyTipped);
+  }, [user, chapterId, hasLoved]);
+
   // Simplified scroll restore effect
   useEffect(() => {
     const pos = readingProgress?.currentLine;
-    console.log('[ScrollRestore] readingProgress:', readingProgress);
-    console.log('[ScrollRestore] pos:', pos);
 
     // If we have no reading progress, start from the top
     if (!readingProgress) {
-      console.log('[ScrollRestore] No saved progress, starting from top');
       hasRestoredRef.current = true;
       setCurrentLine(0);
       lastSavedLineRef.current = 0;
@@ -378,7 +377,6 @@ export default function IndividualChapterPage() {
 
     // only proceed once we have a numeric line index
     if (typeof pos !== 'number' || hasRestoredRef.current) {
-      console.log('[ScrollRestore] skipping – no valid position or already done');
       return;
     }
 
@@ -390,24 +388,20 @@ export default function IndividualChapterPage() {
       const container = contentRef.current;
       if (!container) {
         if (attempts < maxAttempts) return requestAnimationFrame(tryRestore);
-        console.warn('[ScrollRestore] giving up – no contentRef');
         return;
       }
 
       const lines = container.querySelectorAll<HTMLElement>('p, div, h1, h2, h3, h4, h5, h6');
       if (lines.length === 0) {
         if (attempts < maxAttempts) {
-          console.log(`[ScrollRestore] attempt ${attempts}: no lines yet, retrying…`);
           return requestAnimationFrame(tryRestore);
         }
-        console.warn('[ScrollRestore] giving up – no lines found');
         return;
       }
 
       // clamp pos into bounds
       const idx = Math.min(Math.max(0, pos as number), lines.length - 1);
       lines[idx].scrollIntoView({ block: 'center', behavior: 'auto' });
-      console.log('[ScrollRestore] scrolled to line', idx);
 
       hasRestoredRef.current = true;
       setCurrentLine(idx);
@@ -586,6 +580,7 @@ export default function IndividualChapterPage() {
           <div
             className="h-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-300 ease-out"
             style={{ width: `${progressPercentage}%` }}
+            title={`${progressPercentage}% complete`}
           />
         </div>
       </div>

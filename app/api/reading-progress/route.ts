@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     const chapterId = searchParams.get('chapterId');
     const novelId = searchParams.get('novelId');
 
+    console.log('[ReadingProgress API] GET request params:', { userId, chapterId, novelId });
+
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
@@ -20,9 +22,56 @@ export async function GET(request: Request) {
       filter.chapterId = chapterId;
     } else if (novelId) {
       // Get progress for all chapters in a novel
-      filter.chapter = {
-        novel: novelId
-      };
+      // First, get all chapter IDs for this novel
+      console.log('[ReadingProgress API] Fetching chapters for novelId:', novelId);
+
+      // Debug: Let's see what collections exist
+      const collections = await prisma.$runCommandRaw({
+        listCollections: 1
+      });
+      console.log(
+        '[ReadingProgress API] Available collections:',
+        JSON.stringify(collections, null, 2)
+      );
+
+      // Debug: Let's see what chapters exist and their novelId format
+      const allChapters = await prisma.$runCommandRaw({
+        find: 'chapter',
+        limit: 5
+      });
+      console.log(
+        '[ReadingProgress API] Sample chapters:',
+        (allChapters as any).cursor?.firstBatch
+      );
+
+      // Try alternative collection names
+      const chaptersAlt = await prisma.$runCommandRaw({
+        find: 'chapters',
+        limit: 5
+      });
+      console.log(
+        '[ReadingProgress API] Sample chapters (alt collection):',
+        (chaptersAlt as any).cursor?.firstBatch
+      );
+
+      const chapters = await prisma.$runCommandRaw({
+        find: 'chapters',
+        filter: { novel: { $oid: novelId } },
+        projection: { _id: 1, novel: 1 }
+      });
+
+      const chapterIds = (chapters as any).cursor?.firstBatch?.map((ch: any) => ch._id) || [];
+
+      console.log('[ReadingProgress API] Found chapter IDs:', chapterIds);
+
+      if (chapterIds.length === 0) {
+        console.log('[ReadingProgress API] No chapters found for novelId:', novelId);
+        return NextResponse.json([]);
+      }
+
+      // Then get reading progress for those chapter IDs
+      filter.chapterId = { $in: chapterIds };
+      console.log('[ReadingProgress API] Final filter for reading progress:', filter);
     }
 
     // Use raw MongoDB collection for now to bypass Prisma client issue
