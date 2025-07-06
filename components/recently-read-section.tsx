@@ -22,6 +22,7 @@ interface NovelWithProgress {
   chaptersRead: number;
   totalChapters: number;
   lastReadAt: string;
+  lastReadChapterId: string;
 }
 
 export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps) {
@@ -53,7 +54,12 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
         // Group progress by novel and get the highest chapter number read
         const novelProgressMap = new Map<
           string,
-          { lastReadChapter: number; lastReadAt: string; progressEntries: any[] }
+          {
+            lastReadChapter: number;
+            lastReadAt: string;
+            lastReadChapterId: string;
+            progressEntries: any[];
+          }
         >();
 
         progressData.forEach((progress: any) => {
@@ -68,15 +74,21 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
           if (existing) {
             if (chapterNumber > existing.lastReadChapter) {
               existing.lastReadChapter = chapterNumber;
+              existing.lastReadChapterId = progress.chapterId;
             }
             if (new Date(progress.lastReadAt) > new Date(existing.lastReadAt)) {
               existing.lastReadAt = progress.lastReadAt;
+              // Update chapter ID if this is the most recent read
+              if (chapterNumber >= existing.lastReadChapter) {
+                existing.lastReadChapterId = progress.chapterId;
+              }
             }
             existing.progressEntries.push(progress);
           } else {
             novelProgressMap.set(novelId, {
               lastReadChapter: chapterNumber,
               lastReadAt: progress.lastReadAt,
+              lastReadChapterId: progress.chapterId,
               progressEntries: [progress]
             });
           }
@@ -100,7 +112,8 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
               status: novel.status,
               chaptersRead: progressInfo.lastReadChapter,
               totalChapters: totalChapters,
-              lastReadAt: progressInfo.lastReadAt
+              lastReadAt: progressInfo.lastReadAt,
+              lastReadChapterId: progressInfo.lastReadChapterId
             });
           }
         }
@@ -159,7 +172,10 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
 
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {recentlyRead.map((novel) => (
-          <Link key={novel.id} href={`/novels/${novel.id}`}>
+          <Link
+            key={novel.id}
+            href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
+          >
             <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
               <CardContent className="p-0">
                 <div className="relative aspect-[3/4] w-full overflow-hidden">
