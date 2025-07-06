@@ -57,6 +57,16 @@ export const useChapters = (novelId: string | null) => {
     }
   );
 
+  console.log('📖 useChapters Debug:', {
+    novelId,
+    data,
+    error,
+    isLoading,
+    hasData: !!data,
+    chapters: data?.chapters,
+    chaptersLength: data?.chapters?.length || 0
+  });
+
   return {
     chapters: data?.chapters || [],
     pagination: data?.pagination || null,
@@ -87,4 +97,3 @@ export const useBookmark = (userId: string | null, novelId: string | null) => {
 
   return { bookmark };
 };
- 
