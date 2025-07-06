@@ -98,13 +98,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       href="https://dexscreener.com/base/0xCc309867cEa3c1cF7C7829838f72FF70d17cEb07"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-b border-purple-500/30 hover:from-purple-600/30 hover:to-blue-600/30 transition-all duration-200 cursor-pointer"
+                      className="block bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-b border-purple-500/30 hover:from-purple-600/30 hover:to-blue-600/30 transition-all duration-200 cursor-pointer overflow-hidden"
                     >
                       <div className="container mx-auto px-4 py-2">
-                        <div className="flex items-center justify-center gap-2 text-sm">
-                          <span className="text-purple-300 font-medium">🚀</span>
-                          <span className="text-white font-medium">$ASTERION Token Launched!</span>
-                          <span className="text-purple-300 font-medium">🚀</span>
+                        <div className="flex items-center justify-center">
+                          <div className="flex items-center gap-2 text-sm animate-marquee whitespace-nowrap">
+                            <span className="text-purple-300 font-medium animate-spin">🚀</span>
+                            <span className="text-white font-medium">
+                              We just launched $ASTERION token.
+                            </span>
+                            <span className="text-purple-300 font-medium animate-spin">🚀</span>
+                            <span className="text-purple-300 font-medium animate-spin">🚀</span>
+                            <span className="text-white font-medium">
+                              We just launched $ASTERION token.
+                            </span>
+                            <span className="text-purple-300 font-medium animate-spin">🚀</span>
+                          </div>
                         </div>
                       </div>
                     </a>
