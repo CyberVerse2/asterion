@@ -115,6 +115,25 @@ export default function IndividualChapterPage() {
   );
   const { saveProgress } = useSaveReadingProgress();
 
+  // Debug reading progress hook
+  useEffect(() => {
+    console.log('[ReadingProgress] Hook state:', {
+      userId: (user as any)?.id,
+      chapterId,
+      readingProgress,
+      hasUser: !!user,
+      hasUserId: !!(user as any)?.id
+    });
+  }, [(user as any)?.id, chapterId, readingProgress]);
+
+  // Force revalidation when user becomes available
+  useEffect(() => {
+    if ((user as any)?.id && chapterId && mutateProgress) {
+      console.log('[ReadingProgress] User available, forcing revalidation');
+      mutateProgress();
+    }
+  }, [(user as any)?.id, chapterId, mutateProgress]);
+
   // Get user's chapter tip amount with fallback
   const chapterTipAmount = (user as any)?.chapterTipAmount || 0.01;
   const tipAmountDisplay = chapterTipAmount.toFixed(2);
@@ -182,7 +201,7 @@ export default function IndividualChapterPage() {
         setLoading(false);
       }
     },
-    [chapterId, hasLoved] // Removed user dependency, added hasLoved since it's used in the logic
+    [chapterId, hasLoved] // Removed mutateProgress dependency
   );
 
   // Fetch navigation data
@@ -261,13 +280,27 @@ export default function IndividualChapterPage() {
         }
 
         saveTimeoutRef.current = setTimeout(() => {
-          saveProgress({
+          console.log('[SaveProgress] Attempting to save:', {
             userId: (user as any)?.id,
             chapterId,
             currentLine: idx,
             totalLines: offsets.length,
             scrollPosition: idx
           });
+
+          saveProgress({
+            userId: (user as any)?.id,
+            chapterId,
+            currentLine: idx,
+            totalLines: offsets.length,
+            scrollPosition: idx
+          })
+            .then(() => {
+              console.log('[SaveProgress] Successfully saved progress');
+            })
+            .catch((error) => {
+              console.error('[SaveProgress] Failed to save progress:', error);
+            });
         }, 500);
       }
     }, 200);
@@ -314,8 +347,22 @@ export default function IndividualChapterPage() {
 
   // Simplified scroll restore effect
   useEffect(() => {
-    if (!chapter || !readingProgress || hasRestoredRef.current) {
-      console.log('[ScrollRestore] skipping – no chapter or no progress or already done');
+    const pos = readingProgress?.currentLine;
+    console.log('[ScrollRestore] readingProgress:', readingProgress);
+    console.log('[ScrollRestore] pos:', pos);
+
+    // If we have no reading progress, start from the top
+    if (!readingProgress) {
+      console.log('[ScrollRestore] No saved progress, starting from top');
+      hasRestoredRef.current = true;
+      setCurrentLine(0);
+      lastSavedLineRef.current = 0;
+      return;
+    }
+
+    // only proceed once we have a numeric line index
+    if (typeof pos !== 'number' || hasRestoredRef.current) {
+      console.log('[ScrollRestore] skipping – no valid position or already done');
       return;
     }
 
@@ -341,13 +388,8 @@ export default function IndividualChapterPage() {
         return;
       }
 
-      const idx = readingProgress?.currentLine ?? 0;
-      if (idx < 0 || idx >= lines.length) {
-        console.warn('[ScrollRestore] saved index out of range', idx, 'of', lines.length);
-        return;
-      }
-
-      // Jump exactly to that element, centered
+      // clamp pos into bounds
+      const idx = Math.min(Math.max(0, pos as number), lines.length - 1);
       lines[idx].scrollIntoView({ block: 'center', behavior: 'auto' });
       console.log('[ScrollRestore] scrolled to line', idx);
 

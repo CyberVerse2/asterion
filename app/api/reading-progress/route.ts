@@ -13,36 +13,30 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    let whereClause: any = { userId };
+    let filter: any = { userId };
 
     if (chapterId) {
       // Get progress for a specific chapter
-      whereClause.chapterId = chapterId;
+      filter.chapterId = chapterId;
     } else if (novelId) {
       // Get progress for all chapters in a novel
-      whereClause.chapter = {
+      filter.chapter = {
         novel: novelId
       };
     }
 
-    const readingProgress = await prisma.readingProgress.findMany({
-      where: whereClause,
-      include: {
-        chapter: {
-          select: {
-            id: true,
-            title: true,
-            chapterNumber: true,
-            novel: true
-          }
-        }
-      },
-      orderBy: {
-        lastReadAt: 'desc'
-      }
+    // Use raw MongoDB collection for now to bypass Prisma client issue
+    const readingProgress = await prisma.$runCommandRaw({
+      find: 'reading_progress',
+      filter: filter,
+      sort: { lastReadAt: -1 }
     });
 
-    return NextResponse.json(readingProgress);
+    console.log('[ReadingProgress API] GET result:', readingProgress);
+
+    // Extract the documents from the cursor
+    const documents = (readingProgress as any).cursor?.firstBatch || [];
+    return NextResponse.json(documents);
   } catch (error) {
     console.error('Error fetching reading progress:', error);
     return NextResponse.json({ error: 'Failed to fetch reading progress' }, { status: 500 });
@@ -55,8 +49,18 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { userId, chapterId, currentLine, totalLines, progressPercentage, scrollPosition } = body;
 
+    console.log('[ReadingProgress API] POST request received:', {
+      userId,
+      chapterId,
+      currentLine,
+      totalLines,
+      progressPercentage,
+      scrollPosition
+    });
+
     // Validate required fields
     if (!userId || !chapterId) {
+      console.log('[ReadingProgress API] Validation failed: missing userId or chapterId');
       return NextResponse.json({ error: 'userId and chapterId are required' }, { status: 400 });
     }
 
@@ -66,6 +70,7 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
+      console.log('[ReadingProgress API] User not found:', userId);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -74,6 +79,7 @@ export async function POST(request: Request) {
     });
 
     if (!chapter) {
+      console.log('[ReadingProgress API] Chapter not found:', chapterId);
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
     }
 
@@ -85,45 +91,40 @@ export async function POST(request: Request) {
         ? Math.round((currentLine / totalLines) * 100)
         : 0;
 
-    // Upsert reading progress (create or update)
-    const readingProgress = await prisma.readingProgress.upsert({
-      where: {
-        user_chapter_progress: {
-          userId,
-          chapterId
+    console.log(
+      '[ReadingProgress API] Upserting progress with calculated percentage:',
+      calculatedProgressPercentage
+    );
+
+    // Use raw MongoDB upsert to bypass Prisma client issue
+    const now = new Date();
+    const progressData = {
+      userId,
+      chapterId,
+      currentLine: currentLine || 0,
+      totalLines: totalLines || 0,
+      progressPercentage: calculatedProgressPercentage,
+      scrollPosition: scrollPosition || 0,
+      lastReadAt: now,
+      updatedAt: now
+    };
+
+    const result = await prisma.$runCommandRaw({
+      update: 'reading_progress',
+      updates: [
+        {
+          q: { userId, chapterId },
+          u: { $set: progressData },
+          upsert: true
         }
-      },
-      update: {
-        currentLine: currentLine || 0,
-        totalLines: totalLines || 0,
-        progressPercentage: calculatedProgressPercentage,
-        scrollPosition: scrollPosition || 0,
-        lastReadAt: new Date()
-      },
-      create: {
-        userId,
-        chapterId,
-        currentLine: currentLine || 0,
-        totalLines: totalLines || 0,
-        progressPercentage: calculatedProgressPercentage,
-        scrollPosition: scrollPosition || 0,
-        lastReadAt: new Date()
-      },
-      include: {
-        chapter: {
-          select: {
-            id: true,
-            title: true,
-            chapterNumber: true,
-            novel: true
-          }
-        }
-      }
+      ]
     });
+
+    console.log('[ReadingProgress API] Successfully saved progress:', result);
 
     return NextResponse.json({
       status: 'success',
-      readingProgress
+      readingProgress: progressData
     });
   } catch (error) {
     console.error('Error saving reading progress:', error);
@@ -142,16 +143,18 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'userId and chapterId are required' }, { status: 400 });
     }
 
-    await prisma.readingProgress.delete({
-      where: {
-        user_chapter_progress: {
-          userId,
-          chapterId
+    // Use raw MongoDB delete to bypass Prisma client issue
+    const result = await prisma.$runCommandRaw({
+      delete: 'reading_progress',
+      deletes: [
+        {
+          q: { userId, chapterId },
+          limit: 1
         }
-      }
+      ]
     });
 
-    return NextResponse.json({ status: 'success' });
+    return NextResponse.json({ status: 'success', result });
   } catch (error) {
     console.error('Error deleting reading progress:', error);
     return NextResponse.json({ error: 'Failed to delete reading progress' }, { status: 500 });
