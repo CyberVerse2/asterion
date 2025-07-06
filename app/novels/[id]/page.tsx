@@ -433,70 +433,72 @@ export default function NovelPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-md">
-      <div className="space-y-4">
-        {/* Novel Cover with Overlay Content - Full screen on mobile */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden group sm:mx-4 sm:mt-4 sm:rounded-lg">
-          {/* Back Button Overlay */}
-          <Link
-            href="/"
-            className="absolute top-4 left-4 z-10 group/back inline-flex items-center justify-center w-8 h-8 bg-black/50 backdrop-blur-sm rounded-full text-gray-300 hover:text-white hover:bg-black/70 transition-all duration-300 hover:scale-105"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover/back:-translate-x-0.5" />
-          </Link>
+    <div className="container mx-auto max-w-4xl px-4 lg:pt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        {/* Left Column - Cover Image and Stats */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Cover Image - Full Height */}
+          <div className="relative w-full overflow-hidden group rounded-lg">
+            {/* Back Button Overlay */}
+            <Link
+              href="/"
+              className="absolute top-4 left-4 z-10 group/back inline-flex items-center justify-center w-8 h-8 bg-black/50 backdrop-blur-sm rounded-full text-gray-300 hover:text-white hover:bg-black/70 transition-all duration-300 hover:scale-105"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover/back:-translate-x-0.5" />
+            </Link>
 
-          <Image
-            src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
-            alt={novel.title}
-            fill
-            className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
-            priority
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-          />
+            <Image
+              src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
+              alt={novel.title}
+              width={600}
+              height={900}
+              className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+            />
 
-          {/* Bottom overlay with enhanced gradient - seamless blend */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent px-4 py-1 transition-all duration-300 group-hover:from-black group-hover:via-black/80">
-            {/* Status and Rank badges */}
-            <div className="flex items-center gap-2 mb-3">
-              <Badge className="bg-red-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
-                RANK {novel.rank}
-              </Badge>
-              <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
-                {novel.status?.toUpperCase()}
-              </Badge>
-            </div>
-
-            {/* Title and Author */}
-            <div className="mb-3">
-              <h1 className="font-bold text-2xl mb-1 text-white group-hover:text-purple-200 transition-colors duration-300">
-                {novel.title}
-              </h1>
-              <p className="text-sm text-gray-400 mb-2">by {novel.author}</p>
-            </div>
-
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center">
-                {[...Array(4)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-4 w-4 fill-yellow-400 text-yellow-400 transition-all duration-300 group-hover:fill-yellow-300 group-hover:text-yellow-300"
-                  />
-                ))}
-                <Star className="h-4 w-4 fill-yellow-400/50 text-yellow-400 transition-all duration-300 group-hover:fill-yellow-300/50 group-hover:text-yellow-300" />
+            {/* Bottom overlay with enhanced gradient - seamless blend */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent px-4 py-1 transition-all duration-300 group-hover:from-black group-hover:via-black/80">
+              {/* Status and Rank badges */}
+              <div className="flex items-center gap-2 mb-3">
+                <Badge className="bg-red-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
+                  RANK {novel.rank}
+                </Badge>
+                <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
+                  {novel.status?.toUpperCase()}
+                </Badge>
               </div>
-              <span className="text-sm text-gray-300">({stableRating})</span>
+
+              {/* Title and Author */}
+              <div className="mb-3">
+                <h1 className="font-bold text-2xl mb-1 text-white group-hover:text-purple-200 transition-colors duration-300">
+                  {novel.title}
+                </h1>
+                <p className="text-sm text-gray-400 mb-2">by {novel.author}</p>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center">
+                  {[...Array(4)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="h-4 w-4 fill-yellow-400 text-yellow-400 transition-all duration-300 group-hover:fill-yellow-300 group-hover:text-yellow-300"
+                    />
+                  ))}
+                  <Star className="h-4 w-4 fill-yellow-400/50 text-yellow-400 transition-all duration-300 group-hover:fill-yellow-300/50 group-hover:text-yellow-300" />
+                </div>
+                <span className="text-sm text-gray-300">({stableRating})</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="px-4 space-y-3">
-          {/* Stats Section - Outside the image */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
-            <div className="grid grid-cols-4 gap-4">
-              <div className="flex flex-col items-center gap-1">
+          {/* Stats Section - Under the image */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10">
+            <div className="grid grid-cols-4 gap-8">
+              <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-5 w-5 text-purple-400" />
                   <span className="text-base font-medium text-white">
@@ -505,14 +507,14 @@ export default function NovelPage() {
                 </div>
                 <span className="text-xs text-gray-400">Chapters</span>
               </div>
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-blue-400" />
                   <span className="text-base font-medium text-white">{formattedStats.views}</span>
                 </div>
                 <span className="text-xs text-gray-400">Views</span>
               </div>
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
                   <Library className="h-5 w-5 text-green-400" />
                   <span className="text-base font-medium text-white">
@@ -521,7 +523,7 @@ export default function NovelPage() {
                 </div>
                 <span className="text-xs text-gray-400">Library</span>
               </div>
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5 text-orange-400" />
                   <span className="text-base font-medium text-white">{formattedStats.reviews}</span>
@@ -530,9 +532,12 @@ export default function NovelPage() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Enhanced Synopsis with Glass Morphism */}
-          <div>
+        {/* Right Column - Content */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Synopsis */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-white font-semibold text-lg">Synopsis</h3>
               <Button
@@ -542,19 +547,17 @@ export default function NovelPage() {
                 {showSummary ? 'LESS ↑' : 'MORE →'}
               </Button>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
-              <div
-                className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                  showSummary ? 'max-h-[500px]' : 'max-h-[4.5rem]'
-                }`}
-              >
-                <p className="text-gray-300 text-sm leading-relaxed">{novel.summary}</p>
-              </div>
+            <div
+              className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                showSummary ? 'max-h-[500px]' : 'max-h-[4.5rem]'
+              }`}
+            >
+              <p className="text-gray-300 text-sm leading-relaxed">{novel.summary}</p>
             </div>
           </div>
 
-          {/* Enhanced Categories with Glass Morphism */}
-          <div>
+          {/* Categories */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
             <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {(novel.genres || []).map((category: string) => (
@@ -568,7 +571,7 @@ export default function NovelPage() {
             </div>
           </div>
 
-          {/* Enhanced Top Supporters with Glass Morphism */}
+          {/* Top Supporters */}
           {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
             <Card className="novel-card-dark border-purple-400/30 backdrop-blur-sm">
               <CardHeader>
@@ -597,82 +600,46 @@ export default function NovelPage() {
             </Card>
           )}
         </div>
+      </div>
 
-        {/* Spacer for sticky bar */}
-        <div className="pb-24"></div>
+      {/* Spacer for sticky bar */}
+      <div className="pb-24"></div>
 
-        {/* Enhanced Sticky Action Bar with Glass Morphism */}
-        <div className="fixed bottom-0 left-0 w-full z-20 bg-black/95 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-3 sm:py-4">
-          <div className="max-w-md mx-auto">
-            {/* Single Row Layout */}
-            <div className="grid grid-cols-5 gap-3">
-              {/* READ NOW Button - Takes 2 columns */}
-              <Button
-                className="col-span-2 relative overflow-hidden bg-purple-600 hover:bg-purple-700 text-white border-0 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-purple-500/25 group touch-manipulation"
-                onClick={handleReadNow}
-                disabled={chaptersLoading || progressLoading}
-              >
-                <div className="relative flex flex-col items-center justify-center gap-1">
-                  <span className="text-xs sm:text-sm font-bold text-center">{readButtonText}</span>
-                </div>
-              </Button>
+      {/* Enhanced Sticky Action Bar with Glass Morphism */}
+      <div className="fixed bottom-0 left-0 w-full z-20 bg-black/95 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Single Row Layout */}
+          <div className="grid grid-cols-5 gap-3">
+            {/* READ NOW Button - Takes 2 columns */}
+            <Button
+              className="col-span-2 relative overflow-hidden bg-purple-600 hover:bg-purple-700 text-white border-0 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-purple-500/25 group touch-manipulation"
+              onClick={handleReadNow}
+              disabled={chaptersLoading || progressLoading}
+            >
+              <div className="relative flex flex-col items-center justify-center gap-1">
+                <span className="text-xs sm:text-sm font-bold text-center">{readButtonText}</span>
+              </div>
+            </Button>
 
-              {/* Library Button */}
-              <Button
-                className={`relative overflow-hidden py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation ${
-                  isBookmarked
-                    ? 'bg-green-600/20 border-green-400/50 text-green-400 hover:bg-green-600/30'
-                    : 'bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30'
-                }`}
-                onClick={handleBookmark}
-                disabled={isBookmarked || bookmarking}
-              >
-                <div className="flex flex-col items-center justify-center gap-1">
-                  {isBookmarked ? (
-                    <svg
-                      className="h-10 w-10 sm:h-14 sm:w-14 transition-all duration-300 text-green-400 fill-current"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
-                      />
-                    </svg>
-                  )}
-                  <span className="text-xs sm:text-sm font-medium">
-                    {/* {isBookmarked ? 'In Library' : bookmarking ? 'Saving...' : 'Library'} */}
-                  </span>
-                </div>
-              </Button>
-
-              {/* Chapters Button */}
-              <Button
-                className="relative overflow-hidden bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation"
-                onClick={handleChaptersNavigation}
-              >
-                <div className="flex flex-col items-center justify-center gap-1">
-                  <BookOpen className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110" />
-                  {/* <span className="text-xs sm:text-sm font-medium">Chapters</span> */}
-                </div>
-              </Button>
-
-              {/* Share Button */}
-              <Button
-                className="relative overflow-hidden bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation"
-                onClick={handleShare}
-              >
-                <div className="flex flex-col items-center justify-center gap-1">
+            {/* Library Button */}
+            <Button
+              className={`relative overflow-hidden py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation ${
+                isBookmarked
+                  ? 'bg-green-600/20 border-green-400/50 text-green-400 hover:bg-green-600/30'
+                  : 'bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30'
+              }`}
+              onClick={handleBookmark}
+              disabled={isBookmarked || bookmarking}
+            >
+              <div className="flex flex-col items-center justify-center gap-1">
+                {isBookmarked ? (
+                  <svg
+                    className="h-10 w-10 sm:h-14 sm:w-14 transition-all duration-300 text-green-400 fill-current"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                  </svg>
+                ) : (
                   <svg
                     className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110"
                     fill="none"
@@ -683,35 +650,71 @@ export default function NovelPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                      d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
                     />
                   </svg>
-                  {/* <span className="text-xs sm:text-sm font-medium">Share</span> */}
-                </div>
-              </Button>
-            </div>
-          </div>
-        </div>
+                )}
+                <span className="text-xs sm:text-sm font-medium">
+                  {/* {isBookmarked ? 'In Library' : bookmarking ? 'Saving...' : 'Library'} */}
+                </span>
+              </div>
+            </Button>
 
-        {/* Toast Notification */}
-        {showToast && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
-            <div className="bg-green-600/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg border border-green-500/20">
-              <div className="flex items-center gap-2">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Chapters Button */}
+            <Button
+              className="relative overflow-hidden bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation"
+              onClick={handleChaptersNavigation}
+            >
+              <div className="flex flex-col items-center justify-center gap-1">
+                <BookOpen className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110" />
+                {/* <span className="text-xs sm:text-sm font-medium">Chapters</span> */}
+              </div>
+            </Button>
+
+            {/* Share Button */}
+            <Button
+              className="relative overflow-hidden bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30 py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation"
+              onClick={handleShare}
+            >
+              <div className="flex flex-col items-center justify-center gap-1">
+                <svg
+                  className="h-10 w-10 sm:h-14 sm:w-14 transition-transform duration-300 group-hover:scale-110"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M5 13l4 4L19 7"
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
                   />
                 </svg>
-                <span className="text-sm font-medium">{toastMessage}</span>
+                {/* <span className="text-xs sm:text-sm font-medium">Share</span> */}
               </div>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
+          <div className="bg-green-600/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg border border-green-500/20">
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span className="text-sm font-medium">{toastMessage}</span>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Spend Permission Modal */}
       <SpendPermissionRequired
