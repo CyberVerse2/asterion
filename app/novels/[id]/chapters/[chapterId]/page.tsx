@@ -266,20 +266,29 @@ export default function IndividualChapterPage() {
 
       // Auto-save if moved far enough
       const delta = Math.abs(idx - lastSavedLineRef.current);
-      const threshold = Math.max(
-        2,
-        Math.floor(window.innerHeight / (lineEls[0]?.offsetHeight || 1) / 3)
-      );
+      const threshold = Math.max(2, Math.min(10, Math.floor(offsets.length / 20)));
+
+      console.log('[SaveProgress] Check:', {
+        idx,
+        lastSaved: lastSavedLineRef.current,
+        delta,
+        threshold,
+        willSave: delta >= threshold,
+        totalLines: offsets.length
+      });
 
       if (delta >= threshold) {
         console.log('💾 Auto-saving progress:', idx, 'of', offsets.length);
         lastSavedLineRef.current = idx;
 
+        // Clear existing timeout
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current);
         }
 
+        // Set new timeout
         saveTimeoutRef.current = setTimeout(() => {
+          console.log('[SaveProgress] Timeout callback executed!');
           console.log('[SaveProgress] Attempting to save:', {
             userId: (user as any)?.id,
             chapterId,
@@ -288,6 +297,13 @@ export default function IndividualChapterPage() {
             scrollPosition: idx
           });
 
+          if (!(user as any)?.id) {
+            console.error('[SaveProgress] No user ID available for saving');
+            return;
+          }
+
+          console.log('[SaveProgress] About to call saveProgress function');
+
           saveProgress({
             userId: (user as any)?.id,
             chapterId,
@@ -295,13 +311,13 @@ export default function IndividualChapterPage() {
             totalLines: offsets.length,
             scrollPosition: idx
           })
-            .then(() => {
-              console.log('[SaveProgress] Successfully saved progress');
+            .then((result) => {
+              console.log('[SaveProgress] Successfully saved progress:', result);
             })
             .catch((error) => {
               console.error('[SaveProgress] Failed to save progress:', error);
             });
-        }, 500);
+        }, 100); // Reduced from 500ms to 100ms
       }
     }, 200);
 
@@ -318,7 +334,7 @@ export default function IndividualChapterPage() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [chapter, user, chapterId, saveProgress, readingProgress]);
+  }, [chapter?.id, (user as any)?.id, chapterId]); // Removed saveProgress dependency
 
   // Reset tracking state when chapter or user changes
   useEffect(() => {
