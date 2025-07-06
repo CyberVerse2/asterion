@@ -975,7 +975,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="flex gap-1 flex-wrap">
-                  {[10, 25, 50, 100].map((amount) => (
+                  {[100, 200, 500, 1000, 10000].map((amount) => (
                     <Button
                       key={amount}
                       variant="outline"
@@ -1006,8 +1006,8 @@ export default function ProfilePage() {
                     <input
                       type="number"
                       inputMode="decimal"
-                      min={0.01}
-                      max={10}
+                      min={0.1}
+                      max={100}
                       step={0.01}
                       value={chapterTipAmount}
                       onChange={(e) => setChapterTipAmount(Number(e.target.value))}
@@ -1017,7 +1017,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="flex gap-1 flex-wrap">
-                  {[0.01, 0.05, 0.1, 0.25].map((amount) => (
+                  {[0.1, 0.25, 0.5, 1, 10].map((amount) => (
                     <Button
                       key={amount}
                       variant="outline"
