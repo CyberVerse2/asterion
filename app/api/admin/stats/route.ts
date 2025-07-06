@@ -132,24 +132,48 @@ export async function GET(req: NextRequest) {
     });
 
     // Get top users by tips given
-    const topTippers = await prisma.user.findMany({
-      select: {
-        id: true,
-        username: true,
-        pfpUrl: true,
-        _count: {
-          select: {
-            tips: true
+    const topTippersResult = await prisma.$runCommandRaw({
+      aggregate: 'user',
+      cursor: {},
+      pipeline: [
+        {
+          $lookup: {
+            from: 'tip',
+            localField: '_id',
+            foreignField: 'userId',
+            as: 'tips'
+          }
+        },
+        {
+          $addFields: {
+            tipsCount: { $size: '$tips' }
+          }
+        },
+        {
+          $match: {
+            tipsCount: { $gt: 0 }
+          }
+        },
+        {
+          $sort: {
+            tipsCount: -1
+          }
+        },
+        {
+          $limit: 10
+        },
+        {
+          $project: {
+            _id: 1,
+            username: 1,
+            pfpUrl: 1,
+            tipsCount: 1
           }
         }
-      },
-      orderBy: {
-        tips: {
-          _count: 'desc'
-        }
-      },
-      take: 10
+      ]
     });
+
+    const topTippers = (topTippersResult as any).cursor?.firstBatch || [];
 
     // Get user engagement stats
     const totalReadingProgress = await prisma.$runCommandRaw({
@@ -184,10 +208,10 @@ export async function GET(req: NextRequest) {
         bookmarkRate: totalUsers > 0 ? (usersWithBookmarks / totalUsers) * 100 : 0
       },
       topTippers: topTippers.map((user) => ({
-        id: user.id,
+        id: user._id,
         username: user.username,
         pfpUrl: user.pfpUrl,
-        tipsCount: user._count.tips
+        tipsCount: user.tipsCount
       })),
       userGrowth: userGrowthData.map((day) => ({
         date: day.createdAt.toISOString().split('T')[0],
