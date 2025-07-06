@@ -21,24 +21,7 @@ export async function GET(request: Request) {
       // Get progress for a specific chapter
       filter.chapterId = chapterId;
     } else if (novelId) {
-
-
-      // Debug: Let's see what collections exist
-      const collections = await prisma.$runCommandRaw({
-        listCollections: 1
-      });
-
-      // Debug: Let's see what chapters exist and their novelId format
-      const allChapters = await prisma.$runCommandRaw({
-        find: 'chapter',
-        limit: 5
-      });
-      // Try alternative collection names
-      const chaptersAlt = await prisma.$runCommandRaw({
-        find: 'chapters',
-        limit: 5
-      });
-
+      // Get progress for all chapters in a specific novel
       const chapters = await prisma.$runCommandRaw({
         find: 'chapters',
         filter: { novel: { $oid: novelId } },
@@ -48,8 +31,6 @@ export async function GET(request: Request) {
       const chapterIds =
         (chapters as any).cursor?.firstBatch?.map((ch: any) => ch._id.$oid || ch._id) || [];
 
-
-
       if (chapterIds.length === 0) {
         return NextResponse.json([]);
       }
@@ -57,6 +38,7 @@ export async function GET(request: Request) {
       // Then get reading progress for those chapter IDs
       filter.chapterId = { $in: chapterIds };
     }
+    // If no novelId or chapterId, get all progress for the user (for recently read section)
 
     // Use raw MongoDB collection for now to bypass Prisma client issue
     const readingProgress = await prisma.$runCommandRaw({
@@ -65,29 +47,44 @@ export async function GET(request: Request) {
       sort: { lastReadAt: -1 }
     });
 
-    // Debug: Let's also check if there's ANY reading progress data for this user
-    const allUserProgress = await prisma.$runCommandRaw({
-      find: 'reading_progress',
-      filter: { userId: userId },
-      limit: 5
-    });
-    console.log(
-      '[ReadingProgress API] All progress for user:',
-      (allUserProgress as any).cursor?.firstBatch
-    );
-
-    // Debug: Let's check if there's ANY reading progress data at all
-    const allProgress = await prisma.$runCommandRaw({
-      find: 'reading_progress',
-      limit: 5
-    });
-    console.log(
-      '[ReadingProgress API] All progress in database:',
-      (allProgress as any).cursor?.firstBatch
-    );
-
     // Extract the documents from the cursor
     const documents = (readingProgress as any).cursor?.firstBatch || [];
+
+    // If we're fetching all user progress (for recently read), we need to add novelId
+    if (!novelId && !chapterId) {
+      console.log('[ReadingProgress API] Fetching all user progress, adding novelId field');
+
+      // For each progress entry, we need to get the novelId from the chapter
+      const progressWithNovelIds = await Promise.all(
+        documents.map(async (progress: any) => {
+          try {
+            const chapter = await prisma.$runCommandRaw({
+              find: 'chapters',
+              filter: { _id: { $oid: progress.chapterId } },
+              projection: { novel: 1, chapterNumber: 1, order: 1 }
+            });
+
+            const chapterData = (chapter as any).cursor?.firstBatch?.[0];
+            if (chapterData) {
+              return {
+                ...progress,
+                novelId: chapterData.novel?.$oid || chapterData.novel,
+                chapterNumber: chapterData.chapterNumber || chapterData.order || 0
+              };
+            }
+            return progress;
+          } catch (error) {
+            console.error('Error fetching chapter for progress:', error);
+            return progress;
+          }
+        })
+      );
+
+      console.log('[ReadingProgress API] Progress with novelIds:', progressWithNovelIds);
+      return NextResponse.json(progressWithNovelIds);
+    }
+
+    console.log('[ReadingProgress API] Returning documents:', documents);
     return NextResponse.json(documents);
   } catch (error) {
     console.error('Error fetching reading progress:', error);

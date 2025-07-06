@@ -1,9 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 // @ts-ignore
 import { Heart, Users, Star, BookOpen, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useUser } from '@/providers/UserProvider';
 
 interface NovelCardProps {
   novel: {
@@ -27,7 +29,61 @@ interface NovelCardProps {
 }
 
 export default function NovelCard({ novel }: NovelCardProps) {
+  const { user } = useUser();
+  const [readingProgress, setReadingProgress] = useState<number | null>(null);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
   const rating = (4.0 + Math.random() * 1.0).toFixed(1);
+
+  // Fetch reading progress for this novel
+  useEffect(() => {
+    const fetchReadingProgress = async () => {
+      if (!user?.id) {
+        setReadingProgress(null);
+        return;
+      }
+
+      setIsLoadingProgress(true);
+      try {
+        const response = await fetch(`/api/reading-progress?userId=${user.id}&novelId=${novel.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Count completed chapters (95% or more read)
+            let completedChapters = 0;
+
+            data.forEach((progress: any) => {
+              if (progress.currentLine && progress.totalLines) {
+                const completionPercentage = progress.currentLine / progress.totalLines;
+                if (completionPercentage >= 0.95) {
+                  completedChapters++;
+                }
+              }
+            });
+
+            // Calculate total chapters for this novel
+            const totalChapters = Number(novel.totalChapters) || novel.chapters?.length || 0;
+
+            if (totalChapters > 0) {
+              setReadingProgress(Math.round((completedChapters / totalChapters) * 100));
+            } else {
+              setReadingProgress(null);
+            }
+          } else {
+            setReadingProgress(null);
+          }
+        } else {
+          setReadingProgress(null);
+        }
+      } catch (error) {
+        console.error('Error fetching reading progress:', error);
+        setReadingProgress(null);
+      } finally {
+        setIsLoadingProgress(false);
+      }
+    };
+
+    fetchReadingProgress();
+  }, [user?.id, novel.id, novel.totalChapters, novel.chapters?.length]);
 
   return (
     <Link href={`/novels/${novel.id}`}>
@@ -52,6 +108,15 @@ export default function NovelCard({ novel }: NovelCardProps) {
                 RANK {novel.rank}
               </Badge>
             </div>
+
+            {/* Reading Progress Badge - Show if user has progress */}
+            {readingProgress !== null && (
+              <div className="absolute top-12 right-2 z-10">
+                <Badge className="bg-purple-600/90 backdrop-blur-sm text-white border-0 text-xs">
+                  {readingProgress}% Read
+                </Badge>
+              </div>
+            )}
 
             {/* Genre tags */}
             {novel.genres && novel.genres.length > 0 && (
@@ -96,6 +161,31 @@ export default function NovelCard({ novel }: NovelCardProps) {
                 {novel.summary}
               </p>
 
+              {/* Reading Progress Bar - Show if user has progress */}
+              {readingProgress !== null && (
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-300">Progress</span>
+                    <span className="text-xs font-medium text-purple-400">
+                      {(() => {
+                        const totalChapters =
+                          Number(novel.totalChapters) || novel.chapters?.length || 0;
+                        const completedChapters = Math.round(
+                          (readingProgress / 100) * totalChapters
+                        );
+                        return `${completedChapters} / ${totalChapters} chapters`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-1">
+                    <div
+                      className="bg-purple-400 h-1 rounded-full transition-all duration-300"
+                      style={{ width: `${readingProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
               {/* Stats with better spacing */}
               <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
                 <div className="flex items-center gap-1">
@@ -104,7 +194,9 @@ export default function NovelCard({ novel }: NovelCardProps) {
                     {(() => {
                       const chaptersNum = Number(novel.totalChapters);
                       if (!isNaN(chaptersNum) && chaptersNum > 0) {
-                        return (chaptersNum > 1000 ? (chaptersNum / 1000).toFixed(2) + 'K' : chaptersNum);
+                        return chaptersNum > 1000
+                          ? (chaptersNum / 1000).toFixed(2) + 'K'
+                          : chaptersNum;
                       }
                       return '0K';
                     })()}
