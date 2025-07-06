@@ -549,7 +549,7 @@ export default function NovelPage() {
             </div>
             <div
               className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                showSummary ? 'max-h-[500px]' : 'max-h-[4.5rem]'
+                showSummary ? 'max-h-[500px]' : 'max-h-[4.5rem] lg:max-h-none'
               }`}
             >
               <p className="text-gray-300 text-sm leading-relaxed">{novel.summary}</p>
@@ -573,31 +573,27 @@ export default function NovelPage() {
 
           {/* Top Supporters */}
           {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
-            <Card className="novel-card-dark border-purple-400/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-purple-400" />
-                  Top Supporters
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {novel.supporters.map((supporter: any, index: number) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer"
-                    >
-                      <span className="font-medium text-white">{supporter.username}</span>
-                      <div className="text-right">
-                        <div className="font-medium text-purple-400">
-                          ${supporter.totalTipped.toFixed(2)}
-                        </div>
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+              <h3 className="text-white font-semibold mb-4 text-lg flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-purple-400" />
+                Top Supporters
+              </h3>
+              <div className="space-y-3">
+                {novel.supporters.map((supporter: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer"
+                  >
+                    <span className="font-medium text-white text-sm">{supporter.username}</span>
+                    <div className="text-right">
+                      <div className="font-medium text-purple-400 text-sm">
+                        ${supporter.totalTipped.toFixed(2)}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>
