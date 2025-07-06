@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
-import { Suspense } from 'react';
 import LoadingSkeleton from '@/components/loading-skeleton';
-import NovelGrid from '@/components/novel-grid';
-import RecentlyReadSection from '@/components/recently-read-section';
 import { useUser } from '@/providers/UserProvider';
 import { useNovels } from '@/hooks/useNovels';
+
+// Lazy load components for better performance
+const NovelGrid = lazy(() => import('@/components/novel-grid'));
+const RecentlyReadSection = lazy(() => import('@/components/recently-read-section'));
 
 export default function HomePage() {
   const { setFrameReady, isFrameReady } = useMiniKit();
@@ -24,7 +25,11 @@ export default function HomePage() {
     <div className="min-h-screen">
       <section className="container mx-auto px-4 py-8">
         {/* Recently Read Section - Only show if user is logged in */}
-        {user && <RecentlyReadSection userId={user.id} />}
+        {user && (
+          <Suspense fallback={<div className="mb-8 h-32 bg-white/5 rounded-lg animate-pulse" />}>
+            <RecentlyReadSection userId={user.id} />
+          </Suspense>
+        )}
 
         {/* All Novels Section */}
         <div className="mt-8">

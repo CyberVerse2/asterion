@@ -1,11 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { memo } from 'react';
 // @ts-ignore
 import { Heart, Users, Star, BookOpen, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useUser } from '@/providers/UserProvider';
 
 interface NovelCardProps {
   novel: {
@@ -28,60 +27,8 @@ interface NovelCardProps {
   };
 }
 
-export default function NovelCard({ novel }: NovelCardProps) {
-  const { user } = useUser();
-  const [readingProgress, setReadingProgress] = useState<number | null>(null);
-  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+const NovelCard = memo(function NovelCard({ novel }: NovelCardProps) {
   const rating = (4.0 + Math.random() * 1.0).toFixed(1);
-
-  // Fetch reading progress for this novel
-  useEffect(() => {
-    const fetchReadingProgress = async () => {
-      if (!user?.id) {
-        setReadingProgress(null);
-        return;
-      }
-
-      setIsLoadingProgress(true);
-      try {
-        const response = await fetch(`/api/reading-progress?userId=${user.id}&novelId=${novel.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data) && data.length > 0) {
-            // Find the highest chapter number that has been read
-            let highestChapterRead = 0;
-
-            data.forEach((progress: any) => {
-              const chapterNumber = progress.chapterNumber || 0;
-              if (chapterNumber > highestChapterRead) {
-                highestChapterRead = chapterNumber;
-              }
-            });
-
-            // Calculate total chapters for this novel
-            const totalChapters = Number(novel.totalChapters) || novel.chapters?.length || 0;
-
-            if (totalChapters > 0) {
-              setReadingProgress(Math.round((highestChapterRead / totalChapters) * 100));
-            } else {
-              setReadingProgress(null);
-            }
-          } else {
-            setReadingProgress(null);
-          }
-        } else {
-          setReadingProgress(null);
-        }
-      } catch (error) {
-        console.error('Error fetching reading progress:', error);
-        setReadingProgress(null);
-      } finally {
-        setIsLoadingProgress(false);
-      }
-    };
-
-    fetchReadingProgress();
-  }, [user?.id, novel.id, novel.totalChapters, novel.chapters?.length]);
 
   return (
     <Link href={`/novels/${novel.id}`}>
@@ -92,7 +39,11 @@ export default function NovelCard({ novel }: NovelCardProps) {
               src={novel.imageUrl || '/placeholder.svg?height=400&width=300'}
               alt={novel.title}
               fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             />
 
             {/* Top badges */}
@@ -179,4 +130,6 @@ export default function NovelCard({ novel }: NovelCardProps) {
       </Card>
     </Link>
   );
-}
+});
+
+export default NovelCard;
