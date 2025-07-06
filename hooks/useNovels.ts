@@ -11,10 +11,12 @@ const fetcher = (url: string) =>
 export const useNovels = () => {
   const { data, error, isLoading, mutate } = useSWR('/api/novels', fetcher, {
     revalidateOnFocus: false,
-    revalidateOnReconnect: true,
-    dedupingInterval: 60000, // 1 minute
-    errorRetryCount: 3,
-    errorRetryInterval: 5000
+    revalidateOnReconnect: false, // Disable auto-revalidation on reconnect for mobile
+    dedupingInterval: 300000, // 5 minutes - longer cache for mobile
+    errorRetryCount: 2, // Reduce retry count for mobile
+    errorRetryInterval: 3000, // Shorter retry interval
+    keepPreviousData: true, // Keep previous data while loading new data
+    focusThrottleInterval: 5000 // Throttle focus events
   });
 
   return {
@@ -29,10 +31,11 @@ export const useNovels = () => {
 export const useNovel = (id: string | null) => {
   const { data, error, isLoading, mutate } = useSWR(id ? `/api/novels/${id}` : null, fetcher, {
     revalidateOnFocus: false,
-    revalidateOnReconnect: true,
-    dedupingInterval: 300000, // 5 minutes for individual novels
-    errorRetryCount: 3,
-    errorRetryInterval: 5000
+    revalidateOnReconnect: false,
+    dedupingInterval: 600000, // 10 minutes for individual novels
+    errorRetryCount: 2,
+    errorRetryInterval: 3000,
+    keepPreviousData: true
   });
 
   return {
@@ -50,10 +53,11 @@ export const useChapters = (novelId: string | null) => {
     fetcher,
     {
       revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 180000, // 3 minutes
-      errorRetryCount: 3,
-      errorRetryInterval: 5000
+      revalidateOnReconnect: false,
+      dedupingInterval: 300000, // 5 minutes
+      errorRetryCount: 2,
+      errorRetryInterval: 3000,
+      keepPreviousData: true
     }
   );
 

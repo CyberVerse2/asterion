@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
@@ -30,9 +30,15 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
   const [isLoading, setIsLoading] = useState(true);
   const { novels } = useNovels();
 
+  // Memoize the novels data to prevent unnecessary re-renders
+  const novelsMap = useMemo(() => {
+    if (!novels) return new Map();
+    return new Map(novels.map((novel: any) => [novel.id, novel]));
+  }, [novels]);
+
   useEffect(() => {
     const fetchRecentlyRead = async () => {
-      if (!userId || !novels) return;
+      if (!userId || !novelsMap.size) return;
 
       try {
         console.log('🔍 Fetching recently read for user:', userId);
@@ -100,7 +106,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
         const recentlyReadNovels: NovelWithProgress[] = [];
 
         for (const [novelId, progressInfo] of novelProgressMap) {
-          const novel = novels.find((n: any) => n.id === novelId);
+          const novel = novelsMap.get(novelId);
           if (novel) {
             const totalChapters = Number(novel.totalChapters) || novel.chapters?.length || 0;
             recentlyReadNovels.push({
@@ -136,7 +142,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
     };
 
     fetchRecentlyRead();
-  }, [userId, novels]);
+  }, [userId, novelsMap]);
 
   if (isLoading) {
     return (
@@ -183,7 +189,11 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                     src={novel.imageUrl || '/placeholder.svg?height=300&width=200'}
                     alt={novel.title}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
                     className="object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                   />
 
                   {/* Progress overlay */}
@@ -198,39 +208,37 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs text-gray-300">Progress</span>
                         <span className="text-xs font-medium text-purple-400">
-                          Ch.{novel.chaptersRead}/{novel.totalChapters}
+                          {novel.chaptersRead}/{novel.totalChapters}
                         </span>
                       </div>
-                      <div className="w-full bg-white/20 rounded-full h-1 sm:h-1.5">
+                      <div className="w-full bg-gray-700/50 rounded-full h-1.5">
                         <div
-                          className="bg-purple-400 h-1 sm:h-1.5 rounded-full transition-all duration-300"
+                          className="bg-gradient-to-r from-purple-500 to-purple-400 h-1.5 rounded-full transition-all duration-300"
                           style={{
                             width: `${
                               novel.totalChapters > 0
-                                ? Math.round((novel.chaptersRead / novel.totalChapters) * 100)
+                                ? (novel.chaptersRead / novel.totalChapters) * 100
                                 : 0
                             }%`
                           }}
-                        ></div>
+                        />
                       </div>
                     </div>
 
                     {/* Last Read Time */}
                     <div className="flex items-center gap-1 text-xs text-gray-400">
                       <Clock className="h-3 w-3" />
-                      <span className="truncate">
+                      <span>
                         {(() => {
-                          const now = new Date();
                           const lastRead = new Date(novel.lastReadAt);
-                          const diffMs = now.getTime() - lastRead.getTime();
-                          const diffMinutes = Math.floor(diffMs / (1000 * 60));
-                          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                          const now = new Date();
+                          const diffInHours = Math.floor(
+                            (now.getTime() - lastRead.getTime()) / (1000 * 60 * 60)
+                          );
 
-                          if (diffMinutes < 1) return 'Just now';
-                          if (diffMinutes < 60) return `${diffMinutes}m ago`;
-                          if (diffHours < 24) return `${diffHours}h ago`;
-                          if (diffDays < 7) return `${diffDays}d ago`;
+                          if (diffInHours < 1) return 'Just now';
+                          if (diffInHours < 24) return `${diffInHours}h ago`;
+                          if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
                           return lastRead.toLocaleDateString();
                         })()}
                       </span>
