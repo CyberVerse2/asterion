@@ -44,6 +44,7 @@ interface AdminStats {
     username: string;
     pfpUrl?: string;
     tipsCount: number;
+    totalTipped: number;
   }>;
   userGrowth: Array<{
     date: string;
@@ -324,6 +325,14 @@ export default function AdminDashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-green-400 font-medium">{user.tipsCount} tips</div>
+                    <div className="text-yellow-400 font-medium text-xs">
+                      $
+                      {user.totalTipped.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}{' '}
+                      tipped
+                    </div>
                   </div>
                 </div>
               ))}

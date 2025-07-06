@@ -131,49 +131,50 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // Get top users by tips given
-    const topTippersResult = await prisma.$runCommandRaw({
-      aggregate: 'user',
-      cursor: {},
-      pipeline: [
-        {
-          $lookup: {
-            from: 'tip',
-            localField: '_id',
-            foreignField: 'userId',
-            as: 'tips'
-          }
-        },
-        {
-          $addFields: {
-            tipsCount: { $size: '$tips' }
-          }
-        },
-        {
-          $match: {
-            tipsCount: { $gt: 0 }
-          }
-        },
-        {
-          $sort: {
-            tipsCount: -1
-          }
-        },
-        {
-          $limit: 10
-        },
-        {
-          $project: {
-            _id: 1,
-            username: 1,
-            pfpUrl: 1,
-            tipsCount: 1
-          }
+    // Get top users by tips given (count and total amount)
+    console.log('[DEBUG] Starting top tippers query...');
+
+    // Get users with their tip counts and total tipped amount using groupBy
+    const usersWithTipStats = await prisma.tip.groupBy({
+      by: ['userId'],
+      _count: {
+        userId: true
+      },
+      _sum: {
+        amount: true
+      },
+      orderBy: {
+        _sum: {
+          amount: 'desc'
         }
-      ]
+      },
+      take: 10
     });
 
-    const topTippers = (topTippersResult as any).cursor?.firstBatch || [];
+    console.log('[DEBUG] Users with tip stats:', usersWithTipStats);
+
+    // Get the actual user data for these users
+    const topTippers = await Promise.all(
+      usersWithTipStats.map(async (tipData) => {
+        const user = await prisma.user.findUnique({
+          where: { id: tipData.userId },
+          select: {
+            id: true,
+            username: true,
+            pfpUrl: true
+          }
+        });
+        return {
+          id: user?.id || tipData.userId,
+          username: user?.username || 'Unknown User',
+          pfpUrl: user?.pfpUrl || null,
+          tipsCount: tipData._count.userId,
+          totalTipped: tipData._sum.amount || 0
+        };
+      })
+    );
+
+    console.log('[DEBUG] Top tippers final result:', topTippers);
 
     // Get user engagement stats
     const totalReadingProgress = await prisma.$runCommandRaw({
@@ -207,12 +208,7 @@ export async function GET(req: NextRequest) {
         tippingRate: totalUsers > 0 ? (tippingUsersCount / totalUsers) * 100 : 0,
         bookmarkRate: totalUsers > 0 ? (usersWithBookmarks / totalUsers) * 100 : 0
       },
-      topTippers: topTippers.map((user) => ({
-        id: user._id,
-        username: user.username,
-        pfpUrl: user.pfpUrl,
-        tipsCount: user.tipsCount
-      })),
+      topTippers: topTippers,
       userGrowth: userGrowthData.map((day) => ({
         date: day.createdAt.toISOString().split('T')[0],
         newUsers: day._count.id
