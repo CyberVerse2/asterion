@@ -452,7 +452,7 @@ export default function NovelPage() {
               alt={novel.title}
               width={600}
               height={900}
-              className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105 lg:aspect-[3/4] aspect-[4/3]"
               priority
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
