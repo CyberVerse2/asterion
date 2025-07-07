@@ -139,30 +139,76 @@ export async function GET(req: NextRequest) {
     });
     console.log('[DEBUG] Users with createdAt >= lastMonth:', usersInLastMonthCount);
 
-    // Get user growth over time (last 30 days), grouped by day
-    const userGrowthRaw = await prisma.$runCommandRaw({
-      aggregate: 'User',
-      cursor: {},
-      pipeline: [
-        {
-          $match: {
-            createdAt: { $gte: lastMonth }
-          }
-        },
-        {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            newUsers: { $sum: 1 }
-          }
-        },
-        { $sort: { _id: 1 } }
-      ]
+    // Prisma-based user growth calculation (last 30 days)
+    const usersLastMonth = await prisma.user.findMany({
+      where: { createdAt: { gte: lastMonth } },
+      select: { createdAt: true }
     });
-    const userGrowth =
-      (userGrowthRaw as any).cursor?.firstBatch?.map((d: any) => ({
-        date: d._id,
-        newUsers: d.newUsers
-      })) || [];
+    // Group by day
+    const userGrowthMap: Record<string, number> = {};
+    usersLastMonth.forEach((u) => {
+      const date =
+        u.createdAt instanceof Date
+          ? u.createdAt.toISOString().slice(0, 10)
+          : new Date(u.createdAt).toISOString().slice(0, 10);
+      userGrowthMap[date] = (userGrowthMap[date] || 0) + 1;
+    });
+    const userGrowth = Object.entries(userGrowthMap)
+      .map(([date, newUsers]) => ({ date, newUsers }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Daily tips calculation (last 30 days)
+    const tipsLastMonth = await prisma.tip.findMany({
+      where: { date: { gte: lastMonth } },
+      select: { amount: true, date: true }
+    });
+    // Group tips by day
+    const dailyTipsMap: Record<string, number> = {};
+    tipsLastMonth.forEach((tip) => {
+      const date =
+        tip.date instanceof Date
+          ? tip.date.toISOString().slice(0, 10)
+          : new Date(tip.date).toISOString().slice(0, 10);
+      dailyTipsMap[date] = (dailyTipsMap[date] || 0) + Number(tip.amount);
+    });
+    const dailyTips = Object.entries(dailyTipsMap)
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Daily reading progress change (last 30 days) - Pure Prisma approach
+    const readingProgressLastMonth = await prisma.readingProgress.findMany({
+      where: {
+        lastReadAt: {
+          gte: lastMonth
+        }
+      },
+      select: { lastReadAt: true }
+    });
+    console.log('[DEBUG] Reading progress last month count:', readingProgressLastMonth.length);
+    console.log('[DEBUG] Reading progress sample:', readingProgressLastMonth.slice(0, 3));
+    // Group by day
+    const dailyReadingProgressMap: Record<string, number> = {};
+    readingProgressLastMonth.forEach((rp) => {
+      if (rp.lastReadAt) {
+        const date =
+          rp.lastReadAt instanceof Date
+            ? rp.lastReadAt.toISOString().slice(0, 10)
+            : new Date(rp.lastReadAt).toISOString().slice(0, 10);
+        dailyReadingProgressMap[date] = (dailyReadingProgressMap[date] || 0) + 1;
+      }
+    });
+    console.log('[DEBUG] Daily reading progress map:', dailyReadingProgressMap);
+    const dailyReadingProgress = Object.entries(dailyReadingProgressMap)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Fix total users change calculation
+    const totalUsersYesterday = await prisma.user.count({
+      where: { createdAt: { lt: today } }
+    });
+    const totalUsersChange = totalUsers - totalUsersYesterday;
+    const totalUsersChangePercent =
+      totalUsersYesterday > 0 ? (totalUsersChange / totalUsersYesterday) * 100 : 0;
 
     // Calculate previous total users (as of yesterday)
     const previousTotalUsers = await prisma.user.count({
@@ -236,15 +282,37 @@ export async function GET(req: NextRequest) {
     // Calculate engagement rate (users with reading progress / total users)
     const engagementRate = totalUsers > 0 ? (activeUsersCount / totalUsers) * 100 : 0;
 
+    // Debug: Aggregation count with $runCommandRaw
+    const aggTest = await prisma.$runCommandRaw({
+      aggregate: 'User',
+      cursor: {},
+      pipeline: [{ $match: { createdAt: { $gte: lastMonth } } }, { $count: 'count' }]
+    });
+    console.log('[DEBUG] Aggregation count with $runCommandRaw:', aggTest);
+
+    // Debug: Aggregation docs with $runCommandRaw
+    const aggTestDocs = await prisma.$runCommandRaw({
+      aggregate: 'User',
+      cursor: {},
+      pipeline: [
+        { $addFields: { createdAt: { $toDate: '$createdAt' } } },
+        { $match: { createdAt: { $gte: lastMonth } } },
+        { $limit: 5 }
+      ]
+    });
+    console.log('[DEBUG] Aggregation docs with $runCommandRaw:', aggTestDocs);
+
     // Compile statistics
     const stats = {
       overview: {
         totalUsers,
-        previousTotalUsers,
+        previousTotalUsers: totalUsersYesterday,
         activeUsers: activeUsersCount,
         engagementRate: Math.round(engagementRate * 100) / 100, // Round to 2 decimal places
         totalTipsAmount: deepBigIntToString(totalTipsAmount),
-        totalReadingProgress: totalReadingProgressCount
+        totalReadingProgress: totalReadingProgressCount,
+        totalUsersChange,
+        totalUsersChangePercent: Math.round(totalUsersChangePercent * 100) / 100
       },
       growth: {
         today: usersToday,
@@ -260,7 +328,9 @@ export async function GET(req: NextRequest) {
         bookmarkRate: totalUsers > 0 ? (usersWithBookmarks / totalUsers) * 100 : 0
       },
       topTippers: topTippers,
-      userGrowth
+      userGrowth,
+      dailyTips,
+      dailyReadingProgress
     };
 
     console.log('[GET /api/admin/stats] Returning stats:', stats);
