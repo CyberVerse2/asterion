@@ -93,10 +93,6 @@ export async function generateUniqueUsername(
     if (isUnique) {
       return username;
     }
-
-    console.log(
-      `Username generation attempt ${attempt}: "${username}" already exists, retrying...`
-    );
   }
 
   throw new Error(`Failed to generate unique username after ${maxAttempts} attempts`);

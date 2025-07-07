@@ -39,16 +39,6 @@ export const useNovelReadingProgress = (userId: string | null, novelId: string |
     }
   );
 
-  console.log('📚 useNovelReadingProgress Debug:', {
-    userId,
-    novelId,
-    data,
-    error,
-    isLoading,
-    hasData: !!data,
-    dataLength: Array.isArray(data) ? data.length : 'not array'
-  });
-
   return {
     readingProgress: data as ReadingProgress[] | undefined,
     isLoading,

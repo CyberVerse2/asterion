@@ -41,17 +41,14 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
       if (!userId || !novelsMap.size) return;
 
       try {
-        console.log('🔍 Fetching recently read for user:', userId);
 
         // Fetch all reading progress for the user
         const response = await fetch(`/api/reading-progress?userId=${userId}`);
         if (!response.ok) throw new Error('Failed to fetch reading progress');
 
         const progressData = await response.json();
-        console.log('📚 Progress data received:', progressData);
 
         if (!Array.isArray(progressData) || progressData.length === 0) {
-          console.log('📚 No progress data found');
           setRecentlyRead([]);
           setIsLoading(false);
           return;
@@ -100,8 +97,6 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
           }
         });
 
-        console.log('📚 Novel progress map:', novelProgressMap);
-
         // Get novel details and combine with progress
         const recentlyReadNovels: NovelWithProgress[] = [];
 
@@ -124,7 +119,6 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
           }
         }
 
-        console.log('📚 Recently read novels:', recentlyReadNovels);
 
         // Sort by most recently read
         recentlyReadNovels.sort(

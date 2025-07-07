@@ -9,8 +9,6 @@ export async function PATCH(
     const userId = params.id;
     const body = await req.json();
     
-    console.log('[PATCH /api/users/[id]] Updating user:', userId, 'with data:', body);
-
     // Build update data
     const updateData: any = {};
     
@@ -35,10 +33,8 @@ export async function PATCH(
       data: updateData
     });
 
-    console.log('[PATCH /api/users/[id]] User updated successfully:', updatedUser);
     return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error('[PATCH /api/users/[id]] Error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

@@ -24,7 +24,6 @@ export async function GET() {
       return rankA - rankB; // Ascending order (rank 1 first)
     });
 
-    console.log('Fetched novels:', sortedNovels);
     return NextResponse.json(sortedNovels);
   } catch (error) {
     console.error('Error fetching novels:', error);

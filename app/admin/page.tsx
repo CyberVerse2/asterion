@@ -96,13 +96,13 @@ export default function AdminDashboard() {
     fetchStats();
   }, []);
 
-  useEffect(() => {
-    if (stats) {
-      // Debug userGrowth data for the chart
-      // eslint-disable-next-line no-console
-      console.log('User Growth Data for Chart:', stats.userGrowth);
-    }
-  }, [stats]);
+    useEffect(() => {
+      if (stats) {
+        // Debug userGrowth data for the chart
+        // eslint-disable-next-line no-console
+        console.log('User Growth Data for Chart:', stats.userGrowth);
+      }
+    }, [stats]);
 
   if (isLoading) {
     return (

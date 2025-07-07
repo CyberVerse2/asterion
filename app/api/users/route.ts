@@ -13,7 +13,6 @@ function deepBigIntToString(obj: any): any {
 }
 
 export async function GET(req: NextRequest) {
-  console.log('[GET /api/users] Incoming request');
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
@@ -53,7 +52,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    console.log('[GET /api/users] Found user with tips:', user);
     return NextResponse.json(user);
   } catch (error) {
     console.error('[GET /api/users] Error:', error);
@@ -65,10 +63,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  console.log('[POST /api/users] Incoming request');
   try {
     const { fid, username, pfpUrl, walletAddress } = await req.json();
-    console.log('[POST /api/users] Payload:', { fid, username, pfpUrl, walletAddress });
+
 
     // Validate input: either (fid AND username) OR walletAddress must be provided
     if ((!fid || !username) && !walletAddress) {
@@ -125,7 +122,6 @@ export async function POST(req: NextRequest) {
           }
         }
       });
-      console.log('[POST /api/users] Found user by fid:', user);
     }
 
     // If no user found by fid, try by walletAddress
@@ -155,7 +151,6 @@ export async function POST(req: NextRequest) {
           }
         }
       });
-      console.log('[POST /api/users] Found user by wallet address:', user);
     }
 
     // If no user found by fid or walletAddress, try by username as fallback
@@ -185,12 +180,10 @@ export async function POST(req: NextRequest) {
           }
         }
       });
-      console.log('[POST /api/users] Found user by username:', user);
     }
 
     // Handle existing user without wallet address - update with current wallet
     if (user && !user.walletAddress && walletAddress) {
-      console.log('[POST /api/users] Updating existing user with wallet address');
 
       // Check if this wallet address is already associated with another user
       const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
@@ -198,7 +191,6 @@ export async function POST(req: NextRequest) {
         const conflictingUser = await prisma.user.findFirst({
           where: { walletAddress: walletAddress }
         });
-        console.log('[POST /api/users] Wallet address conflict detected');
         return NextResponse.json(
           {
             error: 'This wallet address is already associated with another user',
@@ -235,12 +227,10 @@ export async function POST(req: NextRequest) {
           }
         }
       });
-      console.log('[POST /api/users] Updated existing user with wallet address:', user);
     }
 
     // If user exists, return them (no need to create)
     if (user) {
-      console.log('[POST /api/users] Returning existing user:', user);
       return NextResponse.json(user);
     }
 
@@ -255,7 +245,6 @@ export async function POST(req: NextRequest) {
       });
 
       if (existingUserWithFid) {
-        console.log('[POST /api/users] User with fid already exists, returning existing user');
         return NextResponse.json(existingUserWithFid);
       }
 
@@ -269,7 +258,6 @@ export async function POST(req: NextRequest) {
           const conflictingUser = await prisma.user.findFirst({
             where: { walletAddress: walletAddress }
           });
-          console.log('[POST /api/users] Wallet address conflict during creation');
           return NextResponse.json(
             {
               error: 'This wallet address is already associated with another user',
@@ -289,7 +277,6 @@ export async function POST(req: NextRequest) {
         const conflictingUser = await prisma.user.findFirst({
           where: { walletAddress: walletAddress }
         });
-        console.log('[POST /api/users] Wallet address conflict during wallet-only user creation');
         return NextResponse.json(
           {
             error: 'This wallet address is already associated with another user',
@@ -303,7 +290,6 @@ export async function POST(req: NextRequest) {
       // Generate unique username for wallet-only user
       try {
         userData.username = await generateUniqueUsername(checkUsernameUniqueness);
-        console.log('[POST /api/users] Generated username for wallet user:', userData.username);
       } catch (error) {
         console.error('[POST /api/users] Username generation failed:', error);
         return NextResponse.json(
@@ -346,11 +332,9 @@ export async function POST(req: NextRequest) {
           }
         }
       });
-      console.log('[POST /api/users] Created new user:', user);
     } catch (error: any) {
       // Handle unique constraint violations specifically
       if (error.code === 'P2002' && error.meta?.target?.includes('fid')) {
-        console.log('[POST /api/users] Unique constraint violation on fid, fetching existing user');
         // If there's a unique constraint violation on fid, fetch the existing user
         const existingUser = await prisma.user.findUnique({
           where: { fid: Number(fid) },
@@ -379,10 +363,6 @@ export async function POST(req: NextRequest) {
         });
 
         if (existingUser) {
-          console.log(
-            '[POST /api/users] Returning existing user after constraint violation:',
-            existingUser
-          );
           return NextResponse.json(existingUser);
         }
       }
@@ -392,7 +372,6 @@ export async function POST(req: NextRequest) {
     }
 
     const response = NextResponse.json(user);
-    console.log('[POST /api/users] Response:', user);
     return response;
   } catch (error) {
     console.error('[POST /api/users] Error:', error);
@@ -404,7 +383,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  console.log('[PATCH /api/users] Incoming request');
   try {
     const {
       userId,
@@ -416,16 +394,7 @@ export async function PATCH(req: NextRequest) {
       walletAddress,
       hasAddedMiniapp
     } = await req.json();
-    console.log('[PATCH /api/users] Payload:', {
-      userId,
-      spendLimit,
-      chapterTipAmount,
-      novelId,
-      spendPermission,
-      spendPermissionSignature,
-      walletAddress,
-      hasAddedMiniapp
-    });
+
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
@@ -446,7 +415,6 @@ export async function PATCH(req: NextRequest) {
 
     // Find the user
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    console.log('[PATCH /api/users] Found user:', user);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -464,13 +432,9 @@ export async function PATCH(req: NextRequest) {
     }
     if (spendPermission) {
       const safePermission = deepBigIntToString(spendPermission);
-      console.log('[PATCH /api/users] Storing spendPermission:', safePermission);
-      console.log('[PATCH /api/users] spendPermission type:', typeof safePermission);
-      console.log('[PATCH /api/users] spendPermission keys:', Object.keys(safePermission));
       updateData.spendPermission = safePermission;
     }
     if (spendPermissionSignature) {
-      console.log('[PATCH /api/users] Storing spendPermissionSignature:', spendPermissionSignature);
       updateData.spendPermissionSignature = spendPermissionSignature;
     }
     if (walletAddress) {
@@ -483,7 +447,6 @@ export async function PATCH(req: NextRequest) {
             id: { not: userId } // Exclude current user
           }
         });
-        console.log('[PATCH /api/users] Wallet address conflict detected');
         return NextResponse.json(
           {
             error: 'This wallet address is already associated with another user',
@@ -494,24 +457,16 @@ export async function PATCH(req: NextRequest) {
       }
 
       updateData.walletAddress = walletAddress;
-      console.log('[PATCH /api/users] Adding wallet address to update:', walletAddress);
     }
 
     let updatedUser = user;
     if (Object.keys(updateData).length > 0) {
-      console.log('[PATCH /api/users] updateData to be saved:', updateData);
-      console.log('[PATCH /api/users] updateData keys:', Object.keys(updateData));
-      console.log('[PATCH /api/users] About to call prisma.user.update with:');
-      console.log('[PATCH /api/users] - where:', { id: userId });
-      console.log('[PATCH /api/users] - data:', updateData);
-
       try {
         updatedUser = await prisma.user.update({
           where: { id: userId },
           data: updateData
         });
-        console.log('[PATCH /api/users] Updated user successful:', updatedUser);
-      } catch (updateError) {
+        } catch (updateError) {
         console.error('[PATCH /api/users] Prisma update error details:', updateError);
         throw updateError; // Re-throw to trigger the outer catch
       }

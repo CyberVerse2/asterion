@@ -35,7 +35,6 @@ export function UserProvider({ children }: UserProviderProps) {
   const refreshUser = async () => {
     if (!user || !user.id) return;
 
-    console.log('[UserProvider] Refreshing user data for user ID:', user.id);
     setUserLoading(true);
     setUserError(null);
 
@@ -47,7 +46,6 @@ export function UserProvider({ children }: UserProviderProps) {
       }
       const refreshedUser = await response.json();
       setUser(refreshedUser);
-      console.log('[UserProvider] User data refreshed:', refreshedUser);
     } catch (error: any) {
       console.error('[UserProvider] Error refreshing user:', error);
       setUserError(error.message);
@@ -58,7 +56,6 @@ export function UserProvider({ children }: UserProviderProps) {
 
   // Helper function to create or fetch user
   const createOrFetchUser = async (payload: any) => {
-    console.log('[UserProvider] Creating/fetching user with payload:', payload);
     setUserLoading(true);
     setUserError(null);
 
@@ -69,16 +66,13 @@ export function UserProvider({ children }: UserProviderProps) {
         body: JSON.stringify(payload)
       });
 
-      console.debug('[UserProvider] /api/users POST response:', response);
       if (!response.ok) {
         const err = await response.json();
-        console.error('[UserProvider] /api/users error response:', err);
         throw new Error(err.error || 'Unknown error');
       }
 
       const userData = await response.json();
       setUser(userData);
-      console.debug('[UserProvider] User created/fetched:', userData);
     } catch (err: any) {
       setUserError(err.message);
       console.error('[UserProvider] User onboarding error:', err);
@@ -89,7 +83,6 @@ export function UserProvider({ children }: UserProviderProps) {
 
   // Effect for Farcaster context detection and timeout management
   useEffect(() => {
-    console.debug('[UserProvider] Farcaster context:', context);
 
     // Clear any existing timeout
     if (contextLoadingTimeout) {
@@ -100,14 +93,11 @@ export function UserProvider({ children }: UserProviderProps) {
     if (context) {
       // Context is available - mark as checked immediately
       if (!farcasterContextChecked) {
-        console.log('[UserProvider] Farcaster context found, marking as checked');
         setFarcasterContextChecked(true);
       }
 
       const userObj = context.user;
       const clientObj = context.client;
-      console.debug('[UserProvider] context.user:', userObj);
-      console.debug('[UserProvider] context.client:', clientObj);
 
       // Cast to any to access Farcaster-specific properties not in OnchainKit types
       const fid =
@@ -126,15 +116,6 @@ export function UserProvider({ children }: UserProviderProps) {
       const pfpUrl =
         (userObj && (userObj as any).pfpUrl) || (clientObj && (clientObj as any).pfpUrl) || '';
 
-      console.debug('[UserProvider] Extracted fid:', fid, 'username:', username);
-      console.debug(
-        '[UserProvider] Available userObj properties:',
-        userObj ? Object.keys(userObj) : 'none'
-      );
-      console.debug(
-        '[UserProvider] Available clientObj properties:',
-        clientObj ? Object.keys(clientObj) : 'none'
-      );
 
       // CRITICAL: If we have an fid, this is ALWAYS a Farcaster user, regardless of username extraction
       if (fid && !user && !userLoading) {
@@ -156,17 +137,12 @@ export function UserProvider({ children }: UserProviderProps) {
 
         // Farcaster user found - create/fetch (wallet address will be added later if needed)
         const payload = { fid, username, pfpUrl };
-        console.log('[UserProvider] Creating/fetching Farcaster user:', payload);
         createOrFetchUser(payload);
       }
     } else {
       // Context is null - set a timeout to wait for it to potentially load
       if (!farcasterContextChecked) {
-        console.log(
-          '[UserProvider] Context is null, setting timeout to wait for potential Farcaster context'
-        );
         const timeout = setTimeout(() => {
-          console.log('[UserProvider] Farcaster context timeout reached, marking as checked');
           setFarcasterContextChecked(true);
         }, 2000); // Wait 2 seconds for Farcaster context to load
 
@@ -190,7 +166,6 @@ export function UserProvider({ children }: UserProviderProps) {
     // 3. User doesn't have wallet address yet
     // 4. We now have a wallet address
     if (user && user.fid && !user.walletAddress && walletAddress) {
-      console.log('[UserProvider] Updating existing Farcaster user with wallet address');
 
       // Update user with wallet address via PATCH API
       fetch('/api/users', {
@@ -201,7 +176,6 @@ export function UserProvider({ children }: UserProviderProps) {
         .then((response) => response.json())
         .then((updatedUser) => {
           setUser(updatedUser);
-          console.log('[UserProvider] User updated with wallet address:', updatedUser);
         })
         .catch((error) => {
           console.error('[UserProvider] Error updating user with wallet:', error);
@@ -227,28 +201,15 @@ export function UserProvider({ children }: UserProviderProps) {
         (context.client && ((context.client as any).fid || (context.client as any).clientFid)));
 
     if (hasFarcasterContext) {
-      console.log('[UserProvider] Farcaster context available, skipping wallet-only flow');
       return;
     }
 
     // Double-check: if context exists but no fid, still skip wallet-only flow
     // This handles edge cases where context exists but fid extraction failed
     if (context) {
-      console.log(
-        '[UserProvider] Context exists but no fid found, skipping wallet-only flow to avoid conflicts'
-      );
       return;
     }
 
-    console.log(
-      '[UserProvider] No Farcaster context detected after timeout, creating wallet-only user for address:',
-      walletAddress
-    );
-    console.log('[UserProvider] Context state:', {
-      contextExists: !!context,
-      contextUser: context && (context as any).user ? 'exists' : 'none',
-      contextClient: context && (context as any).client ? 'exists' : 'none'
-    });
 
     createOrFetchUser({ walletAddress });
   }, [isConnected, walletAddress, user, userLoading, farcasterContextChecked, context]);

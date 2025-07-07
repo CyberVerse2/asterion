@@ -184,34 +184,8 @@ export default function ProfilePage() {
       ((context as any).client &&
         ((context as any).client.fid || (context as any).client.clientFid)));
 
-  // Debug logging for Farcaster context detection
-  console.log('[Profile] Context detection debug:', {
-    context: context,
-    contextUser: context ? (context as any).user : null,
-    contextClient: context ? (context as any).client : null,
-    userFid: context && (context as any).user ? (context as any).user.fid : null,
-    clientFid: context && (context as any).client ? (context as any).client.fid : null,
-    clientClientFid: context && (context as any).client ? (context as any).client.clientFid : null,
-    hasFarcasterContext: hasFarcasterContext,
-    profileFid: profile?.fid
-  });
-
   // Alternative detection: if user has fid in profile, they're a Farcaster user
   const isFarcasterUser = Boolean(hasFarcasterContext || (profile && profile.fid));
-
-  console.log('[Profile] Final user type determination:', {
-    hasFarcasterContext,
-    profileHasFid: profile?.fid,
-    isFarcasterUser,
-    willUseERC20: isFarcasterUser
-  });
-
-  // ADDITIONAL DEBUG: Log the exact button that will be rendered
-  console.log('[Profile] Button logic debug:', {
-    isFarcasterUser,
-    buttonType: isFarcasterUser ? 'FARCASTER (ERC20)' : 'WALLET (Coinbase)',
-    functionToCall: isFarcasterUser ? 'handleFarcasterApproval' : 'handleApproveSpend'
-  });
 
   // Use OnchainKit components only for wallet-only users (no Farcaster context)
   const isWalletOnly = profile && profile.walletAddress && !hasFarcasterContext;
@@ -296,11 +270,6 @@ export default function ProfilePage() {
 
   // Move handleApproveSpend inside the component
   async function handleApproveSpend() {
-    console.log(
-      '[Profile] 🚨 handleApproveSpend called - This should be Coinbase spend permissions'
-    );
-    console.log('[Profile] 🚨 User type check:', { isFarcasterUser, profileFid: profile?.fid });
-    console.log('[Profile] 🚨 This function should NOT be called for Farcaster users!');
 
     setApproving(true);
     setApproveError(null);
@@ -326,18 +295,11 @@ export default function ProfilePage() {
       const addressNumber = BigInt(accountAddress); // Convert address to BigInt
       const uniqueSalt = timestamp ^ (addressNumber >> BigInt(96)); // XOR timestamp with truncated address
 
-      console.log('[handleApproveSpend] Generated unique salt:', uniqueSalt.toString());
-
       // Normalize addresses to proper checksum format
       const normalizedAccount = getAddress(accountAddress);
       const normalizedSpender = getAddress(process.env.NEXT_PUBLIC_SPENDER_ADDRESS as ViemAddress);
       const normalizedToken = getAddress(USDC_ADDRESS);
 
-      console.log('[handleApproveSpend] Normalized addresses:', {
-        account: normalizedAccount,
-        spender: normalizedSpender,
-        token: normalizedToken
-      });
 
       const spendPermission = {
         account: normalizedAccount,
@@ -350,15 +312,6 @@ export default function ProfilePage() {
         salt: uniqueSalt, // BigInt (unique salt to prevent hash collisions)
         extraData: '0x' as Hex
       };
-
-      console.log('[handleApproveSpend] spendPermission with native types:', spendPermission);
-      console.log('[handleApproveSpend] About to sign with domain:', {
-        name: 'Spend Permission Manager',
-        version: '1',
-        chainId: chainId,
-        verifyingContract: spendPermissionManagerAddress
-      });
-      console.log('[handleApproveSpend] Chain ID being used:', chainId);
 
       // Ensure we're on Base mainnet (8453)
       if (chainId !== 8453) {
@@ -390,9 +343,6 @@ export default function ProfilePage() {
         primaryType: 'SpendPermission',
         message: spendPermission // Pass raw object directly, no string conversion
       });
-
-      console.log('[handleApproveSpend] Generated signature:', signature);
-      console.log('[handleApproveSpend] Signature length:', signature.length);
       setApproved(true);
 
       // PATCH user with spendPermission and spendPermissionSignature
@@ -424,11 +374,7 @@ export default function ProfilePage() {
             .clone()
             .json()
             .catch(() => ({}));
-          console.log(
-            '[handleApproveSpend] PATCH /api/users response:',
-            patchRes.status,
-            patchData
-          );
+
           if (!patchRes.ok) {
             setApproveError('Failed to save spend permission to database');
             setApproving(false);
@@ -460,7 +406,6 @@ export default function ProfilePage() {
             .clone()
             .json()
             .catch(() => ({}));
-          console.log('[handleApproveSpend] POST /api/collect response:', response.status, data);
           if (!response.ok) throw new Error('Failed to approve onchain');
           if (data.status === 'success') {
             setTransactionStatus('success');
@@ -475,9 +420,6 @@ export default function ProfilePage() {
                 mutate((key) => typeof key === 'string' && key.startsWith('/api/novels/'));
                 // Invalidate all chapters caches
                 mutate((key) => typeof key === 'string' && key.startsWith('/api/chapters'));
-                console.log(
-                  '[Profile] Novel cache invalidated after wallet spend permission approval'
-                );
               });
             }
           } else {
@@ -517,22 +459,11 @@ export default function ProfilePage() {
 
   // Handle Farcaster approval with connector check
   const handleFarcasterApproval = async () => {
-    console.log('[Profile] 🎯 handleFarcasterApproval called - This should be ERC20 approve');
-    console.log('[Profile] 🎯 User type check:', { isFarcasterUser, profileFid: profile?.fid });
 
     setApproving(true);
     setApproveError(null);
 
     try {
-      // Debug current state
-      console.log('[Profile] 🔍 Current state:', {
-        accountAddress: account?.address,
-        accountConnected: account?.isConnected,
-        profileWalletAddress: profile?.walletAddress,
-        contextAvailable: !!context,
-        writeContractAvailable: !!writeContract,
-        availableConnectors: connectors.map((c) => ({ name: c.name, id: c.id }))
-      });
 
       // Save settings first
       if (spendLimit !== profile?.spendLimit) {
@@ -544,25 +475,16 @@ export default function ProfilePage() {
 
       // Check if writeContract is available
       if (!writeContract) {
-        console.log('[Profile] ❌ writeContract not available');
         setApproveError('Contract interaction not ready. Please refresh the page and try again.');
         return;
       }
 
       // Check if account is connected
       if (!account?.isConnected || !account?.address) {
-        console.log('[Profile] ❌ Account not connected');
         setApproveError('Wallet not connected. Please ensure you are in Farcaster and try again.');
         return;
       }
 
-      console.log('[Profile] ✅ Account connected, proceeding with ERC20 approval');
-      console.log('[Profile] 🎯 Calling ERC20 approve with:', {
-        contract: usdcAddress,
-        spender: spenderAddress,
-        amount: approveAmount.toString(),
-        account: account.address
-      });
 
       // Call ERC20 approve directly
       writeContract({
@@ -582,8 +504,6 @@ export default function ProfilePage() {
   // Consolidated post-approval logic for Farcaster users
   useEffect(() => {
     if (isFarcasterUser && isApproveTxSuccess && profile?.id && approveTxHash) {
-      console.log('[Profile] ERC20 approval successful, executing post-approval tasks...');
-      console.log('[Profile] Transaction hash:', approveTxHash);
 
       // Execute all post-approval tasks in parallel
       const tasks = [];
@@ -596,7 +516,6 @@ export default function ProfilePage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: profile.id, spendLimit })
           })
-            .then(() => console.log('[Profile] Spend limit saved'))
             .catch((error) => console.error('[Profile] Error saving spend limit:', error))
         );
       }
@@ -622,12 +541,6 @@ export default function ProfilePage() {
               spendPermissionSignature: approveTxHash
             })
           })
-            .then(() =>
-              console.log(
-                '[Profile] ERC20 approval data saved with transaction hash:',
-                approveTxHash
-              )
-            )
             .catch((error) => console.error('[Profile] Error saving approval data:', error))
         );
       }
@@ -635,13 +548,11 @@ export default function ProfilePage() {
       // Task 3: Refresh user data and invalidate novel cache after other tasks complete
       Promise.all(tasks)
         .then(() => {
-          console.log('[Profile] All post-approval tasks completed, refreshing user data...');
           if (refreshUser) {
             return refreshUser();
           }
         })
         .then(() => {
-          console.log('[Profile] User data refreshed after ERC20 approval');
 
           // Invalidate novel cache to refresh permission-dependent UI
           if (typeof window !== 'undefined') {
@@ -652,7 +563,6 @@ export default function ProfilePage() {
               mutate((key) => typeof key === 'string' && key.startsWith('/api/novels/'));
               // Invalidate all chapters caches
               mutate((key) => typeof key === 'string' && key.startsWith('/api/chapters'));
-              console.log('[Profile] Novel cache invalidated after spend permission approval');
             });
           }
         })

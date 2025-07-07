@@ -26,7 +26,7 @@ const erc20Abi = [
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('[tip-chapter] Incoming request body:', body);
+    
     const { userId, chapterId } = body;
     if (!userId || !chapterId) {
       console.error('[tip-chapter] Missing userId or chapterId', { userId, chapterId });
@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       include: { tips: true }
     });
-    console.log('[tip-chapter] User lookup result:', user);
     if (!user || !user.spendPermission || !user.spendPermissionSignature) {
       console.error('[tip-chapter] User has not granted spend permission', { user });
       return NextResponse.json({ error: 'User has not granted spend permission' }, { status: 400 });
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
 
     // Validate spend permission using the utility function
     const permissionStatus = validateSpendPermission(user as any);
-    console.log('[tip-chapter] Permission validation result:', permissionStatus);
 
     if (!permissionStatus.isValid) {
       console.error('[tip-chapter] Invalid spend permission:', permissionStatus.errorMessage);
@@ -79,31 +77,22 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingTip) {
-      console.log('[tip-chapter] User has already tipped this chapter', { userId, chapterId });
       return NextResponse.json({ error: 'You have already tipped this chapter' }, { status: 400 });
     }
 
     // Use user's custom chapter tip amount, fallback to 0.01 USDC
     const tipAmountUSD = user.chapterTipAmount || 0.01;
     const amount = BigInt(Math.round(tipAmountUSD * 10 ** 6)); // Convert to USDC wei (6 decimals)
-    console.log(
-      '[tip-chapter] Spending amount (USDC, 6 decimals):',
-      amount.toString(),
-      'for',
-      tipAmountUSD,
-      'USDC'
-    );
+
 
     const spenderBundlerClient = await getSpenderWalletClient();
     const publicClient = await getPublicClient();
-    console.log('[tip-chapter] Got spenderBundlerClient and publicClient');
 
     let spendTxnHash: string;
 
     // Handle different permission types
     if (permissionStatus.permissionType === 'erc20') {
       // For ERC20 approval users (Farcaster users), use transferFrom
-      console.log('[tip-chapter] Using ERC20 transferFrom for Farcaster user');
 
       if (!user.walletAddress) {
         console.error('[tip-chapter] ERC20 user missing wallet address');
@@ -116,10 +105,8 @@ export async function POST(request: NextRequest) {
         functionName: 'transferFrom',
         args: [user.walletAddress as `0x${string}`, spenderBundlerClient.account.address, amount]
       });
-      console.log('[tip-chapter] ERC20 transferFrom txnHash:', spendTxnHash);
     } else {
       // For Coinbase spend permission users, use the SpendPermissionManager
-      console.log('[tip-chapter] Using SpendPermissionManager for wallet-only user');
 
       const spendPermission = user.spendPermission;
       spendTxnHash = (await spenderBundlerClient.writeContract({
@@ -128,11 +115,9 @@ export async function POST(request: NextRequest) {
         functionName: 'spend',
         args: [spendPermission, amount]
       })) as `0x${string}`;
-      console.log('[tip-chapter] SpendPermissionManager spend txnHash:', spendTxnHash);
     }
 
     const spendReceipt = await publicClient.waitForTransactionReceipt({ hash: spendTxnHash });
-    console.log('[tip-chapter] spendReceipt:', spendReceipt);
 
     // If transaction was successful, update database
     if (spendReceipt.status) {
@@ -147,7 +132,6 @@ export async function POST(request: NextRequest) {
         where: { id: chapterId },
         data: { tipCount: newTipCount }
       });
-      console.log('[tip-chapter] updatedChapter:', updatedChapter);
 
       // Create tip record for user
       await prisma.tip.create({
@@ -158,7 +142,6 @@ export async function POST(request: NextRequest) {
           amount: tipAmountUSD
         }
       });
-      console.log('[tip-chapter] Created tip record');
 
       // Update or create supporter record
       const existingSupporter = await prisma.supporter.findFirst({
@@ -178,7 +161,6 @@ export async function POST(request: NextRequest) {
             totalTipped: newTotalTipped
           }
         });
-        console.log('[tip-chapter] Updated existing supporter');
       } else {
         await prisma.supporter.create({
           data: {
@@ -187,7 +169,6 @@ export async function POST(request: NextRequest) {
             totalTipped: tipAmountUSD
           }
         });
-        console.log('[tip-chapter] Created new supporter record');
       }
 
       return NextResponse.json({
@@ -207,7 +188,6 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error('[tip-chapter] Caught error:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: (error as Error)?.message || String(error) },
       { status: 500 }

@@ -139,7 +139,7 @@ export default function IndividualChapterPage() {
             throw new Error('Chapter not found');
           } else if (response.status >= 500 && retryCount < 2) {
             // Retry on server errors (up to 2 retries)
-            console.log(`Server error, retrying... (attempt ${retryCount + 1})`);
+
             setTimeout(() => fetchChapter(retryCount + 1), 1000 * (retryCount + 1));
             return;
           } else {
@@ -163,7 +163,7 @@ export default function IndividualChapterPage() {
         console.error('Error fetching chapter:', err);
         if (retryCount < 2 && err instanceof Error && !err.message.includes('not found')) {
           // Retry on network errors (but not 404s)
-          console.log(`Network error, retrying... (attempt ${retryCount + 1})`);
+
           setTimeout(() => fetchChapter(retryCount + 1), 1000 * (retryCount + 1));
           return;
         }
@@ -254,7 +254,6 @@ export default function IndividualChapterPage() {
               scrollPosition: idx
             })
               .then((result) => {
-                console.log('[SaveProgress] Successfully saved progress:', result);
               })
               .catch((error) => {
                 console.error('[SaveProgress] Failed to save progress:', error);
@@ -481,8 +480,7 @@ export default function IndividualChapterPage() {
     if (previousChapter) {
       const proceedWithNavigation = async () => {
         // Save current reading progress before navigating
-        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
-          console.log('📖 Saving progress before navigating to previous chapter');
+        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {  
           await saveProgress({
             userId: (user as any)?.id,
             chapterId,
@@ -504,7 +502,6 @@ export default function IndividualChapterPage() {
       const proceedWithNavigation = async () => {
         // Save current reading progress before navigating
         if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
-          console.log('📖 Saving progress before navigating to next chapter');
           await saveProgress({
             userId: (user as any)?.id,
             chapterId,

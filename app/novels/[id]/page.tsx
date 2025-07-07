@@ -119,18 +119,8 @@ export default function NovelPage() {
 
   // Calculate continue reading information
   const continueReadingInfo = useMemo(() => {
-    console.log('📖 Continue Reading Info Debug:', {
-      readingProgress,
-      readingProgressType: typeof readingProgress,
-      readingProgressIsArray: Array.isArray(readingProgress),
-      chapters,
-      chaptersType: typeof chapters,
-      chaptersIsArray: Array.isArray(chapters),
-      chaptersLength: chapters?.length
-    });
 
     if (!readingProgress || !Array.isArray(readingProgress) || !Array.isArray(chapters)) {
-      console.log('📖 Continue Reading Info: Early return - missing data');
       return null;
     }
 
@@ -139,32 +129,20 @@ export default function NovelPage() {
       .filter((progress) => progress.lastReadAt)
       .sort((a, b) => new Date(b.lastReadAt).getTime() - new Date(a.lastReadAt).getTime())[0];
 
-    console.log('📖 Last read progress:', lastReadProgress);
-
     if (!lastReadProgress) {
-      console.log('📖 Continue Reading Info: No last read progress found');
       return null;
     }
 
     // Find the corresponding chapter
     const lastReadChapter = chapters.find((chapter) => chapter.id === lastReadProgress.chapterId);
 
-    console.log('📖 Last read chapter:', lastReadChapter);
-
     if (!lastReadChapter) {
-      console.log('📖 Continue Reading Info: Chapter not found for progress');
       return null;
     }
 
     // Check if the chapter is completed (95% or more)
     const isCompleted = lastReadProgress.currentLine / lastReadProgress.totalLines >= 0.95;
 
-    console.log('📖 Chapter completion check:', {
-      currentLine: lastReadProgress.currentLine,
-      totalLines: lastReadProgress.totalLines,
-      percentage: (lastReadProgress.currentLine / lastReadProgress.totalLines) * 100,
-      isCompleted
-    });
 
     // If completed, suggest next chapter, otherwise continue current chapter
     if (isCompleted) {
@@ -172,11 +150,6 @@ export default function NovelPage() {
         (chapter) => chapter.id === lastReadChapter.id
       );
       const nextChapter = chapters[currentChapterIndex + 1];
-
-      console.log('📖 Next chapter check:', {
-        currentChapterIndex,
-        nextChapter: nextChapter?.title
-      });
 
       if (nextChapter) {
         const result = {
@@ -186,7 +159,6 @@ export default function NovelPage() {
           chapterIndex: currentChapterIndex + 1,
           isNewChapter: true
         };
-        console.log('📖 Continue Reading Info: Returning next chapter:', result);
         return result;
       }
     }
@@ -201,27 +173,18 @@ export default function NovelPage() {
       isNewChapter: false,
       progress: lastReadProgress
     };
-    console.log('📖 Continue Reading Info: Returning current chapter:', result);
     return result;
   }, [readingProgress, chapters]);
 
   // Debug reading progress data
   useEffect(() => {
     if (user?.id && novelId) {
-      console.log('🔍 Novel Reading Progress Debug:', {
-        userId: user.id,
-        novelId,
-        readingProgress,
-        progressLoading,
-        continueReadingInfo
-      });
     }
   }, [user?.id, novelId, readingProgress, progressLoading, continueReadingInfo]);
 
   // Force revalidation when page loads to ensure fresh data
   useEffect(() => {
     if (user?.id && novelId && mutateReadingProgress) {
-      console.log('🔄 Forcing reading progress revalidation on page load');
       mutateReadingProgress();
     }
   }, [user?.id, novelId]);
@@ -350,18 +313,8 @@ export default function NovelPage() {
 
   // Calculate button text
   const readButtonText = useMemo(() => {
-    console.log('🔘 Button State Debug:', {
-      chaptersLoading,
-      progressLoading,
-      readingProgress,
-      chapters: chapters?.length,
-      continueReadingInfo,
-      userId: user?.id,
-      novelId
-    });
 
     if (chaptersLoading || progressLoading) {
-      console.log('🔘 Button: Loading state');
       return 'Loading...';
     }
 
@@ -370,11 +323,9 @@ export default function NovelPage() {
       const buttonText = continueReadingInfo.isNewChapter
         ? `Next: ${chapterLabel}`
         : `Continue: ${chapterLabel}`;
-      console.log('🔘 Button: Continue reading state:', buttonText);
       return buttonText;
     }
 
-    console.log('🔘 Button: READ NOW state (no progress found)');
     return 'READ NOW';
   }, [
     chaptersLoading,

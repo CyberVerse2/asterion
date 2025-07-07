@@ -9,8 +9,6 @@ export async function GET(request: Request) {
     const chapterId = searchParams.get('chapterId');
     const novelId = searchParams.get('novelId');
 
-    console.log('[ReadingProgress API] GET request params:', { userId, chapterId, novelId });
-
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
@@ -52,8 +50,6 @@ export async function GET(request: Request) {
 
     // If we're fetching all user progress (for recently read), we need to add novelId
     if (!novelId && !chapterId) {
-      console.log('[ReadingProgress API] Fetching all user progress, adding novelId field');
-
       // For each progress entry, we need to get the novelId from the chapter
       const progressWithNovelIds = await Promise.all(
         documents.map(async (progress: any) => {
@@ -80,11 +76,9 @@ export async function GET(request: Request) {
         })
       );
 
-      console.log('[ReadingProgress API] Progress with novelIds:', progressWithNovelIds);
       return NextResponse.json(progressWithNovelIds);
     }
 
-    console.log('[ReadingProgress API] Returning documents:', documents);
     return NextResponse.json(documents);
   } catch (error) {
     console.error('Error fetching reading progress:', error);
@@ -98,18 +92,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { userId, chapterId, currentLine, totalLines, progressPercentage, scrollPosition } = body;
 
-    console.log('[ReadingProgress API] POST request received:', {
-      userId,
-      chapterId,
-      currentLine,
-      totalLines,
-      progressPercentage,
-      scrollPosition
-    });
-
     // Validate required fields
     if (!userId || !chapterId) {
-      console.log('[ReadingProgress API] Validation failed: missing userId or chapterId');
       return NextResponse.json({ error: 'userId and chapterId are required' }, { status: 400 });
     }
 
@@ -119,7 +103,6 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      console.log('[ReadingProgress API] User not found:', userId);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -128,7 +111,7 @@ export async function POST(request: Request) {
     });
 
     if (!chapter) {
-      console.log('[ReadingProgress API] Chapter not found:', chapterId);
+      
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
     }
 
@@ -140,10 +123,6 @@ export async function POST(request: Request) {
         ? Math.round((currentLine / totalLines) * 100)
         : 0;
 
-    console.log(
-      '[ReadingProgress API] Upserting progress with calculated percentage:',
-      calculatedProgressPercentage
-    );
 
     // Use raw MongoDB upsert to bypass Prisma client issue
     const now = new Date();
@@ -158,7 +137,6 @@ export async function POST(request: Request) {
       updatedAt: now
     };
 
-    console.log('[ReadingProgress API] Saving progress data:', progressData);
 
     const result = await prisma.$runCommandRaw({
       update: 'reading_progress',
@@ -171,18 +149,13 @@ export async function POST(request: Request) {
       ]
     });
 
-    console.log('[ReadingProgress API] Successfully saved progress:', result);
-
     // Debug: Let's verify what was actually saved
     const savedProgress = await prisma.$runCommandRaw({
       find: 'reading_progress',
       filter: { userId: userId, chapterId: chapterId },
       limit: 1
     });
-    console.log(
-      '[ReadingProgress API] Verified saved progress:',
-      (savedProgress as any).cursor?.firstBatch
-    );
+
 
     return NextResponse.json({
       status: 'success',

@@ -68,12 +68,6 @@ export async function GET(req: NextRequest) {
     });
 
     // Get active users (users with reading progress from data reference date)
-    console.log('[DEBUG] Active users calculation:', {
-      dataReferenceDate: dataReferenceDate.toISOString(),
-      today: today.toISOString(),
-      yesterday: yesterday.toISOString()
-    });
-
     // Use Prisma query instead of MongoDB aggregation
     const activeUsersResult = await prisma.readingProgress.findMany({
       where: {
@@ -88,8 +82,6 @@ export async function GET(req: NextRequest) {
     });
 
     const activeUsersCount = activeUsersResult.length;
-    console.log('[DEBUG] Active users result (Prisma):', activeUsersResult.length);
-    console.log('[DEBUG] Active users count:', activeUsersCount);
 
     // Get users with bookmarks
     const usersWithBookmarks = await prisma.user.count({
@@ -167,8 +159,6 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // Daily reading progress change (last 30 days) - Pure Prisma approach
-    console.log('[DEBUG] lastMonth date:', lastMonth);
-    console.log('[DEBUG] lastMonth ISO string:', lastMonth.toISOString());
 
     const readingProgressLastMonth = await prisma.readingProgress.findMany({
       where: {
@@ -178,8 +168,6 @@ export async function GET(req: NextRequest) {
       },
       select: { lastReadAt: true }
     });
-    console.log('[DEBUG] Reading progress found in last 30 days:', readingProgressLastMonth.length);
-    console.log('[DEBUG] Most recent lastReadAt values:', readingProgressLastMonth.slice(0, 5));
     // Group by day
     const dailyReadingProgressMap: Record<string, number> = {};
     readingProgressLastMonth.forEach((rp) => {
@@ -195,8 +183,7 @@ export async function GET(req: NextRequest) {
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    console.log('[DEBUG] Daily reading progress map:', dailyReadingProgressMap);
-    console.log('[DEBUG] Final dailyReadingProgress array:', dailyReadingProgress);
+
 
     // Debug: Check most recent lastReadAt values
     const recentReadingProgress = await prisma.readingProgress.findMany({
@@ -223,17 +210,6 @@ export async function GET(req: NextRequest) {
       take: 5,
       orderBy: { createdAt: 'asc' }
     });
-    console.log('[DEBUG] Sample user creation dates:', sampleUsers);
-
-    console.log('[DEBUG] Total users change calculation:', {
-      totalUsers,
-      usersBeforeJuly6,
-      usersOnJuly6AndAfter,
-      totalUsersChange,
-      totalUsersChangePercent,
-      dataReferenceDate: dataReferenceDate.toISOString()
-    });
-
     // Fix growthRate calculation
     let growthRate = 0;
     if (usersYesterday === 0 && usersToday > 0) {

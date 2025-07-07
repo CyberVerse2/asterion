@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, Suspense, lazy } from 'react';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useMiniKit, ready } from '@coinbase/onchainkit/minikit';
 import LoadingSkeleton from '@/components/loading-skeleton';
 import { useUser } from '@/providers/UserProvider';
 import { useNovels } from '@/hooks/useNovels';
@@ -21,6 +21,13 @@ export default function HomePage() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
+
+  // Call ready() when user and frame are ready
+  useEffect(() => {
+    if (user && isFrameReady) {
+      ready();
+    }
+  }, [user, isFrameReady]);
 
   return (
     <div className="min-h-screen">
