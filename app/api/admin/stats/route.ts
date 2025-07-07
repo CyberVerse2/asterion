@@ -115,21 +115,47 @@ export async function GET(req: NextRequest) {
 
     const totalTipsAmount = totalTipsResult._sum.amount || 0;
 
-    // Get user growth over time (last 30 days)
-    const userGrowthData = await prisma.user.groupBy({
-      by: ['createdAt'],
+    // Get user growth over time (last 30 days), grouped by day
+    const userGrowthRaw = await prisma.$runCommandRaw({
+      aggregate: 'user',
+      cursor: {},
+      pipeline: [
+        {
+          $match: {
+            createdAt: { $gte: lastMonth }
+          }
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            newUsers: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]
+    });
+    const userGrowth =
+      (userGrowthRaw as any).cursor?.firstBatch?.map((d: any) => ({
+        date: d._id,
+        newUsers: d.newUsers
+      })) || [];
+
+    // Calculate previous total users (as of yesterday)
+    const previousTotalUsers = await prisma.user.count({
       where: {
-        createdAt: {
-          gte: lastMonth
-        }
-      },
-      _count: {
-        id: true
-      },
-      orderBy: {
-        createdAt: 'asc'
+        createdAt: { lt: today }
       }
     });
+
+    // Fix growthRate calculation
+    let growthRate = 0;
+    if (usersYesterday === 0 && usersToday > 0) {
+      growthRate = 100;
+    } else if (usersYesterday > 0) {
+      growthRate = ((usersToday - usersYesterday) / usersYesterday) * 100;
+    } else {
+      growthRate = 0;
+    }
 
     // Get top users by tips given (count and total amount)
     console.log('[DEBUG] Starting top tippers query...');
@@ -190,6 +216,7 @@ export async function GET(req: NextRequest) {
     const stats = {
       overview: {
         totalUsers,
+        previousTotalUsers,
         activeUsers: activeUsersCount,
         engagementRate: Math.round(engagementRate * 100) / 100, // Round to 2 decimal places
         totalTipsAmount: deepBigIntToString(totalTipsAmount),
@@ -200,7 +227,7 @@ export async function GET(req: NextRequest) {
         yesterday: usersYesterday,
         thisWeek: usersThisWeek,
         thisMonth: usersThisMonth,
-        growthRate: usersYesterday > 0 ? ((usersToday - usersYesterday) / usersYesterday) * 100 : 0
+        growthRate
       },
       engagement: {
         usersWithBookmarks,
@@ -209,10 +236,7 @@ export async function GET(req: NextRequest) {
         bookmarkRate: totalUsers > 0 ? (usersWithBookmarks / totalUsers) * 100 : 0
       },
       topTippers: topTippers,
-      userGrowth: userGrowthData.map((day) => ({
-        date: day.createdAt.toISOString().split('T')[0],
-        newUsers: day._count.id
-      }))
+      userGrowth
     };
 
     console.log('[GET /api/admin/stats] Returning stats:', stats);
