@@ -201,7 +201,7 @@ export async function GET(req: NextRequest) {
 
     // Fix total users change calculation
     const totalUsersYesterday = await prisma.user.count({
-      where: { createdAt: { lt: today } }
+      where: { createdAt: { lt: yesterday } }
     });
     const totalUsersChange = totalUsers - totalUsersYesterday;
     const totalUsersChangePercent =
@@ -211,7 +211,8 @@ export async function GET(req: NextRequest) {
       totalUsers,
       totalUsersYesterday,
       totalUsersChange,
-      totalUsersChangePercent
+      totalUsersChangePercent,
+      yesterday: yesterday.toISOString()
     });
 
     // Fix growthRate calculation
