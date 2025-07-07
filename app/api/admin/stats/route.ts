@@ -61,6 +61,12 @@ export async function GET(req: NextRequest) {
     });
 
     // Get active users (users with reading progress in the last 7 days)
+    console.log('[DEBUG] Active users calculation:', {
+      lastWeek: lastWeek.toISOString(),
+      today: today.toISOString(),
+      yesterday: yesterday.toISOString()
+    });
+
     const activeUsers = await prisma.$runCommandRaw({
       aggregate: 'reading_progress',
       cursor: {},
@@ -68,7 +74,7 @@ export async function GET(req: NextRequest) {
         {
           $match: {
             lastReadAt: {
-              $gte: lastWeek.toISOString()
+              $gte: lastWeek
             }
           }
         },
@@ -84,6 +90,8 @@ export async function GET(req: NextRequest) {
     });
 
     const activeUsersCount = (activeUsers as any).cursor?.firstBatch?.[0]?.activeUsers || 0;
+    console.log('[DEBUG] Active users result:', activeUsers);
+    console.log('[DEBUG] Active users count:', activeUsersCount);
 
     // Get users with bookmarks
     const usersWithBookmarks = await prisma.user.count({
@@ -206,6 +214,14 @@ export async function GET(req: NextRequest) {
     const totalUsersChange = totalUsers - totalUsersYesterday;
     const totalUsersChangePercent =
       totalUsersYesterday > 0 ? (totalUsersChange / totalUsersYesterday) * 100 : 0;
+
+    // Debug: Check user creation dates
+    const sampleUsers = await prisma.user.findMany({
+      select: { id: true, createdAt: true },
+      take: 5,
+      orderBy: { createdAt: 'asc' }
+    });
+    console.log('[DEBUG] Sample user creation dates:', sampleUsers);
 
     console.log('[DEBUG] Total users change calculation:', {
       totalUsers,
