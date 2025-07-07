@@ -154,7 +154,6 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
       </div>
     );
   }
-
   if (recentlyRead.length === 0) {
     return null; // Don't show section if no recently read novels
   }
@@ -211,13 +210,18 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                         <div
                           className="bg-gradient-to-r from-purple-500 to-purple-400 h-1.5 rounded-full transition-all duration-300"
                           style={{
-                            width: `${
-                              novel.totalChapters > 0
-                                ? ((novel.chaptersRead ?? 0) / novel.totalChapters) * 100
-                                : 0
-                            }%`
+                            width: (() => {
+                              const chaptersRead =
+                                typeof novel.chaptersRead === 'number' ? novel.chaptersRead : 0;
+                              const totalChapters =
+                                typeof novel.totalChapters === 'number' ? novel.totalChapters : 0;
+                              if (totalChapters <= 0) return '0%';
+                              const percent = Math.min((chaptersRead / totalChapters) * 100, 100);
+                              return `${percent}%`;
+                            })()
                           }}
                         />
+    
                       </div>
                     </div>
 
