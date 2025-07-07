@@ -183,7 +183,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                   src={novel.imageUrl || '/placeholder.svg?height=300&width=200'}
                   alt={novel.title}
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                   placeholder="blur"
