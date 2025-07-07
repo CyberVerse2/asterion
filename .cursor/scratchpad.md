@@ -391,12 +391,19 @@ Users report that after reading progress is saved, the page sometimes jumps up o
   - **Success Criteria:** Users must have valid spend permission to read novels ✅
 
 - [x] **Integrate Chapter Reader with Existing Pages**
+
   - ✅ Added line-level reading progress tracking to existing ChapterReader
   - ✅ Implemented IntersectionObserver for scroll position tracking
   - ✅ Added reading progress indicator card
   - ✅ Added automatic position restoration when returning to chapter
   - ✅ Integrated with reading progress hooks
   - **Success Criteria:** Embedded chapter reader tracks reading progress ✅
+
+- [x] **Backfill User `createdAt` Field**
+
+  - ✅ Ran the backfill script to set `createdAt` for all users in the database
+  - ✅ Used earliest reading progress or current date as fallback
+  - **Success Criteria:** All users now have a valid `createdAt` field, unblocking analytics and user growth features ✅
 
 ## Current Tasks 🔄
 
@@ -510,6 +517,12 @@ The reading progress tracking wasn't being initialized at all. The issue was:
 6. **Maintained robust algorithm** - Simple, reliable intersection observer with proper cleanup
 
 The system should now show "Setting up observer for 81 elements" immediately and "Saving progress: X of 81" with accurate progress tracking. Restore will work by default without requiring ?restore=true. Awaiting final user testing and confirmation.
+
+## User `createdAt` Backfill
+
+**Date:** Current session  
+**Status:** ✅ Backfill script executed successfully  
+**Context:** Ran the backfill script after installing `dotenv`. All users in the database now have a valid `createdAt` field. This unblocks analytics, user growth, and dashboard features that depend on accurate user creation dates. No errors encountered during the process. Ready for Planner/user verification and next analytics/dashboard tests.
 
 # Lessons
 
