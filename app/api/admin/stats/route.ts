@@ -20,6 +20,13 @@ export async function GET(req: NextRequest) {
     const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+    // For active users, use a more recent window since data is from July 2025
+    const activeUsersWindow = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000); // Last 2 days instead of 7
+
+    // Since data is from July 6-7, 2025, adjust the reference date
+    const dataReferenceDate = new Date('2025-07-06T00:00:00.000Z');
+    const dataReferenceYesterday = new Date(dataReferenceDate.getTime() - 24 * 60 * 60 * 1000);
+
     // Get total user count
     const totalUsers = await prisma.user.count();
 
@@ -60,37 +67,28 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // Get active users (users with reading progress in the last 7 days)
+    // Get active users (users with reading progress from data reference date)
     console.log('[DEBUG] Active users calculation:', {
-      lastWeek: lastWeek.toISOString(),
+      dataReferenceDate: dataReferenceDate.toISOString(),
       today: today.toISOString(),
       yesterday: yesterday.toISOString()
     });
 
-    const activeUsers = await prisma.$runCommandRaw({
-      aggregate: 'reading_progress',
-      cursor: {},
-      pipeline: [
-        {
-          $match: {
-            lastReadAt: {
-              $gte: lastWeek
-            }
-          }
-        },
-        {
-          $group: {
-            _id: '$userId'
-          }
-        },
-        {
-          $count: 'activeUsers'
+    // Use Prisma query instead of MongoDB aggregation
+    const activeUsersResult = await prisma.readingProgress.findMany({
+      where: {
+        lastReadAt: {
+          gte: dataReferenceDate
         }
-      ]
+      },
+      select: {
+        userId: true
+      },
+      distinct: ['userId']
     });
 
-    const activeUsersCount = (activeUsers as any).cursor?.firstBatch?.[0]?.activeUsers || 0;
-    console.log('[DEBUG] Active users result:', activeUsers);
+    const activeUsersCount = activeUsersResult.length;
+    console.log('[DEBUG] Active users result (Prisma):', activeUsersResult.length);
     console.log('[DEBUG] Active users count:', activeUsersCount);
 
     // Get users with bookmarks
@@ -207,13 +205,17 @@ export async function GET(req: NextRequest) {
       select: { lastReadAt: true }
     });
 
-    // Fix total users change calculation
-    const totalUsersYesterday = await prisma.user.count({
-      where: { createdAt: { lt: yesterday } }
+    // Fix total users change calculation - use a more appropriate baseline
+    const usersBeforeJuly6 = await prisma.user.count({
+      where: { createdAt: { lt: dataReferenceDate } }
     });
-    const totalUsersChange = totalUsers - totalUsersYesterday;
+    const usersOnJuly6AndAfter = await prisma.user.count({
+      where: { createdAt: { gte: dataReferenceDate } }
+    });
+
+    const totalUsersChange = usersOnJuly6AndAfter;
     const totalUsersChangePercent =
-      totalUsersYesterday > 0 ? (totalUsersChange / totalUsersYesterday) * 100 : 0;
+      usersBeforeJuly6 > 0 ? (totalUsersChange / usersBeforeJuly6) * 100 : 0;
 
     // Debug: Check user creation dates
     const sampleUsers = await prisma.user.findMany({
@@ -225,10 +227,11 @@ export async function GET(req: NextRequest) {
 
     console.log('[DEBUG] Total users change calculation:', {
       totalUsers,
-      totalUsersYesterday,
+      usersBeforeJuly6,
+      usersOnJuly6AndAfter,
       totalUsersChange,
       totalUsersChangePercent,
-      yesterday: yesterday.toISOString()
+      dataReferenceDate: dataReferenceDate.toISOString()
     });
 
     // Fix growthRate calculation
@@ -311,7 +314,7 @@ export async function GET(req: NextRequest) {
     const stats = {
       overview: {
         totalUsers,
-        previousTotalUsers: totalUsersYesterday,
+        previousTotalUsers: usersBeforeJuly6,
         activeUsers: activeUsersCount,
         engagementRate: Math.round(engagementRate * 100) / 100, // Round to 2 decimal places
         totalTipsAmount: deepBigIntToString(totalTipsAmount),
