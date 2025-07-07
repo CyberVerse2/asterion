@@ -11,8 +11,8 @@ async function main() {
 
   const now = new Date();
 
-  // Find users with missing or null createdAt
-  const cursor = users.find({ $or: [{ createdAt: { $exists: false } }, { createdAt: null }] });
+  // Iterate over all users and forcibly set createdAt to a BSON Date
+  const cursor = users.find({});
   let count = 0;
   while (await cursor.hasNext()) {
     const user = await cursor.next();
@@ -23,8 +23,19 @@ async function main() {
       .sort({ lastReadAt: 1 })
       .limit(1)
       .toArray();
-    const createdAt = rp[0]?.lastReadAt || now;
-    await users.updateOne({ _id: user._id }, { $set: { createdAt } });
+    let createdAt = rp[0]?.lastReadAt || now;
+    // If user.createdAt exists, try to parse it as a Date
+    if (user.createdAt) {
+      if (user.createdAt instanceof Date) {
+        createdAt = user.createdAt;
+      } else if (typeof user.createdAt === 'string' || typeof user.createdAt === 'number') {
+        const parsed = new Date(user.createdAt);
+        if (!isNaN(parsed.getTime())) {
+          createdAt = parsed;
+        }
+      }
+    }
+    await users.updateOne({ _id: user._id }, { $set: { createdAt: new Date(createdAt) } });
     console.log(`Backfilled user ${user._id} with createdAt: ${createdAt}`);
     count++;
   }
