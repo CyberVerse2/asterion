@@ -17,10 +17,12 @@ import {
   ArrowDown,
   RefreshCw
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface AdminStats {
   overview: {
     totalUsers: number;
+    previousTotalUsers: number;
     activeUsers: number;
     engagementRate: number;
     totalTipsAmount: string;
@@ -161,17 +163,30 @@ export default function AdminDashboard() {
                 {stats.overview.totalUsers.toLocaleString()}
               </div>
               <p className="text-xs text-gray-400 mt-1">
-                {stats.growth.growthRate > 0 ? (
-                  <span className="text-green-400 flex items-center">
-                    <ArrowUp className="h-3 w-3 mr-1" />+{stats.growth.growthRate.toFixed(1)}% from
-                    yesterday
-                  </span>
-                ) : (
-                  <span className="text-red-400 flex items-center">
-                    <ArrowDown className="h-3 w-3 mr-1" />
-                    {Math.abs(stats.growth.growthRate).toFixed(1)}% from yesterday
-                  </span>
-                )}
+                {(() => {
+                  const diff = stats.overview.totalUsers - stats.overview.previousTotalUsers;
+                  const percent =
+                    stats.overview.previousTotalUsers > 0
+                      ? (diff / stats.overview.previousTotalUsers) * 100
+                      : 0;
+                  if (diff > 0) {
+                    return (
+                      <span className="text-green-400 flex items-center">
+                        <ArrowUp className="h-3 w-3 mr-1" />+{diff.toLocaleString()} (
+                        {percent.toFixed(1)}%) from yesterday
+                      </span>
+                    );
+                  } else if (diff < 0) {
+                    return (
+                      <span className="text-red-400 flex items-center">
+                        <ArrowDown className="h-3 w-3 mr-1" />
+                        {diff.toLocaleString()} ({percent.toFixed(1)}%) from yesterday
+                      </span>
+                    );
+                  } else {
+                    return <span className="text-gray-400">No change from yesterday</span>;
+                  }
+                })()}
               </p>
             </CardContent>
           </Card>
@@ -230,7 +245,7 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-white">{stats.growth.today}</div>
                   <p className="text-sm text-gray-400">Today</p>
@@ -247,6 +262,37 @@ export default function AdminDashboard() {
                   <div className="text-2xl font-bold text-white">{stats.growth.thisMonth}</div>
                   <p className="text-sm text-gray-400">This Month</p>
                 </div>
+              </div>
+              {/* Daily Growth Table */}
+              <div className="overflow-x-auto mt-2 mb-4">
+                <table className="min-w-full text-xs text-gray-300">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-1 text-left">Date</th>
+                      <th className="px-2 py-1 text-right">New Users</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.userGrowth.slice(-14).map((row) => (
+                      <tr key={row.date}>
+                        <td className="px-2 py-1">{row.date}</td>
+                        <td className="px-2 py-1 text-right">{row.newUsers}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* User Growth Chart */}
+              <div className="w-full h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stats.userGrowth.slice(-14)} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                    <XAxis dataKey="date" tick={{ fill: '#bbb', fontSize: 12 }} />
+                    <YAxis tick={{ fill: '#bbb', fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: '#222', border: 'none', color: '#fff' }} />
+                    <Line type="monotone" dataKey="newUsers" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
