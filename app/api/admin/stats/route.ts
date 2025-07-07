@@ -115,6 +115,13 @@ export async function GET(req: NextRequest) {
 
     const totalTipsAmount = totalTipsResult._sum.amount || 0;
 
+    // Debug: Print users created in the last 30 days
+    const recentUsers = await prisma.user.findMany({
+      where: { createdAt: { gte: lastMonth } },
+      select: { id: true, createdAt: true }
+    });
+    console.log('[DEBUG] Users created in last 30 days:', recentUsers);
+
     // Get user growth over time (last 30 days), grouped by day
     const userGrowthRaw = await prisma.$runCommandRaw({
       aggregate: 'user',
