@@ -133,9 +133,15 @@ export async function GET(req: NextRequest) {
     });
     console.log('[DEBUG] Users created in last 30 days:', recentUsers);
 
+    // Debug: Print count of users matching { createdAt: { $gte: lastMonth } }
+    const usersInLastMonthCount = await prisma.user.count({
+      where: { createdAt: { gte: lastMonth } }
+    });
+    console.log('[DEBUG] Users with createdAt >= lastMonth:', usersInLastMonthCount);
+
     // Get user growth over time (last 30 days), grouped by day
     const userGrowthRaw = await prisma.$runCommandRaw({
-      aggregate: 'user',
+      aggregate: 'User',
       cursor: {},
       pipeline: [
         {
