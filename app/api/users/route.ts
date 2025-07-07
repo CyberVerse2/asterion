@@ -413,7 +413,8 @@ export async function PATCH(req: NextRequest) {
       novelId,
       spendPermission,
       spendPermissionSignature,
-      walletAddress
+      walletAddress,
+      hasAddedMiniapp
     } = await req.json();
     console.log('[PATCH /api/users] Payload:', {
       userId,
@@ -422,7 +423,8 @@ export async function PATCH(req: NextRequest) {
       novelId,
       spendPermission,
       spendPermissionSignature,
-      walletAddress
+      walletAddress,
+      hasAddedMiniapp
     });
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
@@ -456,6 +458,9 @@ export async function PATCH(req: NextRequest) {
     }
     if (typeof chapterTipAmount === 'number') {
       updateData.chapterTipAmount = chapterTipAmount;
+    }
+    if (typeof hasAddedMiniapp === 'boolean') {
+      updateData.hasAddedMiniapp = hasAddedMiniapp;
     }
     if (spendPermission) {
       const safePermission = deepBigIntToString(spendPermission);

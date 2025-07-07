@@ -5,6 +5,7 @@ import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import LoadingSkeleton from '@/components/loading-skeleton';
 import { useUser } from '@/providers/UserProvider';
 import { useNovels } from '@/hooks/useNovels';
+import MiniappPrompt from '@/components/miniapp-prompt';
 
 // Lazy load components for better performance
 const NovelGrid = lazy(() => import('@/components/novel-grid'));
@@ -45,6 +46,9 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Miniapp Prompt */}
+      <MiniappPrompt />
     </div>
   );
 }

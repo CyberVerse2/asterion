@@ -14,6 +14,7 @@ export interface User {
   chapterTipAmount?: number; // Amount in USDC to tip per chapter
   spendPermission?: any; // JSON object containing spend permission data
   spendPermissionSignature?: string; // Signature for the spend permission
+  hasAddedMiniapp?: boolean; // Track whether user has added the miniapp
 }
 
 export interface Novel {
