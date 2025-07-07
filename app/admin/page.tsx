@@ -60,6 +60,14 @@ interface AdminStats {
     date: string;
     newUsers: number;
   }>;
+  dailyTips: Array<{
+    date: string;
+    amount: number;
+  }>;
+  dailyReadingProgress: Array<{
+    date: string;
+    count: number;
+  }>;
 }
 
 export default function AdminDashboard() {
@@ -411,6 +419,75 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Daily Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Daily Tips Chart */}
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-400" />
+                Daily Tips
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="w-full h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={stats.dailyTips.slice(-14)}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                    <XAxis dataKey="date" tick={{ fill: '#bbb', fontSize: 12 }} />
+                    <YAxis tick={{ fill: '#bbb', fontSize: 12 }} />
+                    <Tooltip contentStyle={{ background: '#222', border: 'none', color: '#fff' }} />
+                    <Line
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Daily Reading Progress Chart */}
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-orange-400" />
+                Daily Reading Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="w-full h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={stats.dailyReadingProgress.slice(-14)}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                    <XAxis dataKey="date" tick={{ fill: '#bbb', fontSize: 12 }} />
+                    <YAxis tick={{ fill: '#bbb', fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: '#222', border: 'none', color: '#fff' }} />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#f97316"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

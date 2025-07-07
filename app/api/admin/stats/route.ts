@@ -161,6 +161,9 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // Daily reading progress change (last 30 days) - Pure Prisma approach
+    console.log('[DEBUG] lastMonth date:', lastMonth);
+    console.log('[DEBUG] lastMonth ISO string:', lastMonth.toISOString());
+
     const readingProgressLastMonth = await prisma.readingProgress.findMany({
       where: {
         lastReadAt: {
@@ -169,6 +172,7 @@ export async function GET(req: NextRequest) {
       },
       select: { lastReadAt: true }
     });
+    console.log('[DEBUG] Reading progress found in last 30 days:', readingProgressLastMonth.length);
     console.log('[DEBUG] Most recent lastReadAt values:', readingProgressLastMonth.slice(0, 5));
     // Group by day
     const dailyReadingProgressMap: Record<string, number> = {};
@@ -185,6 +189,9 @@ export async function GET(req: NextRequest) {
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
+    console.log('[DEBUG] Daily reading progress map:', dailyReadingProgressMap);
+    console.log('[DEBUG] Final dailyReadingProgress array:', dailyReadingProgress);
+
     // Debug: Check most recent lastReadAt values
     const recentReadingProgress = await prisma.readingProgress.findMany({
       orderBy: { lastReadAt: 'desc' },
@@ -200,11 +207,11 @@ export async function GET(req: NextRequest) {
     const totalUsersChangePercent =
       totalUsersYesterday > 0 ? (totalUsersChange / totalUsersYesterday) * 100 : 0;
 
-    // Calculate previous total users (as of yesterday)
-    const previousTotalUsers = await prisma.user.count({
-      where: {
-        createdAt: { lt: today }
-      }
+    console.log('[DEBUG] Total users change calculation:', {
+      totalUsers,
+      totalUsersYesterday,
+      totalUsersChange,
+      totalUsersChangePercent
     });
 
     // Fix growthRate calculation
