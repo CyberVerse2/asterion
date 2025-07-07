@@ -17,7 +17,15 @@ import {
   ArrowDown,
   RefreshCw
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts';
 
 interface AdminStats {
   overview: {
@@ -79,6 +87,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (stats) {
+      // Debug userGrowth data for the chart
+      // eslint-disable-next-line no-console
+      console.log('User Growth Data for Chart:', stats.userGrowth);
+    }
+  }, [stats]);
 
   if (isLoading) {
     return (
@@ -285,12 +301,22 @@ export default function AdminDashboard() {
               {/* User Growth Chart */}
               <div className="w-full h-48">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={stats.userGrowth.slice(-14)} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <LineChart
+                    data={stats.userGrowth.slice(-14)}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                     <XAxis dataKey="date" tick={{ fill: '#bbb', fontSize: 12 }} />
                     <YAxis tick={{ fill: '#bbb', fontSize: 12 }} allowDecimals={false} />
                     <Tooltip contentStyle={{ background: '#222', border: 'none', color: '#fff' }} />
-                    <Line type="monotone" dataKey="newUsers" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                    <Line
+                      type="monotone"
+                      dataKey="newUsers"
+                      stroke="#a78bfa"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
