@@ -23,8 +23,20 @@ export default function MiniappPrompt({ onClose }: MiniappPromptProps) {
 
   // Check if user has already added the miniapp
   useEffect(() => {
+    console.log('[MiniappPrompt] useEffect check:', {
+      user,
+      hasAddedMiniapp: user?.hasAddedMiniapp,
+      isFrameReady
+    });
     if (user && !user.hasAddedMiniapp && isFrameReady) {
+      console.log('[MiniappPrompt] Showing prompt');
       setShowPrompt(true);
+    } else {
+      console.log('[MiniappPrompt] Not showing prompt. Conditions:', {
+        userExists: !!user,
+        userHasNotAdded: user ? !user.hasAddedMiniapp : 'N/A',
+        isFrameReady
+      });
     }
   }, [user, isFrameReady]);
 
