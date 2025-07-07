@@ -48,28 +48,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <MiniKitContextProvider>
                 <UserProvider>
                   <SWRProvider>
-                    <header className="border-b border-white/10 bg-black/50 backdrop-blur supports-[backdrop-filter]:bg-black/30 sticky top-0 z-50">
-                      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                        <Link href="/" className="flex items-center gap-2 sm:gap-3">
-                          <img
-                            src="/placeholder.png"
-                            alt="Asterion Logo"
-                            className="h-6 w-6 sm:h-8 sm:w-8"
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-bold text-lg sm:text-xl leading-tight text-white">
-                              Asterion
-                            </span>
-                            <span className="text-xs sm:text-sm text-gray-400 leading-tight hidden sm:block">
-                              Discover Amazing Stories
-                            </span>
-                          </div>
-                        </Link>
-                        <div className="flex items-center gap-4">
-                          <HeaderWallet />
-                        </div>
-                      </div>
-                    </header>
                     <main className="ornate-pattern">{children}</main>
                     {/* Bottom Navigation Bar */}
                     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 border-t border-white/10 rounded-t-2xl shadow-lg backdrop-blur-md">
@@ -89,10 +67,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M12 4v16m8-8H4"
+                              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"
                             />
                           </svg>
-                          <span className="text-xs">Continue</span>
+                          <span className="text-xs">Home</span>
                         </Link>
                         <Link
                           href="/ranking"

@@ -143,13 +143,11 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
   if (isLoading) {
     return (
       <div className="mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Recently Read</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-white/5 rounded-lg p-3 sm:p-4 h-24 sm:h-32"></div>
-            </div>
-          ))}
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Continue Reading</h2>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          <div className="animate-pulse">
+            <div className="bg-white/5 rounded-lg p-3 sm:p-4 h-24 sm:h-32"></div>
+          </div>
         </div>
       </div>
     );
@@ -158,112 +156,106 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
     return null; // Don't show section if no recently read novels
   }
 
+  // Only show the most recent novel
+  const novel = recentlyRead[0];
+
   return (
     <div className="mb-6 sm:mb-8">
       <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-white">Recently Read</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Continue Reading</h2>
         <Link
-          href="/profile"
+          href="/history"
           className="flex items-center gap-1 sm:gap-2 text-purple-400 hover:text-purple-300 transition-colors text-xs sm:text-sm"
         >
-          View All
+          View History
           <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
         </Link>
       </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {recentlyRead.map((novel) => (
-          <Link
-            key={novel.id}
-            href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
-          >
-            <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
-              <CardContent className="p-0">
-                <div className="relative aspect-[3/4] w-full overflow-hidden">
-                  <Image
-                    src={novel.imageUrl || '/placeholder.svg?height=300&width=200'}
-                    alt={novel.title}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                    className="object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                  />
-
-                  {/* Progress overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-2 sm:p-4">
-                    <h3 className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-white group-hover:text-purple-200 transition-colors duration-300">
-                      {novel.title}
-                    </h3>
-                    <p className="text-xs text-gray-400 mb-1 sm:mb-2">by {novel.author}</p>
-
-                    {/* Reading Progress */}
-                    <div className="mb-2 sm:mb-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-300">Progress</span>
-                        <span className="text-xs font-medium text-purple-400">
-                          {novel.chaptersRead}/{novel.totalChapters}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-700/50 rounded-full h-1.5">
-                        <div
-                          className="bg-gradient-to-r from-purple-500 to-purple-400 h-1.5 rounded-full transition-all duration-300"
-                          style={{
-                            width: (() => {
-                              const chaptersRead =
-                                typeof novel.chaptersRead === 'number' ? novel.chaptersRead : 0;
-                              const totalChapters =
-                                typeof novel.totalChapters === 'number' ? novel.totalChapters : 0;
-                              if (totalChapters <= 0) return '0%';
-                              const percent = Math.min((chaptersRead / totalChapters) * 100, 100);
-                              return `${percent}%`;
-                            })()
-                          }}
-                        />
-    
-                      </div>
-                    </div>
-
-                    {/* Last Read Time */}
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        {(() => {
-                          const lastRead = new Date(
-                            typeof novel.lastReadAt === 'object' &&
-                            novel.lastReadAt !== null &&
-                            '$date' in novel.lastReadAt
-                              ? (novel.lastReadAt as { $date: string }).$date
-                              : novel.lastReadAt ?? ''
-                          );
-                          const now = new Date();
-                          const diffInHours = Math.floor(
-                            (now.getTime() - lastRead.getTime()) / (1000 * 60 * 60)
-                          );
-
-                          if (diffInHours < 1) return 'Just now';
-                          if (diffInHours < 24) return `${diffInHours}h ago`;
-                          if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
-                          return lastRead.toLocaleDateString();
-                        })()}
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
+        <Link
+          key={novel.id}
+          href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
+        >
+          <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
+            <CardContent className="p-0">
+              <div className="relative aspect-[3/4] w-full overflow-hidden">
+                <Image
+                  src={novel.imageUrl || '/placeholder.svg?height=300&width=200'}
+                  alt={novel.title}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                  className="object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                />
+                {/* Progress overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-2 sm:p-4">
+                  <h3 className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-white group-hover:text-purple-200 transition-colors duration-300">
+                    {novel.title}
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-1 sm:mb-2">by {novel.author}</p>
+                  {/* Reading Progress */}
+                  <div className="mb-2 sm:mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-300">Progress</span>
+                      <span className="text-xs font-medium text-purple-400">
+                        {novel.chaptersRead}/{novel.totalChapters}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  {novel.status && (
-                    <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
-                      <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-1 sm:px-2 py-0.5 sm:py-1">
-                        {novel.status.toUpperCase()}
-                      </Badge>
+                    <div className="w-full bg-gray-700/50 rounded-full h-1.5">
+                      <div
+                        className="bg-gradient-to-r from-purple-500 to-purple-400 h-1.5 rounded-full transition-all duration-300"
+                        style={{
+                          width: (() => {
+                            const chaptersRead =
+                              typeof novel.chaptersRead === 'number' ? novel.chaptersRead : 0;
+                            const totalChapters =
+                              typeof novel.totalChapters === 'number' ? novel.totalChapters : 0;
+                            if (totalChapters <= 0) return '0%';
+                            const percent = Math.min((chaptersRead / totalChapters) * 100, 100);
+                            return `${percent}%`;
+                          })()
+                        }}
+                      />
                     </div>
-                  )}
+                  </div>
+                  {/* Last Read Time */}
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      {(() => {
+                        const lastRead = new Date(
+                          typeof novel.lastReadAt === 'object' &&
+                          novel.lastReadAt !== null &&
+                          '$date' in novel.lastReadAt
+                            ? (novel.lastReadAt as { $date: string }).$date
+                            : novel.lastReadAt ?? ''
+                        );
+                        const now = new Date();
+                        const diffInHours = Math.floor(
+                          (now.getTime() - lastRead.getTime()) / (1000 * 60 * 60)
+                        );
+                        if (diffInHours < 1) return 'Just now';
+                        if (diffInHours < 24) return `${diffInHours}h ago`;
+                        if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+                        return lastRead.toLocaleDateString();
+                      })()}
+                    </span>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+                {/* Status Badge */}
+                {novel.status && (
+                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
+                    <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-1 sm:px-2 py-0.5 sm:py-1">
+                      {novel.status.toUpperCase()}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
