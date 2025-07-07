@@ -12,8 +12,6 @@ function deepBigIntToString(obj: any): any {
 }
 
 export async function GET(req: NextRequest) {
-  console.log('[GET /api/admin/stats] Incoming request');
-
   try {
     // Get current date and calculate date ranges
     const now = new Date();
@@ -115,29 +113,16 @@ export async function GET(req: NextRequest) {
 
     const totalTipsAmount = totalTipsResult._sum.amount || 0;
 
-    // Debug: Print first 5 users and their createdAt types
-    const debugUsers = await prisma.user.findMany({
-      select: { id: true, createdAt: true },
-      take: 5,
-      orderBy: { createdAt: 'asc' }
-    });
-    console.log(
-      '[DEBUG] First 5 users:',
-      debugUsers.map((u) => ({ id: u.id, createdAt: u.createdAt, type: typeof u.createdAt }))
-    );
-
     // Debug: Print users created in the last 30 days
     const recentUsers = await prisma.user.findMany({
       where: { createdAt: { gte: lastMonth } },
       select: { id: true, createdAt: true }
     });
-    console.log('[DEBUG] Users created in last 30 days:', recentUsers);
 
     // Debug: Print count of users matching { createdAt: { $gte: lastMonth } }
     const usersInLastMonthCount = await prisma.user.count({
       where: { createdAt: { gte: lastMonth } }
     });
-    console.log('[DEBUG] Users with createdAt >= lastMonth:', usersInLastMonthCount);
 
     // Prisma-based user growth calculation (last 30 days)
     const usersLastMonth = await prisma.user.findMany({
@@ -184,8 +169,7 @@ export async function GET(req: NextRequest) {
       },
       select: { lastReadAt: true }
     });
-    console.log('[DEBUG] Reading progress last month count:', readingProgressLastMonth.length);
-    console.log('[DEBUG] Reading progress sample:', readingProgressLastMonth.slice(0, 3));
+    console.log('[DEBUG] Most recent lastReadAt values:', readingProgressLastMonth.slice(0, 5));
     // Group by day
     const dailyReadingProgressMap: Record<string, number> = {};
     readingProgressLastMonth.forEach((rp) => {
@@ -197,10 +181,16 @@ export async function GET(req: NextRequest) {
         dailyReadingProgressMap[date] = (dailyReadingProgressMap[date] || 0) + 1;
       }
     });
-    console.log('[DEBUG] Daily reading progress map:', dailyReadingProgressMap);
     const dailyReadingProgress = Object.entries(dailyReadingProgressMap)
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Debug: Check most recent lastReadAt values
+    const recentReadingProgress = await prisma.readingProgress.findMany({
+      orderBy: { lastReadAt: 'desc' },
+      take: 5,
+      select: { lastReadAt: true }
+    });
 
     // Fix total users change calculation
     const totalUsersYesterday = await prisma.user.count({
@@ -228,9 +218,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Get top users by tips given (count and total amount)
-    console.log('[DEBUG] Starting top tippers query...');
-
-    // Get users with their tip counts and total tipped amount using groupBy
     const usersWithTipStats = await prisma.tip.groupBy({
       by: ['userId'],
       _count: {
@@ -246,8 +233,6 @@ export async function GET(req: NextRequest) {
       },
       take: 10
     });
-
-    console.log('[DEBUG] Users with tip stats:', usersWithTipStats);
 
     // Get the actual user data for these users
     const topTippers = await Promise.all(
@@ -270,8 +255,6 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    console.log('[DEBUG] Top tippers final result:', topTippers);
-
     // Get user engagement stats
     const totalReadingProgress = await prisma.$runCommandRaw({
       count: 'reading_progress'
@@ -288,7 +271,6 @@ export async function GET(req: NextRequest) {
       cursor: {},
       pipeline: [{ $match: { createdAt: { $gte: lastMonth } } }, { $count: 'count' }]
     });
-    console.log('[DEBUG] Aggregation count with $runCommandRaw:', aggTest);
 
     // Debug: Aggregation docs with $runCommandRaw
     const aggTestDocs = await prisma.$runCommandRaw({
@@ -300,7 +282,6 @@ export async function GET(req: NextRequest) {
         { $limit: 5 }
       ]
     });
-    console.log('[DEBUG] Aggregation docs with $runCommandRaw:', aggTestDocs);
 
     // Compile statistics
     const stats = {
@@ -333,10 +314,8 @@ export async function GET(req: NextRequest) {
       dailyReadingProgress
     };
 
-    console.log('[GET /api/admin/stats] Returning stats:', stats);
     return NextResponse.json(stats);
   } catch (error) {
-    console.error('[GET /api/admin/stats] Error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
