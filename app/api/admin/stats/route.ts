@@ -115,6 +115,17 @@ export async function GET(req: NextRequest) {
 
     const totalTipsAmount = totalTipsResult._sum.amount || 0;
 
+    // Debug: Print first 5 users and their createdAt types
+    const debugUsers = await prisma.user.findMany({
+      select: { id: true, createdAt: true },
+      take: 5,
+      orderBy: { createdAt: 'asc' }
+    });
+    console.log(
+      '[DEBUG] First 5 users:',
+      debugUsers.map((u) => ({ id: u.id, createdAt: u.createdAt, type: typeof u.createdAt }))
+    );
+
     // Debug: Print users created in the last 30 days
     const recentUsers = await prisma.user.findMany({
       where: { createdAt: { gte: lastMonth } },
