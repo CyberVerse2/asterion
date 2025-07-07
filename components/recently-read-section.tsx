@@ -178,13 +178,13 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
         >
           <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
             <CardContent className="p-0">
-              <div className="relative aspect-[3/4] w-full overflow-hidden">
+              <div className="relative w-full overflow-hidden group rounded-lg">
                 <Image
-                  src={novel.imageUrl || '/placeholder.svg?height=300&width=200'}
+                  src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
                   alt={novel.title}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                  width={600}
+                  height={900}
+                  className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105 lg:aspect-[3/4] aspect-[4/3]"
                   loading="lazy"
                   placeholder="blur"
                   blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
