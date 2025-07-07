@@ -18,7 +18,7 @@ model User {
   novels     String[] // Array of Novel IDs (as strings, for authored novels)
   supporters Supporter[]
   readingProgress ReadingProgress[] // User's reading progress across chapters
-  createdAt  DateTime? @map("createdAt")
+  createdAt  DateTime  @map("createdAt") @default(now())
   updatedAt  DateTime? @map("updatedAt")
   spendLimit Float    @default(100)
   chapterTipAmount Float @default(0.01) // Amount in USDC to tip per chapter
