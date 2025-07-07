@@ -17,10 +17,9 @@ interface NovelWithProgress {
   title: string;
   author: string;
   imageUrl?: string;
-  totalChapters?: string;
+  totalChapters: number;
   status?: string;
   chaptersRead: number;
-  totalChapters: number;
   lastReadAt: string;
   lastReadChapterId: string;
 }
@@ -41,7 +40,6 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
       if (!userId || !novelsMap.size) return;
 
       try {
-
         // Fetch all reading progress for the user
         const response = await fetch(`/api/reading-progress?userId=${userId}`);
         if (!response.ok) throw new Error('Failed to fetch reading progress');
@@ -79,7 +77,11 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
               existing.lastReadChapter = chapterNumber;
               existing.lastReadChapterId = progress.chapterId;
             }
-            if (new Date(progress.lastReadAt) > new Date(existing.lastReadAt)) {
+            // Safely parse dates and handle invalid values
+            const progressDate = progress.lastReadAt ? Date.parse(progress.lastReadAt) : NaN;
+            const existingDate = existing.lastReadAt ? Date.parse(existing.lastReadAt) : NaN;
+
+            if (!isNaN(progressDate) && (isNaN(existingDate) || progressDate > existingDate)) {
               existing.lastReadAt = progress.lastReadAt;
               // Update chapter ID if this is the most recent read
               if (chapterNumber >= existing.lastReadChapter) {
@@ -103,22 +105,22 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
         for (const [novelId, progressInfo] of novelProgressMap) {
           const novel = novelsMap.get(novelId);
           if (novel) {
-            const totalChapters = Number(novel.totalChapters) || novel.chapters?.length || 0;
+            const totalChapters = Number(novel.totalChapters) || 0;
+            const progress =
+              totalChapters > 0 ? ((progressInfo.lastReadChapter ?? 0) / totalChapters) * 100 : 0;
             recentlyReadNovels.push({
               id: novel.id,
               title: novel.title,
               author: novel.author,
               imageUrl: novel.imageUrl,
-              totalChapters: novel.totalChapters,
+              totalChapters: totalChapters,
               status: novel.status,
               chaptersRead: progressInfo.lastReadChapter,
-              totalChapters: totalChapters,
               lastReadAt: progressInfo.lastReadAt,
               lastReadChapterId: progressInfo.lastReadChapterId
             });
           }
         }
-
 
         // Sort by most recently read
         recentlyReadNovels.sort(
@@ -211,7 +213,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                           style={{
                             width: `${
                               novel.totalChapters > 0
-                                ? (novel.chaptersRead / novel.totalChapters) * 100
+                                ? ((novel.chaptersRead ?? 0) / novel.totalChapters) * 100
                                 : 0
                             }%`
                           }}
@@ -224,7 +226,14 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                       <Clock className="h-3 w-3" />
                       <span>
                         {(() => {
-                          const lastRead = new Date(novel.lastReadAt);
+                          console.log('novel.lastReadAt', novel.lastReadAt);
+                          const lastRead = new Date(
+                            typeof novel.lastReadAt === 'object' &&
+                            novel.lastReadAt !== null &&
+                            '$date' in novel.lastReadAt
+                              ? (novel.lastReadAt as { $date: string }).$date
+                              : novel.lastReadAt ?? ''
+                          );
                           const now = new Date();
                           const diffInHours = Math.floor(
                             (now.getTime() - lastRead.getTime()) / (1000 * 60 * 60)
