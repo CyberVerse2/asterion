@@ -757,3 +757,50 @@ The current chapter reading page (`app/novels/[id]/chapters/[chapterId]/page.tsx
 6. **Maintained robust algorithm** - Simple, reliable intersection observer with proper cleanup
 
 The system is now production-ready with proper performance optimizations. Awaiting final user testing and confirmation.
+
+# Background and Motivation
+
+- Move navigation to the bottom, update tab names, reorganize sections, and improve visual style for a modern, mobile-friendly experience.
+
+# Key Changes
+
+1. **Bottom Navigation Bar**
+
+   - Move navigation to the bottom.
+   - Tabs: "Continue" (last read novel), "Ranking" (all novels by rank, with correct image aspect ratio), "History" (full reading history), **"Profile" (links to existing profile page)**.
+   - **Style:** Navigation bar should have curved (rounded) edges for a modern look.
+
+2. **Continue Tab**
+
+   - Shows only the most recently read novel for the user.
+
+3. **Ranking Tab**
+
+   - Lists all novels, sorted by rank.
+   - Each novel uses the same image aspect ratio and style as the novel detail page.
+
+4. **History Tab**
+
+   - Shows the user's full reading history.
+
+5. **Profile Tab**
+   - Links to the existing profile page/component.
+
+# High-level Task Breakdown
+
+- [ ] 1. Move navigation bar to the bottom, update tab names/links, and style with curved edges.
+- [ ] 2. Refactor "Recently Read" section to "Continue" and show only the last read novel.
+- [ ] 3. Create a "Ranking" page/component that lists all novels by rank, using the same image aspect ratio and style as the novel detail page.
+- [ ] 4. Create a "History" page/component that shows the user's full reading history.
+- [ ] 5. Add a Profile tab that links to the existing profile page.
+- [ ] 6. Update navigation links to route to the new/renamed pages.
+- [ ] 7. Test all navigation and data flows.
+
+# Success Criteria
+
+- Navigation bar is at the bottom, has curved edges, and contains "Continue", "Ranking", "History", and "Profile" tabs.
+- "Continue" tab shows only the last read novel for the user.
+- "Ranking" tab shows all novels sorted by rank, with correct image aspect ratio/style.
+- "History" tab shows the user's full reading history.
+- "Profile" tab links to the existing profile page.
+- All navigation works on both desktop and mobile.
