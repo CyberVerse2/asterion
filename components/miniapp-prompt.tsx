@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
+import { useMiniKit, useAddFrame, useNotification } from '@coinbase/onchainkit/minikit';
 import { useUser } from '@/providers/UserProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, Plus, Check } from 'lucide-react';
+import { X, Plus, Check, Bell } from 'lucide-react';
 
 interface MiniappPromptProps {
   onClose?: () => void;
@@ -15,9 +15,11 @@ export default function MiniappPrompt({ onClose }: MiniappPromptProps) {
   const { context, isFrameReady } = useMiniKit();
   const { user } = useUser();
   const addFrame = useAddFrame();
+  const sendNotification = useNotification();
   const [isAdding, setIsAdding] = useState(false);
   const [hasAdded, setHasAdded] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [notificationSent, setNotificationSent] = useState(false);
 
   // Check if user has already added the miniapp
   useEffect(() => {
@@ -47,11 +49,22 @@ export default function MiniappPrompt({ onClose }: MiniappPromptProps) {
           })
         });
 
+        // Send a welcome notification
+        try {
+          await sendNotification({
+            title: 'Welcome to Asterion! 📚',
+            body: "You've successfully added Asterion to your mini apps. Start exploring amazing novels!"
+          });
+          setNotificationSent(true);
+        } catch (notificationError) {
+          console.error('Failed to send notification:', notificationError);
+        }
+
         // Close the prompt after a short delay
         setTimeout(() => {
           setShowPrompt(false);
           onClose?.();
-        }, 2000);
+        }, 3000);
       }
     } catch (error) {
       console.error('Failed to add frame:', error);
@@ -99,6 +112,10 @@ export default function MiniappPrompt({ onClose }: MiniappPromptProps) {
                 <Check className="h-3 w-3 text-green-400" />
                 Discover trending novels
               </li>
+              <li className="flex items-center gap-2">
+                <Bell className="h-3 w-3 text-blue-400" />
+                Receive welcome notification
+              </li>
             </ul>
           </div>
 
@@ -116,7 +133,7 @@ export default function MiniappPrompt({ onClose }: MiniappPromptProps) {
               ) : hasAdded ? (
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4" />
-                  Added!
+                  {notificationSent ? 'Added & Notified!' : 'Added!'}
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
