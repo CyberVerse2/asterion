@@ -525,11 +525,14 @@ export default function IndividualChapterPage() {
   function preprocessContent(raw: string): string {
     // Remove all <h4>...</h4> tags and their content
     let noH4 = raw.replace(/<h4[^>]*>[\s\S]*?<\/h4>/gi, '');
-    // Remove spam message about NovelFire.net
-    noH4 = noH4.replace(
-      /Search the NovelFire\.net website on Google to access chapters of novels early and in the highest quality\./gi,
-      ''
-    );
+    // Remove any <p>...</p> or line containing 'NovelFire.net' (case-insensitive)
+    // Remove <p> tags containing NovelFire.net
+    noH4 = noH4.replace(/<p[^>]*>[^<]*NovelFire\.net[^<]*<\/p>/gi, '');
+    // Remove any remaining lines containing NovelFire.net
+    noH4 = noH4
+      .split(/\n/)
+      .filter((line) => !/NovelFire\.net/i.test(line))
+      .join('\n');
     // If already contains <p> or <h1>, <h2>, <ul>, <ol>, <li>, <blockquote>, assume it's HTML
     if (/<\s*(p|h1|h2|h3|ul|ol|li|blockquote)[^>]*>/i.test(noH4)) {
       return noH4;
@@ -691,6 +694,18 @@ export default function IndividualChapterPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Floating Back Button - Side, vertically centered */}
+      <div className="fixed left-1 md:left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 opacity-40 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
+        <button
+          type="button"
+          onClick={goBackToNovel}
+          className="bg-card border border-border rounded-full p-2 md:p-3 text-gray-400 hover:text-primary hover:bg-primary/10 active:bg-primary/20 focus:bg-primary/20 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation mb-1"
+          aria-label="Back to Novel"
+        >
+          <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
+        </button>
       </div>
 
       {/* Love Animations */}
