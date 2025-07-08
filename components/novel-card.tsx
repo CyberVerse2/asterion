@@ -5,6 +5,7 @@ import { memo } from 'react';
 import { Heart, Users, Star, BookOpen, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
 
 interface NovelCardProps {
   novel: {
@@ -48,7 +49,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProp
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-base text-white truncate group-hover:text-purple-200 transition-colors duration-300">
+              <h3 className="font-bold text-white text-base truncate group-hover:text-purple-200 transition-colors duration-300">
                 {novel.title}
               </h3>
             </div>
@@ -58,11 +59,17 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProp
               {novel.latestChapter?.title || '—'}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <span className="bg-purple-900 text-purple-200 text-[10px] font-semibold rounded px-2 py-0.5">
+              <span className="bg-purple-600 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
                 NEW CH
               </span>
               <span className="text-xs text-gray-400">
-                Update: {novel.latestChapter?.updatedAt || novel.updatedAt || '—'}
+                {(() => {
+                  const dateStr = novel.latestChapter?.updatedAt || novel.updatedAt;
+                  if (dateStr) {
+                    return `Update: ${formatDistanceToNow(new Date(dateStr), { addSuffix: true })}`;
+                  }
+                  return 'Update: —';
+                })()}
               </span>
             </div>
           </div>
