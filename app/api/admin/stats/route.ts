@@ -183,8 +183,6 @@ export async function GET(req: NextRequest) {
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-
-
     // Debug: Check most recent lastReadAt values
     const recentReadingProgress = await prisma.readingProgress.findMany({
       orderBy: { lastReadAt: 'desc' },
@@ -241,7 +239,7 @@ export async function GET(req: NextRequest) {
     const topTippers = await Promise.all(
       usersWithTipStats.map(async (tipData) => {
         const user = await prisma.user.findUnique({
-          where: { id: tipData.userId },
+          where: { id: tipData.userId ?? undefined },
           select: {
             id: true,
             username: true,

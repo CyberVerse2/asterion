@@ -1,3 +1,4 @@
+"use client"
 import useSWR from 'swr';
 
 // Fetcher function for SWR
@@ -6,7 +7,6 @@ const fetcher = (url: string) =>
     if (!res.ok) throw new Error('Failed to fetch');
     return res.json();
   });
-
 // Hook for fetching all novels
 export const useNovels = () => {
   const { data, error, isLoading, mutate } = useSWR('/api/novels', fetcher, {

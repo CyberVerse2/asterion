@@ -1,3 +1,4 @@
+"use client"
 import { useNovels } from '@/hooks/useNovels';
 import Link from 'next/link';
 import Image from 'next/image';
