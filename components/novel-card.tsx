@@ -54,7 +54,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
     }
     return (
       <Link href={`/novels/${novel.id}`}>
-        <div className="flex gap-3 p-2 hover:bg-white/5 transition border border-white/10 bg-[#232336]/90 items-center">
+        <div className="flex gap-3 p-2 hover:bg-white/5 transition bg-[#232336]/90 items-center">
           <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
             <Image
               src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
