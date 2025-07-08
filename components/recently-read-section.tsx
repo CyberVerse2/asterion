@@ -10,6 +10,7 @@ import { useNovels } from '@/hooks/useNovels';
 
 interface RecentlyReadSectionProps {
   userId: string;
+  horizontal?: boolean;
 }
 
 interface NovelWithProgress {
@@ -24,7 +25,7 @@ interface NovelWithProgress {
   lastReadChapterId: string;
 }
 
-export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps) {
+export default function RecentlyReadSection({ userId, horizontal }: RecentlyReadSectionProps) {
   const [recentlyRead, setRecentlyRead] = useState<NovelWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { novels } = useNovels();
@@ -169,12 +170,18 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
           <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
         </Link>
       </div>
-      <div className="flex justify-center gap-4">
+      <div
+        className={
+          horizontal
+            ? 'flex gap-4 overflow-x-auto scrollbar-hide pb-2'
+            : 'flex justify-center gap-4'
+        }
+      >
         {novelsToShow.map((novel) => (
           <Link
             key={novel.id}
             href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
-            className="w-[159px]"
+            className="w-[159px] flex-shrink-0"
           >
             <Card className="w-[159px] h-auto shadow-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-border hover:border-primary/50 group">
               <CardContent className="p-0">

@@ -44,6 +44,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <section className="container mx-auto px-4 py-8">
+        {/* Continue Reading Row (horizontal) */}
+        {user && (
+          <Suspense fallback={<div className="mb-8 h-32 bg-white/5 rounded-lg animate-pulse" />}>
+            <RecentlyReadSection userId={user.id} horizontal />
+          </Suspense>
+        )}
         <h2 className="text-2xl font-bold text-white mb-1">Ranking</h2>
         <p className="text-sm text-muted-foreground mb-6">
           The best ones and users&apos; favorites
