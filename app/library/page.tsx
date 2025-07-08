@@ -6,6 +6,7 @@ import { BookOpen } from 'lucide-react';
 import NovelCard from '@/components/novel-card';
 import { useState } from 'react';
 import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
+import useSWR from 'swr';
 
 export default function LibraryPage() {
   const { user, userLoading } = useUser();
@@ -30,6 +31,11 @@ export default function LibraryPage() {
   }
 
   // Optionally sort/filter based on filter state (not implemented yet)
+
+  // Fetch all reading progress for the user's bookmarks
+  const { data: allProgress } = useSWR(
+    user?.id && bookmarkedNovels.length > 0 ? `/api/reading-progress?userId=${user.id}` : null
+  );
 
   return (
     <div className="container mx-auto px-0 py-4 max-w-2xl">
@@ -65,14 +71,15 @@ export default function LibraryPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {bookmarkedNovels.map((novel: any) => {
-            const { readingProgress } = useNovelReadingProgress(user?.id || null, novel.id);
-            // Calculate overall progress percentage (average or max of all chapters)
+            // Find all progress entries for this novel
+            const novelProgress =
+              allProgress && Array.isArray(allProgress)
+                ? allProgress.filter((p: any) => p.novelId === novel.id)
+                : [];
             let progress = 0;
-            if (readingProgress && readingProgress.length > 0) {
-              const completed = readingProgress.filter(
-                (p: any) => p.progressPercentage >= 95
-              ).length;
-              progress = Math.round((completed / readingProgress.length) * 100);
+            if (novelProgress.length > 0) {
+              const completed = novelProgress.filter((p: any) => p.progressPercentage >= 95).length;
+              progress = Math.round((completed / novelProgress.length) * 100);
             }
             return (
               <NovelCard key={novel.id} novel={novel} libraryStyle={true} progress={progress} />

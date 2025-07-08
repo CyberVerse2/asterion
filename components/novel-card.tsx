@@ -6,6 +6,7 @@ import { Heart, Users, Star, BookOpen, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { Progress } from '@/components/ui/progress';
 
 interface NovelCardProps {
   novel: {
@@ -30,9 +31,10 @@ interface NovelCardProps {
     progress?: string;
   };
   libraryStyle?: boolean;
+  progress?: number;
 }
 
-const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProps) {
+const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: NovelCardProps) {
   if (libraryStyle) {
     // Library style card (horizontal, minimal, like screenshot)
     return (
@@ -56,6 +58,12 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProp
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-xs text-gray-400">Progress : Not yet read.</span>
               </div>
+              {typeof progress === 'number' && progress > 0 && (
+                <div className="mt-1">
+                  <Progress value={progress} className="h-2 bg-white/10" />
+                  <span className="text-[10px] text-gray-400 ml-1">{progress}% complete</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-gray-300 truncate">
                   Latest: Chapter {novel.latestChapter?.chapterNumber || '—'}:{' '}
