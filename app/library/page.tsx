@@ -66,31 +66,33 @@ export default function LibraryPage() {
         </div>
       </div>
       <div className="px-0 py-2 w-full max-w-2xl mx-auto">
-        {userLoading || isLoading ? (
-          <div className="text-gray-400">Loading your bookmarks...</div>
-        ) : bookmarkedNovels.length === 0 ? (
-          <div className="text-gray-400">You have no bookmarked novels yet.</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-2">
-            {bookmarkedNovels.map((novel: any) => {
-              // Find all progress entries for this novel
-              const novelProgress =
-                allProgress && Array.isArray(allProgress)
-                  ? allProgress.filter((p: any) => p.novelId === novel.id)
-                  : [];
-              let progress = 0;
-              if (novelProgress.length > 0) {
-                const completed = novelProgress.filter(
-                  (p: any) => p.progressPercentage >= 95
-                ).length;
-                progress = Math.round((completed / novelProgress.length) * 100);
-              }
-              return (
-                <NovelCard key={novel.id} novel={novel} libraryStyle={true} progress={progress} />
-              );
-            })}
-          </div>
-        )}
+        <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100vh - 90px)' }}>
+          {userLoading || isLoading ? (
+            <div className="text-gray-400">Loading your bookmarks...</div>
+          ) : bookmarkedNovels.length === 0 ? (
+            <div className="text-gray-400">You have no bookmarked novels yet.</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2">
+              {bookmarkedNovels.map((novel: any) => {
+                // Find all progress entries for this novel
+                const novelProgress =
+                  allProgress && Array.isArray(allProgress)
+                    ? allProgress.filter((p: any) => p.novelId === novel.id)
+                    : [];
+                let progress = 0;
+                if (novelProgress.length > 0) {
+                  const completed = novelProgress.filter(
+                    (p: any) => p.progressPercentage >= 95
+                  ).length;
+                  progress = Math.round((completed / novelProgress.length) * 100);
+                }
+                return (
+                  <NovelCard key={novel.id} novel={novel} libraryStyle={true} progress={progress} />
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
