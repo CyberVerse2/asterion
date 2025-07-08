@@ -59,7 +59,7 @@ export default function HomePage() {
           <button
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
               tab === 'trending'
-                ? 'bg-yellow-600 text-white shadow'
+                ? 'bg-primary text-primary-foreground shadow shadow-primary/40'
                 : 'bg-card text-muted-foreground'
             }`}
             onClick={() => setTab('trending')}
@@ -69,7 +69,7 @@ export default function HomePage() {
           <button
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
               tab === 'mostRead'
-                ? 'bg-yellow-600 text-white shadow'
+                ? 'bg-primary text-primary-foreground shadow shadow-primary/40'
                 : 'bg-card text-muted-foreground'
             }`}
             onClick={() => setTab('mostRead')}
@@ -79,7 +79,7 @@ export default function HomePage() {
           <button
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
               tab === 'highestRated'
-                ? 'bg-yellow-600 text-white shadow'
+                ? 'bg-primary text-primary-foreground shadow shadow-primary/40'
                 : 'bg-card text-muted-foreground'
             }`}
             onClick={() => setTab('highestRated')}
@@ -94,7 +94,7 @@ export default function HomePage() {
           <div className="text-red-500">Error: {error.message}</div>
         ) : (
           <>
-            <div className="overflow-x-auto pb-4 scrollbar-hide">
+            <div className="overflow-x-auto pb-4 scrollbar-hide mt-4">
               <div className="flex gap-4" style={{ minWidth: '100%' }}>
                 {(() => {
                   // Distribute novels into columns, each with two rows (vertical)
@@ -112,7 +112,7 @@ export default function HomePage() {
                             className="flex-shrink-0 w-32 flex flex-col items-center group relative"
                           >
                             {/* Gold rank badge */}
-                            <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-yellow-600 text-white text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-yellow-400">
+                            <span className="absolute top-2 left-1/2 -translate-x-1/2 z-30 bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-primary">
                               {Number(row0.rank) || col * 2 + 1}
                             </span>
                             <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
@@ -130,9 +130,12 @@ export default function HomePage() {
                                 {row0.title}
                               </h3>
                               <div className="flex items-center justify-center gap-1 mt-1">
-                                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                <Star className="w-3 h-3 text-primary fill-primary" />
                                 <span className="text-xs text-muted-foreground">
                                   {row0.rating ? Number(row0.rating).toFixed(1) : '5.0'}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  · {row0.totalChapters || 0} ch
                                 </span>
                               </div>
                             </div>
@@ -145,7 +148,7 @@ export default function HomePage() {
                             className="flex-shrink-0 w-32 flex flex-col items-center group relative"
                           >
                             {/* Gold rank badge */}
-                            <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-yellow-600 text-white text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-yellow-400">
+                            <span className="absolute top-2 left-1/2 -translate-x-1/2 z-30 bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-primary">
                               {Number(row1.rank) || col * 2 + 2}
                             </span>
                             <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
@@ -163,9 +166,12 @@ export default function HomePage() {
                                 {row1.title}
                               </h3>
                               <div className="flex items-center justify-center gap-1 mt-1">
-                                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                <Star className="w-3 h-3 text-primary fill-primary" />
                                 <span className="text-xs text-muted-foreground">
                                   {row1.rating ? Number(row1.rating).toFixed(1) : '5.0'}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  · {row1.totalChapters || 0} ch
                                 </span>
                               </div>
                             </div>
