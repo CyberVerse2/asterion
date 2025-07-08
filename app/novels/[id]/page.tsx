@@ -414,10 +414,10 @@ export default function NovelPage() {
             >
               {/* Status and Rank badges */}
               <div className="flex items-center gap-2 mb-3">
-                <Badge className="bg-primary text-primary-foreground border-0 text-xs px-3 py-1 rounded-full">
+                <Badge className="text-xs px-2 py-0.5 rounded border-2 border-primary text-primary bg-transparent font-bold tracking-wide shadow-sm">
                   RANK {novel.rank}
                 </Badge>
-                <Badge className="bg-primary text-primary-foreground border-0 text-xs px-3 py-1 rounded-full">
+                <Badge className="text-xs px-2 py-0.5 rounded border-2 border-primary text-primary bg-transparent font-bold tracking-wide shadow-sm">
                   {novel.status?.toUpperCase()}
                 </Badge>
               </div>
@@ -508,16 +508,19 @@ export default function NovelPage() {
           </div>
 
           {/* Categories */}
-          <div className="bg-card rounded-lg p-4 border border-border">
-            <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
+          <div>
+            <h3 className="text-white font-semibold mb-3 text-lg">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {(novel.genres || []).map((category: string) => (
-                <Badge
+                <Link
                   key={category}
-                  className="bg-white/10 backdrop-blur-md text-white border-0 text-xs px-4 py-2 hover:bg-white/20 transition-all duration-200 cursor-pointer font-normal"
+                  href={`/ranking?genre=${encodeURIComponent(category)}&sort=genre`}
+                  className="no-underline"
                 >
-                  {category}
-                </Badge>
+                  <Badge className="bg-card text-primary border border-border text-xs px-4 py-2 hover:bg-primary/10 transition-all duration-200 cursor-pointer font-normal">
+                    {category}
+                  </Badge>
+                </Link>
               ))}
             </div>
           </div>
