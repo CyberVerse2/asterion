@@ -10,11 +10,15 @@ export default function BottomNav() {
     (pathname.split('/').length === 3 || pathname.split('/').length === 5);
   if (hideNav) return null;
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 border-t border-white/10 rounded-t-2xl shadow-lg backdrop-blur-md">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#181825]/95 border-t border-purple-900/40 rounded-t-3xl shadow-2xl backdrop-blur-xl">
       <div className="container mx-auto px-4 h-16 flex items-center justify-around">
         <Link
           href="/"
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
+          className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
+            pathname === '/'
+              ? 'text-purple-400 bg-purple-900/20'
+              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+          }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -34,7 +38,11 @@ export default function BottomNav() {
         </Link>
         <Link
           href="/ranking"
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
+          className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
+            pathname === '/ranking'
+              ? 'text-purple-400 bg-purple-900/20'
+              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+          }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -54,7 +62,11 @@ export default function BottomNav() {
         </Link>
         <Link
           href="/library"
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
+          className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
+            pathname === '/library'
+              ? 'text-purple-400 bg-purple-900/20'
+              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+          }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -74,7 +86,11 @@ export default function BottomNav() {
         </Link>
         <Link
           href="/profile"
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
+          className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
+            pathname === '/profile'
+              ? 'text-purple-400 bg-purple-900/20'
+              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+          }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

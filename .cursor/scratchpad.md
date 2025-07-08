@@ -810,57 +810,31 @@ The current chapter reading page (`app/novels/[id]/chapters/[chapterId]/page.tsx
 
 The system is now production-ready with proper performance optimizations. Awaiting final user testing and confirmation.
 
-# Background and Motivation
+# High-level Task Breakdown (UI Consistency & Header Backgrounds)
 
-- Move navigation to the bottom, update tab names, reorganize sections, and improve visual style for a modern, mobile-friendly experience.
+1. Refactor Bottom Navigation Bar
 
-# Key Changes
+   - Update background to soft dark (#181825 or similar)
+   - Use purple highlights for active/hover states
+   - Add/adjust rounded corners for modern look
+   - Ensure icon and text colors match new theme
+   - **Success Criteria:** Nav bar visually matches the new theme and is consistent across all pages
 
-1. **Bottom Navigation Bar**
+2. Refactor Ranking Page Cards & Header
 
-   - Move navigation to the bottom.
-   - Tabs: "Continue" (last read novel), "Ranking" (all novels by rank, with correct image aspect ratio), "History" (full reading history), **"Profile" (links to existing profile page)**.
-   - **Style:** Navigation bar should have curved (rounded) edges for a modern look.
+   - Update card backgrounds, borders, and badges to use purple/gray (no green/blue except error)
+   - Ensure spacing, padding, and font sizes match new design
+   - Apply `.ornate-pattern` background only to the "Browse Novels" section header (not full page)
+   - **Success Criteria:** Cards and header match the new theme and use the ornate pattern only in the header
 
-2. **Continue Tab**
+3. Refactor Library Page Header & Cards
 
-   - Shows only the most recently read novel for the user.
+   - Ensure library section header uses `.ornate-pattern` background
+   - Confirm `NovelCard` horizontal style is consistent (spacing, background, badge colors)
+   - **Success Criteria:** Library header uses ornate pattern, cards match the new style
 
-3. **Ranking Tab**
+4. Test All Changes
+   - Test on mobile and desktop for visual consistency
+   - **Success Criteria:** All navigation, cards, and headers are visually consistent and match the new theme
 
-   - Lists all novels, sorted by rank.
-   - Each novel uses the same image aspect ratio and style as the novel detail page.
-
-4. **History Tab**
-
-   - Shows the user's full reading history.
-
-5. **Profile Tab**
-   - Links to the existing profile page/component.
-
-# High-level Task Breakdown
-
-- [ ] 1. Move navigation bar to the bottom, update tab names/links, and style with curved edges.
-- [ ] 2. Refactor "Recently Read" section to "Continue" and show only the last read novel.
-- [ ] 3. Create a "Ranking" page/component that lists all novels by rank, using the same image aspect ratio and style as the novel detail page.
-- [ ] 4. Create a "History" page/component that shows the user's full reading history.
-- [ ] 5. Add a Profile tab that links to the existing profile page.
-- [ ] 6. Update navigation links to route to the new/renamed pages.
-- [ ] 7. Test all navigation and data flows.
-
-# Success Criteria
-
-- Navigation bar is at the bottom, has curved edges, and contains "Continue", "Ranking", "History", and "Profile" tabs.
-- "Continue" tab shows only the last read novel for the user.
-- "Ranking" tab shows all novels sorted by rank, with correct image aspect ratio/style.
-- "History" tab shows the user's full reading history.
-- "Profile" tab links to the existing profile page.
-- All navigation works on both desktop and mobile.
-
-## Project Status Board
-
-- [x] Update status/rank badge colors from green/red to purple/gray in novel-card and recently-read-section for theme consistency
-
-## Executor's Feedback or Assistance Requests
-
-- The global background is now a softer dark (#181825), and the novel detail page has been fully refactored to match the updated, modern, purple-accented UI. All badges, stats, and sticky bar now use the new color palette and spacing. Please review the UI and let me know if further adjustments are needed before marking this task complete.
+- [x] Refactor navigation bar, ranking page header/cards, and library header for theme consistency and header backgrounds
