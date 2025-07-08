@@ -55,13 +55,13 @@ export default function RankingPage() {
     <div className="w-full">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
-        <div className="rounded-2xl ornate-pattern mb-1 max-w-xl mx-auto shadow-lg">
-          <h2 className="text-lg font-semibold text-white mb-1 px-2">Browse Novels</h2>
-          <p className="text-xs text-gray-400 mb-1 px-2">
+        <div className="ornate-pattern bg-[#232336]  pt-1 mb-1 max-w-xl mx-auto shadow-lg">
+          <h2 className="text-lg font-semibold text-white mb-0.5 px-2">Browse Novels</h2>
+          <p className="text-xs text-gray-400 mb-1.5 px-2">
             Discover the most popular web/light novels
           </p>
           {/* Sort buttons row */}
-          <div className="flex gap-2 px-2">
+          <div className="flex gap-2 px-2 pb-1.5">
             <div className="relative flex-1">
               <button
                 className={`w-full border border-gray-500 text-purple-400 bg-zinc-900 rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-between ${

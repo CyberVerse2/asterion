@@ -41,10 +41,10 @@ export default function LibraryPage() {
     <div className="w-full">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
-        <div className="rounded-2xl ornate-pattern mb-1 max-w-2xl mx-auto shadow-lg">
-          <h2 className="text-lg font-semibold text-white mb-1 px-2">Your Library</h2>
-          <p className="text-xs text-gray-400 mb-1 px-2">Keep track of your favourite novels</p>
-          <div className="flex gap-2 px-2 mb-2">
+        <div className="ornate-pattern bg-[#232336]  pt-1 mb-1 max-w-2xl mx-auto shadow-lg">
+          <h2 className="text-lg font-semibold text-white mb-0.5 px-2">Your Library</h2>
+          <p className="text-xs text-gray-400 mb-1.5 px-2">Keep track of your favourite novels</p>
+          <div className="flex gap-2 px-2 mb-2 pb-1.5">
             <Link
               href="/history"
               className="flex-1 bg-zinc-900 border border-gray-600 text-purple-400 rounded-lg px-3 py-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center gap-1"
