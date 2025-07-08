@@ -88,15 +88,13 @@
 }
 
 .category-tag {
-  background: rgba(60, 60, 60, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
+  background: #232336;
+  border: 1px solid #29293a;
 }
 
 .novel-card-dark {
-  background: rgba(30, 30, 30, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: #232336;
+  border: 1px solid #29293a;
 }
 
 /* Love Animation Styles */

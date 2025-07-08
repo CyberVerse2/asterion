@@ -650,12 +650,12 @@ export default function ProfilePage() {
           </div>
 
           {/* Enhanced Profile Header with Background */}
-          <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10 shadow-lg">
+          <div className="relative bg-card/40 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-border shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 rounded-2xl opacity-50"></div>
             <div className="relative flex items-center gap-4 sm:gap-6">
               {/* Avatar Section */}
               <div className="relative">
-                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 flex-shrink-0 ring-2 ring-purple-400/30 shadow-lg">
+                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 flex-shrink-0 ring-2 ring-primary/30 shadow-lg">
                   <AvatarImage
                     src={
                       isWalletOnly
@@ -673,20 +673,20 @@ export default function ProfilePage() {
                   </AvatarFallback>
                 </Avatar>
                 {/* Status indicator */}
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-black/40 shadow-sm"></div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-success/20 rounded-full border-2 border-black/40 shadow-sm"></div>
               </div>
 
               {/* User Info Section */}
               <div className="flex-1 min-w-0 space-y-1 sm:space-y-2">
                 {/* Username */}
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate text-white">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate text-foreground">
                     {typeof profile?.username === 'string' ? profile.username : 'Unknown User'}
                   </h1>
                   {!isWalletOnly && (
                     <Badge
                       variant="secondary"
-                      className="bg-purple-500/20 text-purple-300 border-purple-400/30 text-xs px-2 py-1"
+                      className="bg-primary/20 text-primary border-primary/30 text-xs px-2 py-1"
                     >
                       Farcaster
                     </Badge>
@@ -694,7 +694,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* User Type & Stats */}
-                <div className="flex items-center gap-3 text-sm text-gray-400">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <BookOpen className="h-4 w-4" />
                     Reader
@@ -717,7 +717,7 @@ export default function ProfilePage() {
 
                 {/* Quick Stats */}
                 <div className="flex items-center gap-4 sm:gap-6 pt-1">
-                  <div className="flex items-center gap-1 text-green-400">
+                  <div className="flex items-center gap-1 text-success">
                     <DollarSign className="h-4 w-4" />
                     <span className="text-sm font-medium">
                       $
@@ -745,7 +745,7 @@ export default function ProfilePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all duration-200"
+                  className="bg-card/10 border-border text-foreground hover:bg-card/20 transition-all duration-200"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
@@ -757,51 +757,51 @@ export default function ProfilePage() {
           {/* Visual Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center">
-              <div className="bg-black/40 backdrop-blur-sm px-4 text-sm text-gray-400">
+              <div className="bg-card/40 backdrop-blur-sm px-4 text-sm text-muted-foreground">
                 Activity
               </div>
             </div>
           </div>
 
           {/* Enhanced Tipping History */}
-          <Card className="novel-card-dark border-white/10">
-            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg p-3 space-y-0">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-1 text-white">
+          <Card className="novel-card-dark border-border">
+            <CardHeader className="bg-card/10 rounded-t-lg p-3 space-y-0">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-1 text-foreground">
                 Recent Tips
                 <Badge
                   variant="secondary"
-                  className="ml-auto bg-purple-500/20 text-purple-300 border-purple-400/30"
+                  className="ml-auto bg-primary/20 text-primary border-primary/30"
                 >
                   {Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]).length : 0}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-white/10">
+              <div className="divide-y divide-border">
                 {(Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]) : []).map(
                   (tip, index) => (
                     <div
                       key={index}
-                      className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
+                      className="p-4 hover:bg-card/5 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0 mr-3">
-                          <div className="font-medium text-sm sm:text-base truncate text-white">
+                          <div className="font-medium text-sm sm:text-base truncate text-foreground">
                             {tip.novel?.title || `Novel ID: ${tip.novelId}`}
                           </div>
                           {tip.chapter && (
-                            <div className="text-xs sm:text-sm font-medium text-purple-400 truncate">
+                            <div className="text-xs sm:text-sm font-medium text-primary truncate">
                               {tip.chapter.title}
                             </div>
                           )}
-                          <div className="text-xs text-gray-400 mt-1">
+                          <div className="text-xs text-muted-foreground mt-1">
                             {tip.date ? new Date(tip.date).toLocaleDateString() : 'Unknown date'}
                           </div>
                         </div>
-                        <Badge className="flex items-center flex-shrink-0 bg-green-500/20 text-green-300 border-green-400/30 px-1">
+                        <Badge className="flex items-center flex-shrink-0 bg-success/20 text-success border-success/30 px-1">
                           <DollarSign className="h-3 w-3" />
                           <span className="text-xs">
                             {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
@@ -812,12 +812,14 @@ export default function ProfilePage() {
                   )
                 )}
                 {(!Array.isArray(profile?.tips) || profile.tips.length === 0) && (
-                  <div className="text-center text-gray-400 py-12">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-white/5 rounded-full flex items-center justify-center">
+                  <div className="text-center text-muted-foreground py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-card/5 rounded-full flex items-center justify-center">
                       <Heart className="h-8 w-8 text-gray-500" />
                     </div>
                     <p className="text-sm sm:text-base font-medium">No tips yet</p>
-                    <p className="text-xs text-gray-500 mt-1">Start reading to support authors!</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Start reading to support authors!
+                    </p>
                   </div>
                 )}
               </div>
@@ -827,24 +829,24 @@ export default function ProfilePage() {
           {/* Visual Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center">
-              <div className="bg-black/40 backdrop-blur-sm px-4 text-sm text-gray-400">
+              <div className="bg-card/40 backdrop-blur-sm px-4 text-sm text-muted-foreground">
                 Settings
               </div>
             </div>
           </div>
 
           {/* Enhanced Spend Settings */}
-          <Card className="novel-card-dark border-white/10">
-            <CardHeader className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-t-lg p-3 space-y-0">
-              <CardTitle className="flex items-center gap-1 text-base sm:text-lg text-white">
+          <Card className="novel-card-dark border-border">
+            <CardHeader className="bg-card/10 rounded-t-lg p-3 space-y-0">
+              <CardTitle className="flex items-center gap-1 text-base sm:text-lg text-foreground">
                 Spend Settings
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <Info className="h-4 w-4 text-gray-400 cursor-pointer hover:text-blue-400 transition-colors" />
+                      <Info className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-blue-400 transition-colors" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Control how much USDC the app can spend on your behalf</p>
@@ -858,11 +860,11 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-white">Spend Limit</h3>
-                    <p className="text-xs text-gray-400">Maximum total USDC</p>
+                    <h3 className="font-medium text-foreground">Spend Limit</h3>
+                    <p className="text-xs text-muted-foreground">Maximum total USDC</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-400">$</span>
+                    <span className="text-muted-foreground">$</span>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -870,7 +872,7 @@ export default function ProfilePage() {
                       max={100000}
                       value={spendLimit}
                       onChange={(e) => setSpendLimit(Number(e.target.value))}
-                      className="border border-white/20 rounded-lg px-3 py-2 w-20 text-center text-white bg-black/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      className="border border-border rounded-lg px-3 py-2 w-20 text-center text-foreground bg-card focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                       disabled={saving}
                     />
                   </div>
@@ -884,8 +886,8 @@ export default function ProfilePage() {
                       onClick={() => setSpendLimit(amount)}
                       className={`text-xs px-3 py-1 ${
                         spendLimit === amount
-                          ? 'bg-purple-500/20 border-purple-400/50 text-purple-300'
-                          : 'bg-black/20 border-white/10 text-gray-300 hover:bg-purple-500/10'
+                          ? 'bg-primary/20 border-primary/50 text-primary'
+                          : 'bg-card border-border text-muted-foreground hover:bg-primary/10'
                       }`}
                       disabled={saving}
                     >
@@ -899,11 +901,11 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-white">Tip Amount</h3>
-                    <p className="text-xs text-gray-400">Per chapter tip</p>
+                    <h3 className="font-medium text-foreground">Tip Amount</h3>
+                    <p className="text-xs text-muted-foreground">Per chapter tip</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-400">$</span>
+                    <span className="text-muted-foreground">$</span>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -912,7 +914,7 @@ export default function ProfilePage() {
                       step={0.01}
                       value={chapterTipAmount}
                       onChange={(e) => setChapterTipAmount(Number(e.target.value))}
-                      className="border border-white/20 rounded-lg px-3 py-2 w-20 text-center text-white bg-black/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      className="border border-border rounded-lg px-3 py-2 w-20 text-center text-foreground bg-card focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                       disabled={saving}
                     />
                   </div>
@@ -926,8 +928,8 @@ export default function ProfilePage() {
                       onClick={() => setChapterTipAmount(amount)}
                       className={`text-xs px-3 py-1 ${
                         chapterTipAmount === amount
-                          ? 'bg-purple-500/20 border-purple-400/50 text-purple-300'
-                          : 'bg-black/20 border-white/10 text-gray-300 hover:bg-purple-500/10'
+                          ? 'bg-primary/20 border-primary/50 text-primary'
+                          : 'bg-card border-border text-muted-foreground hover:bg-primary/10'
                       }`}
                       disabled={saving}
                     >
@@ -939,14 +941,14 @@ export default function ProfilePage() {
 
               {/* Status Messages */}
               {saving && (
-                <div className="flex items-center gap-3 text-sm text-blue-400 bg-blue-500/10 border border-blue-400/20 p-3 rounded-lg">
+                <div className="flex items-center gap-3 text-sm text-blue-400 bg-primary/10 border border-primary/30 p-3 rounded-lg">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-400 border-t-transparent"></div>
                   <span>Saving changes...</span>
                 </div>
               )}
 
               {/* Action Button */}
-              <div className="pt-4 border-t border-white/10">
+              <div className="pt-4 border-t border-border">
                 {isFarcasterUser ? (
                   <Button
                     onClick={handleFarcasterApproval}
@@ -966,7 +968,7 @@ export default function ProfilePage() {
                       </div>
                     ) : isApproveTxSuccess ? (
                       <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
+                        <div className="h-4 w-4 rounded-full bg-success flex items-center justify-center">
                           <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 8 8">
                             <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
                           </svg>
@@ -990,7 +992,7 @@ export default function ProfilePage() {
                       </div>
                     ) : approved ? (
                       <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
+                        <div className="h-4 w-4 rounded-full bg-success flex items-center justify-center">
                           <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 8 8">
                             <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
                           </svg>
@@ -1028,8 +1030,8 @@ export default function ProfilePage() {
               )}
 
               {isFarcasterUser && isApproveTxSuccess && (
-                <div className="flex items-center gap-3 text-sm text-green-400 bg-green-500/10 border border-green-400/20 p-3 rounded-lg">
-                  <div className="h-4 w-4 rounded-full bg-green-400 flex items-center justify-center">
+                <div className="flex items-center gap-3 text-sm text-success bg-success/10 border border-success/30 p-3 rounded-lg">
+                  <div className="h-4 w-4 rounded-full bg-success flex items-center justify-center">
                     <svg className="h-2 w-2 text-black" fill="currentColor" viewBox="0 0 8 8">
                       <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z" />
                     </svg>

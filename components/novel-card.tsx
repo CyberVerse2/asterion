@@ -57,7 +57,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
         href={`/novels/${novel.id}`}
         className="flex gap-3 p-2 hover:bg-white/5 transition items-center block"
       >
-        <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+        <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-muted border border-border flex items-center justify-center">
           <Image
             src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
             alt={novel.title}
@@ -69,24 +69,24 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
         </div>
         <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
           <div>
-            <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-white truncate group-hover:text-purple-200 transition-colors duration-300">
+            <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-foreground truncate group-hover:text-primary transition-colors duration-300">
               {novel.title}
             </h3>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-gray-400">Progress : {progressText}</span>
+              <span className="text-xs text-muted-foreground">Progress : {progressText}</span>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs text-gray-300 truncate">
+              <span className="text-xs text-muted-foreground truncate">
                 Latest: Chapter {novel.latestChapter?.chapterNumber || '—'}:{' '}
                 {novel.latestChapter?.title || '—'}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] px-1 py-0 rounded border border-purple-700 text-purple-400 bg-transparent font-semibold">
+            <span className="text-[10px] px-1 py-0 rounded border border-primary text-primary bg-transparent font-semibold">
               NEW CH
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-muted-foreground">
               {(() => {
                 const dateStr = novel.latestChapter?.updatedAt || novel.updatedAt;
                 if (dateStr) {
@@ -105,7 +105,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
 
   return (
     <Link href={`/novels/${novel.id}`}>
-      <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 flex flex-col group">
+      <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-border hover:border-primary/50 flex flex-col group">
         <CardHeader className="p-0">
           <div className="relative aspect-[3/4] w-full overflow-hidden">
             <Image
@@ -121,12 +121,12 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
 
             {/* Top badges */}
             <div className="absolute top-2 right-2 z-10">
-              <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-xs">
+              <Badge className="bg-primary/90 backdrop-blur-sm text-white border-0 text-xs">
                 {novel.status?.toUpperCase()}
               </Badge>
             </div>
             <div className="absolute top-2 left-2 z-10">
-              <Badge className="bg-gray-700/90 backdrop-blur-sm text-white border-0 text-xs">
+              <Badge className="bg-muted/90 backdrop-blur-sm text-white border-0 text-xs">
                 RANK {novel.rank}
               </Badge>
             </div>
@@ -137,7 +137,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
                 {novel.genres.slice(0, 3).map((genre, index) => (
                   <Badge
                     key={index}
-                    className="bg-white/10 backdrop-blur-md text-white border-0 text-xs px-2 py-1"
+                    className="bg-muted/10 backdrop-blur-md text-white border-0 text-xs px-2 py-1"
                   >
                     {genre}
                   </Badge>
@@ -149,10 +149,10 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 rounded-b-lg transition-all duration-300 group-hover:from-black/100 group-hover:via-black/80">
               {/* Title and Author */}
               <div className="mb-3">
-                <h3 className="font-bold text-xl mb-1 line-clamp-2 text-white group-hover:text-purple-200 transition-colors duration-300">
+                <h3 className="font-bold text-xl mb-1 line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300">
                   {novel.title}
                 </h3>
-                <p className="text-xs text-gray-400 mb-2">by {novel.author}</p>
+                <p className="text-xs text-muted-foreground mb-2">by {novel.author}</p>
               </div>
 
               {/* Rating */}
@@ -166,19 +166,19 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
                   ))}
                   <Star className="h-3 w-3 fill-yellow-400/50 text-yellow-400 transition-all duration-300 group-hover:fill-yellow-300/50 group-hover:text-yellow-300" />
                 </div>
-                <span className="text-xs text-gray-300">({rating})</span>
+                <span className="text-xs text-muted-foreground">({rating})</span>
               </div>
 
               {/* Summary */}
-              <p className="text-sm text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-200 transition-colors duration-300">
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-3 group-hover:text-gray-200 transition-colors duration-300">
                 {novel.summary}
               </p>
 
               {/* Stats with better spacing */}
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-border">
                 <div className="flex items-center gap-1">
-                  <BookOpen className="h-3 w-3 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
-                  <span className="text-xs font-medium text-white">
+                  <BookOpen className="h-3 w-3 text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:drop-shadow-sm" />
+                  <span className="text-xs font-medium text-foreground">
                     {(() => {
                       const chaptersNum = Number(novel.totalChapters);
                       if (!isNaN(chaptersNum) && chaptersNum > 0) {
@@ -189,12 +189,12 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
                       return '0K';
                     })()}
                   </span>
-                  <span className="text-xs text-gray-400">chapters</span>
+                  <span className="text-xs text-muted-foreground">chapters</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Eye className="h-3 w-3 text-gray-300 transition-all duration-300 group-hover:text-purple-300 group-hover:drop-shadow-sm" />
-                  <span className="text-xs font-medium text-white">{novel.views || '0'}</span>
-                  <span className="text-xs text-gray-400">views</span>
+                  <Eye className="h-3 w-3 text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:drop-shadow-sm" />
+                  <span className="text-xs font-medium text-foreground">{novel.views || '0'}</span>
+                  <span className="text-xs text-muted-foreground">views</span>
                 </div>
               </div>
             </div>

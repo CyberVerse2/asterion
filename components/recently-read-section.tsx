@@ -144,7 +144,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
         <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Continue Reading</h2>
         <div className="grid grid-cols-1 gap-3 sm:gap-4">
           <div className="animate-pulse">
-            <div className="bg-white/5 rounded-lg p-3 sm:p-4 h-24 sm:h-32"></div>
+            <div className="bg-muted rounded-lg p-3 sm:p-4 h-24 sm:h-32"></div>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
         <h2 className="text-xl sm:text-2xl font-bold text-white">Continue Reading</h2>
         <Link
           href="/history"
-          className="flex items-center gap-1 sm:gap-2 text-purple-400 hover:text-purple-300 transition-colors text-xs sm:text-sm"
+          className="flex items-center gap-1 sm:gap-2 text-primary hover:text-purple-300 transition-colors text-xs sm:text-sm"
         >
           View History
           <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -176,7 +176,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
             href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
             className="w-[159px]"
           >
-            <Card className="w-[159px] h-auto shadow-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
+            <Card className="w-[159px] h-auto shadow-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-border hover:border-primary/50 group">
               <CardContent className="p-0">
                 <div className="relative w-[159px] h-[200px] overflow-hidden group rounded-lg mx-auto shadow-2xl">
                   <Image
@@ -191,7 +191,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                   />
                   {novel.status && (
                     <div className="absolute top-2 right-2 z-20">
-                      <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-[10px] px-1.5 py-0.5">
+                      <Badge className="bg-primary/90 backdrop-blur-sm text-white border-0 text-[10px] px-1.5 py-0.5">
                         {novel.status.toUpperCase()}
                       </Badge>
                     </div>
@@ -208,7 +208,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                   {/* Overlay content */}
                   <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 z-10">
                     <h3
-                      className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-white group-hover:text-purple-200 transition-colors duration-300"
+                      className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-foreground group-hover:text-purple-200 transition-colors duration-300"
                       style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
                     >
                       {novel.title}
@@ -217,19 +217,19 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                     <div className="mb-2 sm:mb-3">
                       <div className="flex items-center justify-between mb-1">
                         <span
-                          className="text-xs text-gray-300"
+                          className="text-xs text-muted-foreground"
                           style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
                         >
                           Progress
                         </span>
                         <span
-                          className="text-xs font-medium text-purple-400"
+                          className="text-xs font-medium text-primary"
                           style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
                         >
                           {novel.chaptersRead}/{novel.totalChapters}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-700/50 rounded-full h-1.5">
+                      <div className="w-full bg-muted rounded-full h-1.5">
                         <div
                           className="bg-gradient-to-r from-purple-500 to-purple-400 h-1.5 rounded-full transition-all duration-300"
                           style={{
@@ -248,7 +248,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                     </div>
                     {/* Last Read Time */}
                     <div
-                      className="flex items-center gap-1 text-xs text-gray-400"
+                      className="flex items-center gap-1 text-xs text-muted-foreground"
                       style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
                     >
                       <Clock className="h-3 w-3" />

@@ -41,19 +41,21 @@ export default function LibraryPage() {
     <div className="w-full">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
-        <div className="ornate-pattern bg-[#232336] pt-1 max-w-2xl mx-auto shadow-lg">
-          <h2 className="text-lg font-semibold text-white mb-0.5 px-2">Your Library</h2>
-          <p className="text-xs text-gray-400 mb-1.5 px-2">Keep track of your favourite novels</p>
+        <div className="ornate-pattern bg-card pt-1 max-w-2xl mx-auto shadow-lg">
+          <h2 className="text-lg font-semibold text-foreground mb-0.5 px-2">Your Library</h2>
+          <p className="text-xs text-muted-foreground mb-1.5 px-2">
+            Keep track of your favourite novels
+          </p>
           <div className="flex gap-2 px-2 mb-2 pb-1.5">
             <Link
               href="/history"
-              className="flex-1 bg-zinc-900 border border-gray-600 text-purple-400 rounded-lg px-3 py-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center gap-1"
+              className="flex-1 bg-muted border border-border text-primary rounded-lg px-3 py-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center gap-1"
             >
               <BookOpen className="h-4 w-4 mr-1" />
               History
             </Link>
             <button
-              className="flex-1 w-full border border-gray-500 text-purple-400 bg-zinc-900 rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center"
+              className="flex-1 w-full border border-border text-primary bg-muted rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center"
               onClick={() => {
                 const idx = filterOptions.indexOf(filter);
                 setFilter(filterOptions[(idx + 1) % filterOptions.length]);
@@ -71,11 +73,11 @@ export default function LibraryPage() {
           style={{ maxHeight: 'calc(100vh - 90px)' }}
         >
           {userLoading || isLoading ? (
-            <div className="text-gray-400">Loading your bookmarks...</div>
+            <div className="text-muted-foreground">Loading your bookmarks...</div>
           ) : bookmarkedNovels.length === 0 ? (
-            <div className="text-gray-400">You have no bookmarked novels yet.</div>
+            <div className="text-muted-foreground">You have no bookmarked novels yet.</div>
           ) : (
-            <div className="divide-y divide-white/20 bg-[#232336]/90 rounded-2xl shadow-lg">
+            <div className="divide-y divide-white/20 bg-card/90 rounded-2xl shadow-lg">
               {bookmarkedNovels.map((novel: any) => {
                 // Find all progress entries for this novel
                 const novelProgress =

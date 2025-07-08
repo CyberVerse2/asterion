@@ -444,7 +444,7 @@ export default function NovelPage() {
           </div>
 
           {/* Stats Section - Under the image */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10">
+          <div className="bg-[#232336]/90 shadow-2xl rounded-lg p-6 border border-white/10">
             <div className="grid grid-cols-4 gap-8">
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
@@ -485,11 +485,11 @@ export default function NovelPage() {
         {/* Right Column - Content */}
         <div className="lg:col-span-3 space-y-6">
           {/* Synopsis */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white font-semibold text-lg">Synopsis</h3>
+          <div className="bg-[#232336]/90 rounded-lg px-3 py-1 border border-white/10">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-white font-semibold text-base">Synopsis</h3>
               <Button
-                className="bg-transparent text-gray-400 hover:text-white hover:bg-white/10 p-2 transition-all duration-200"
+                className="bg-transparent text-sm text-gray-400 hover:text-white hover:bg-white/10 p-2 pr-0 transition-all duration-200"
                 onClick={toggleSummary}
               >
                 {showSummary ? 'LESS ↑' : 'MORE →'}
@@ -505,7 +505,7 @@ export default function NovelPage() {
           </div>
 
           {/* Categories */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+          <div className="bg-[#232336]/90 rounded-lg p-4 border border-white/10">
             <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {(novel.genres || []).map((category: string) => (
@@ -521,27 +521,59 @@ export default function NovelPage() {
 
           {/* Top Supporters */}
           {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-              <h3 className="text-white font-semibold mb-4 text-lg flex items-center gap-2">
+            <section className="mt-6">
+              <h3 className="text-white font-semibold mb-3 text-lg flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-purple-400" />
-                Top Supporters
+                Top Tippers
               </h3>
-              <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
                 {novel.supporters.map((supporter: any, index: number) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer"
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full bg-[#232336] border border-white/10 text-white text-xs font-medium ${
+                      index === 0
+                        ? 'border-purple-400/60 bg-purple-900/60 text-purple-200 shadow-md'
+                        : ''
+                    }`}
                   >
-                    <span className="font-medium text-white text-sm">{supporter.username}</span>
-                    <div className="text-right">
-                      <div className="font-medium text-purple-400 text-sm">
-                        ${supporter.totalTipped.toFixed(2)}
+                    {/* Animated, gradient, glowing star for top tipper */}
+                    {index === 0 && (
+                      <svg
+                        className="w-4 h-4 mr-1 animate-bounce"
+                        viewBox="0 0 20 20"
+                        fill="url(#gold-gradient)"
+                        style={{ filter: 'drop-shadow(0 0 6px #facc15)' }}
+                      >
+                        <defs>
+                          <linearGradient id="gold-gradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#fffbe6" />
+                            <stop offset="50%" stopColor="#facc15" />
+                            <stop offset="100%" stopColor="#b45309" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z" />
+                      </svg>
+                    )}
+                    {/* Avatar or fallback */}
+                    {supporter.avatarUrl ? (
+                      <img
+                        src={supporter.avatarUrl}
+                        alt={supporter.username}
+                        className="w-5 h-5 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px] font-bold uppercase">
+                        {supporter.username?.[0] || '?'}
                       </div>
-                    </div>
+                    )}
+                    <span>{supporter.username}</span>
+                    <span className="ml-1 text-purple-300 font-bold">
+                      ${supporter.totalTipped.toFixed(2)}
+                    </span>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </div>
       </div>

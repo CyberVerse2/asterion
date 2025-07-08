@@ -838,3 +838,42 @@ The system is now production-ready with proper performance optimizations. Awaiti
    - **Success Criteria:** All navigation, cards, and headers are visually consistent and match the new theme
 
 - [x] Refactor navigation bar, ranking page header/cards, and library header for theme consistency and header backgrounds
+
+# Theme/Style Consistency Audit (June 2024)
+
+## Summary of Findings
+
+- **Glassmorphism/Blur:** Legacy classes like `.stats-card`, `.category-tag`, `.novel-card-dark` use rgba backgrounds, blur, and semi-transparent borders. These should be removed or replaced with solid backgrounds for theme consistency (except for the stats card if desired).
+- **Direct Color Usage:** Many components use direct color values (e.g., `bg-[#232336]/90`, `bg-black/40`, `bg-white/5`, etc.) instead of theme variables or Tailwind theme classes.
+- **Border/Shadow Inconsistencies:** Cards and overlays use `border-white/10`, `border-purple-400/30`, `shadow-lg`, etc. These should be standardized.
+- **Text Color Inconsistencies:** Usage of `text-gray-400`, `text-white`, `text-purple-300`, etc. should be replaced with theme classes.
+- **Badge/Status/Progress Colors:** Some badges/status indicators use non-theme colors.
+- **Button/Pill Styles:** Some use direct color or semi-transparent backgrounds.
+- **Category/Tag Styles:** `.category-tag` uses glassmorphism.
+- **Profile Status Indicator:** Uses `bg-green-500` (allowed for status, but check usage).
+- **Global CSS Variables:** Two sets of theme variables exist; ensure a single source of truth.
+
+## High-level Task Breakdown (Theme Consistency)
+
+- [x] Remove or refactor all glassmorphism/blur classes except for the stats card if desired.
+  - .novel-card-dark and .category-tag now use solid backgrounds and standard borders. .stats-card left as is for now (per design feedback).
+- [ ] Replace all direct color usages in components with theme variables or Tailwind theme classes.
+- [ ] Standardize all borders, shadows, and text colors to use theme classes.
+- [ ] Audit all badges, pills, and status indicators for color consistency.
+- [ ] Ensure only one set of global theme variables is used and referenced everywhere.
+- [ ] Test all major pages (library, ranking, novel, chapter, profile) for visual consistency.
+
+# Project Status Board
+
+- [x] Remove or refactor all glassmorphism/blur classes except for the stats card if desired.
+  - .novel-card-dark and .category-tag now use solid backgrounds and standard borders. .stats-card left as is for now (per design feedback).
+- [ ] Replace all direct color usages in components with theme variables or Tailwind theme classes.
+- [ ] Standardize all borders, shadows, and text colors to use theme classes.
+- [ ] Audit all badges, pills, and status indicators for color consistency.
+- [ ] Ensure only one set of global theme variables is used and referenced everywhere.
+- [ ] Test all major pages (library, ranking, novel, chapter, profile) for visual consistency.
+
+# Executor's Feedback or Assistance Requests
+
+- ✅ Refactored .novel-card-dark and .category-tag to remove glassmorphism/blur styles. Both now use solid backgrounds and standard borders. .stats-card left as is for now (per design feedback).
+- Proceeding to the next task: Replace all direct color usages in components with theme variables or Tailwind theme classes.
