@@ -859,8 +859,8 @@ The system is now production-ready with proper performance optimizations. Awaiti
 
 ## Project Status Board
 
-- [x] Reduce the size and font weight of the novel title on mobile, keeping the current size and weight on larger screens. (awaiting user review)
+- [x] Increase the space between the title and status/chapters row by adding mb-2 to the title. (awaiting user review)
 
 ## Executor's Feedback or Assistance Requests
 
-- The novel title is now smaller and less bold on mobile, but remains as before on larger screens. Please review the UI and confirm if it matches your expectations before marking this task as complete.
+- The space between the title and the status/chapters row has been increased. Please review the UI and confirm if it matches your expectations before marking this task as complete.
