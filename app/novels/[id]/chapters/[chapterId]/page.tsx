@@ -13,8 +13,6 @@ import {
   formatReadingProgress,
   getLastReadTimestamp
 } from '@/hooks/useReadingProgress';
-import { useSpendPermissionGuard } from '@/hooks/use-spend-permission-guard';
-import SpendPermissionRequired from '@/components/spend-permission-required';
 import LoveAnimation from '@/components/love-animation';
 import ChapterListModal from '@/components/chapter-list-modal';
 
@@ -66,9 +64,6 @@ export default function IndividualChapterPage() {
   const chapterId = params.chapterId as string;
   const startFromTop = searchParams.get('startFromTop') === 'true';
   const disableRestore = searchParams.get('noRestore') === 'true';
-
-  // Spend permission guard hook
-  const { isModalOpen, checkPermissionAndProceed, closeModal } = useSpendPermissionGuard();
 
   // Chapter state
   const [chapter, setChapter] = useState<Chapter | null>(null);
@@ -477,43 +472,33 @@ export default function IndividualChapterPage() {
   // Navigation handlers
   const goToPrevious = async () => {
     if (previousChapter) {
-      const proceedWithNavigation = async () => {
-        // Save current reading progress before navigating
-        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
-          await saveProgress({
-            userId: (user as any)?.id,
-            chapterId,
-            currentLine,
-            totalLines,
-            scrollPosition: currentLine
-          });
-        }
-        router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
-      };
-
-      // Check permission before navigating
-      checkPermissionAndProceed(user, proceedWithNavigation);
+      // Save current reading progress before navigating
+      if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
+        await saveProgress({
+          userId: (user as any)?.id,
+          chapterId,
+          currentLine,
+          totalLines,
+          scrollPosition: currentLine
+        });
+      }
+      router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
     }
   };
 
   const goToNext = async () => {
     if (nextChapter) {
-      const proceedWithNavigation = async () => {
-        // Save current reading progress before navigating
-        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
-          await saveProgress({
-            userId: (user as any)?.id,
-            chapterId,
-            currentLine,
-            totalLines,
-            scrollPosition: currentLine
-          });
-        }
-        router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
-      };
-
-      // Check permission before navigating
-      checkPermissionAndProceed(user, proceedWithNavigation);
+      // Save current reading progress before navigating
+      if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
+        await saveProgress({
+          userId: (user as any)?.id,
+          chapterId,
+          currentLine,
+          totalLines,
+          scrollPosition: currentLine
+        });
+      }
+      router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
     }
   };
 
@@ -695,9 +680,6 @@ export default function IndividualChapterPage() {
         novelId={novelId}
         currentChapterId={chapterId}
       />
-
-      {/* Spend Permission Required Modal */}
-      <SpendPermissionRequired isOpen={isModalOpen} onClose={closeModal} user={user} />
     </div>
   );
 }
