@@ -66,13 +66,16 @@ export default function LibraryPage() {
         </div>
       </div>
       <div className="px-0 py-2 w-full max-w-2xl mx-auto">
-        <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100vh - 90px)' }}>
+        <div
+          className="overflow-y-auto scrollbar-hide pb-24"
+          style={{ maxHeight: 'calc(100vh - 90px)' }}
+        >
           {userLoading || isLoading ? (
             <div className="text-gray-400">Loading your bookmarks...</div>
           ) : bookmarkedNovels.length === 0 ? (
             <div className="text-gray-400">You have no bookmarked novels yet.</div>
           ) : (
-            <div className="grid grid-cols-1 gap-2 ">
+            <div className="divide-y divide-white/20 bg-[#232336]/90 rounded-2xl shadow-lg">
               {bookmarkedNovels.map((novel: any) => {
                 // Find all progress entries for this novel
                 const novelProgress =

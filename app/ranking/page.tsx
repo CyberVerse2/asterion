@@ -136,8 +136,11 @@ export default function RankingPage() {
         </div>
       </div>
       <div className="max-w-xl mx-auto">
-        <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100vh - 90px)' }}>
-          <div className="divide-y divide-white/10 bg-[#232336]/90 rounded-2xl shadow-lg overflow-hidden mt-4">
+        <div
+          className="overflow-y-auto scrollbar-hide pb-24"
+          style={{ maxHeight: 'calc(100vh - 90px)' }}
+        >
+          <div className="divide-y divide-white/20 bg-[#232336]/90 rounded-2xl shadow-lg mt-4">
             {filteredNovels.map((novel, idx) => (
               <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
                 <div className="flex gap-3 p-2 hover:bg-white/5 transition">

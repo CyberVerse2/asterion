@@ -53,47 +53,48 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
       progressText = `Chapter 1 / ${novel.chapters.length}`;
     }
     return (
-      <Link href={`/novels/${novel.id}`}>
-        <div className="flex gap-3 p-2 hover:bg-white/5 transition bg-[#232336]/90  items-center">
-          <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
-            <Image
-              src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
-              alt={novel.title}
-              width={96}
-              height={120}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-          <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
-            <div>
-              <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-white truncate group-hover:text-purple-200 transition-colors duration-300">
-                {novel.title}
-              </h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-400">Progress : {progressText}</span>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-gray-300 truncate">
-                  Latest: Chapter {novel.latestChapter?.chapterNumber || '—'}:{' '}
-                  {novel.latestChapter?.title || '—'}
-                </span>
-              </div>
+      <Link
+        href={`/novels/${novel.id}`}
+        className="flex gap-3 p-2 hover:bg-white/5 transition items-center block"
+      >
+        <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+          <Image
+            src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
+            alt={novel.title}
+            width={96}
+            height={120}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+        <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
+          <div>
+            <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-white truncate group-hover:text-purple-200 transition-colors duration-300">
+              {novel.title}
+            </h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-gray-400">Progress : {progressText}</span>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] px-1 py-0 rounded border border-purple-700 text-purple-400 bg-transparent font-semibold">
-                NEW CH
-              </span>
-              <span className="text-xs text-gray-400">
-                {(() => {
-                  const dateStr = novel.latestChapter?.updatedAt || novel.updatedAt;
-                  if (dateStr) {
-                    return `Update: ${formatDistanceToNow(new Date(dateStr), { addSuffix: true })}`;
-                  }
-                  return 'Update: —';
-                })()}
+              <span className="text-xs text-gray-300 truncate">
+                Latest: Chapter {novel.latestChapter?.chapterNumber || '—'}:{' '}
+                {novel.latestChapter?.title || '—'}
               </span>
             </div>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[10px] px-1 py-0 rounded border border-purple-700 text-purple-400 bg-transparent font-semibold">
+              NEW CH
+            </span>
+            <span className="text-xs text-gray-400">
+              {(() => {
+                const dateStr = novel.latestChapter?.updatedAt || novel.updatedAt;
+                if (dateStr) {
+                  return `Update: ${formatDistanceToNow(new Date(dateStr), { addSuffix: true })}`;
+                }
+                return 'Update: —';
+              })()}
+            </span>
           </div>
         </div>
       </Link>
