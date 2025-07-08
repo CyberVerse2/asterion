@@ -181,17 +181,17 @@ export default function RecentlyReadSection({ userId, horizontal }: RecentlyRead
           <Link
             key={novel.id}
             href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
-            className="w-[159px] flex-shrink-0"
+            className="w-32 flex-shrink-0"
           >
-            <Card className="w-[159px] h-auto shadow-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-border hover:border-primary/50 group">
+            <Card className="w-32 h-auto shadow-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-border hover:border-primary/50 group">
               <CardContent className="p-0">
-                <div className="relative w-[159px] h-[200px] overflow-hidden group rounded-lg mx-auto shadow-2xl">
+                <div className="relative w-32 h-44 overflow-hidden group rounded-lg mx-auto shadow-2xl">
                   <Image
                     src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
                     alt={novel.title}
-                    width={159}
-                    height={200}
-                    className="w-[159px] h-[200px] object-contain transition-transform duration-300 group-hover:scale-105 bg-black"
+                    width={160}
+                    height={224}
+                    className="w-32 h-44 object-contain transition-transform duration-300 group-hover:scale-105 bg-black"
                     loading="lazy"
                     placeholder="blur"
                     blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="

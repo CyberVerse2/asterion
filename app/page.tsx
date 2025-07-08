@@ -93,41 +93,92 @@ export default function HomePage() {
         ) : error ? (
           <div className="text-red-500">Error: {error.message}</div>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-            {sortedNovels.slice(0, 20).map((novel, idx) => (
-              <Link
-                key={novel.id}
-                href={`/novels/${novel.id}`}
-                className="flex-shrink-0 w-32 sm:w-40 flex flex-col items-center group relative"
-              >
-                {/* Gold rank badge */}
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-yellow-600 text-white text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-yellow-400">
-                  {Number(novel.rank) || idx + 1}
-                </span>
-                <div className="w-32 h-44 sm:w-40 sm:h-56 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
-                  <Image
-                    src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
-                    alt={novel.title}
-                    width={160}
-                    height={224}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="w-full text-center">
-                  <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-300">
-                    {novel.title}
-                  </h3>
-                  <div className="flex items-center justify-center gap-1 mt-1">
-                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                    <span className="text-xs text-muted-foreground">
-                      {novel.rating ? Number(novel.rating).toFixed(1) : '5.0'}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="overflow-x-auto pb-4 scrollbar-hide">
+              <div className="flex gap-4" style={{ minWidth: '100%' }}>
+                {(() => {
+                  // Distribute novels into columns, each with two rows (vertical)
+                  const columns = [];
+                  const maxCols = Math.ceil(Math.min(sortedNovels.length, 20) / 2);
+                  for (let col = 0; col < maxCols; col++) {
+                    const row0 = sortedNovels[col * 2];
+                    const row1 = sortedNovels[col * 2 + 1];
+                    columns.push(
+                      <div key={col} className="flex flex-col gap-4">
+                        {row0 && (
+                          <Link
+                            key={row0.id}
+                            href={`/novels/${row0.id}`}
+                            className="flex-shrink-0 w-32 flex flex-col items-center group relative"
+                          >
+                            {/* Gold rank badge */}
+                            <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-yellow-600 text-white text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-yellow-400">
+                              {Number(row0.rank) || col * 2 + 1}
+                            </span>
+                            <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
+                              <Image
+                                src={row0.imageUrl || '/placeholder.svg?height=600&width=450'}
+                                alt={row0.title}
+                                width={160}
+                                height={224}
+                                className="w-32 h-44 object-contain"
+                                loading="lazy"
+                              />
+                            </div>
+                            <div className="w-full text-center">
+                              <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-300">
+                                {row0.title}
+                              </h3>
+                              <div className="flex items-center justify-center gap-1 mt-1">
+                                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                <span className="text-xs text-muted-foreground">
+                                  {row0.rating ? Number(row0.rating).toFixed(1) : '5.0'}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        )}
+                        {row1 && (
+                          <Link
+                            key={row1.id}
+                            href={`/novels/${row1.id}`}
+                            className="flex-shrink-0 w-32 flex flex-col items-center group relative"
+                          >
+                            {/* Gold rank badge */}
+                            <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-yellow-600 text-white text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-yellow-400">
+                              {Number(row1.rank) || col * 2 + 2}
+                            </span>
+                            <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
+                              <Image
+                                src={row1.imageUrl || '/placeholder.svg?height=600&width=450'}
+                                alt={row1.title}
+                                width={160}
+                                height={224}
+                                className="w-32 h-44 object-contain"
+                                loading="lazy"
+                              />
+                            </div>
+                            <div className="w-full text-center">
+                              <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-300">
+                                {row1.title}
+                              </h3>
+                              <div className="flex items-center justify-center gap-1 mt-1">
+                                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                <span className="text-xs text-muted-foreground">
+                                  {row1.rating ? Number(row1.rating).toFixed(1) : '5.0'}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  }
+                  return columns;
+                })()}
+              </div>
+            </div>
+          </>
         )}
       </section>
 
