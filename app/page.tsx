@@ -141,13 +141,12 @@ export default function HomePage() {
                               </svg>
                               {Number(row0.rank) || col * 2 + 1}
                             </span>
-                            <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
+                            <div className="w-32 aspect-[3/4] rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
                               <Image
                                 src={row0.imageUrl || '/placeholder.svg?height=600&width=450'}
                                 alt={row0.title}
-                                width={160}
-                                height={230}
-                                className="w-32 h-44 object-contain"
+                                fill
+                                className="object-cover w-full h-full"
                                 loading="lazy"
                               />
                             </div>
@@ -208,13 +207,12 @@ export default function HomePage() {
                               </svg>
                               {Number(row1.rank) || col * 2 + 2}
                             </span>
-                            <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
+                            <div className="w-32 aspect-[3/4] rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
                               <Image
                                 src={row1.imageUrl || '/placeholder.svg?height=600&width=450'}
                                 alt={row1.title}
-                                width={160}
-                                height={224}
-                                className="w-32 h-44 object-contain"
+                                fill
+                                className="object-cover w-full h-full"
                                 loading="lazy"
                               />
                             </div>

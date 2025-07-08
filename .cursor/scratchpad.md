@@ -947,3 +947,11 @@ The system is now production-ready with proper performance optimizations. Awaiti
 ## Executor's Feedback or Assistance Requests
 
 - The Continue Reading section has been restored to the previous design as requested. All recently read novels are shown, using the old card layout with the progress bar and progress label. Awaiting user review and feedback before marking this task as complete.
+
+## Project Status Board
+
+- [x] Review MiniappPrompt logic to ensure it only shows when user is loaded, has not added the miniapp, and isFrameReady is true (Farcaster mini app environment)
+
+## Executor's Feedback or Assistance Requests
+
+- The MiniappPrompt logic has been reviewed and confirmed: it only shows when the user is loaded, has not added the miniapp, and isFrameReady is true (i.e., running in the Farcaster mini app environment). No code changes needed unless you want to override for local testing. Please confirm if this matches your requirements or if you need further adjustments.
