@@ -64,11 +64,25 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { fid, username, pfpUrl, walletAddress, usernames } = await req.json();
+    const { fid, username, pfpUrl, walletAddress, usernames, userIds } = await req.json();
 
-    // Batch user profile fetch
+    // Batch user profile fetch by userIds
+    if (Array.isArray(userIds)) {
+      const users = await prisma.user.findMany({
+        where: {
+          id: { in: userIds }
+        },
+        select: {
+          id: true,
+          username: true,
+          pfpUrl: true
+        }
+      });
+      return NextResponse.json(users);
+    }
+
+    // Batch user profile fetch by usernames (case-insensitive)
     if (Array.isArray(usernames)) {
-      // Fetch all users by username (case-insensitive)
       const users = await prisma.user.findMany({
         where: {
           username: {
