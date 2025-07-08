@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { BookOpen, ArrowLeft, RefreshCw, SortAsc, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export default function ChapterListPage() {
   const params = useParams();
@@ -98,8 +99,8 @@ export default function ChapterListPage() {
       </div>
 
       <div className="mb-6">
-        <input
-          className="w-full rounded-lg bg-card border border-border focus:border-purple-400/50 transition-colors"
+        <Input
+          className="w-full h-12 text-base rounded-lg bg-card border border-border focus:border-purple-400/50 transition-colors px-4 py-3"
           placeholder="Search with chapter no or title"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -129,7 +130,7 @@ export default function ChapterListPage() {
               </span>
               <Link
                 href={`/novels/${params.id}/chapters/${chapter.id}`}
-                className="flex-1 text-foreground hover:text-primary font-medium truncate text-base lg:text-lg"
+                className="flex-1 text-foreground hover:text-primary font-medium text-base lg:text-lg text-left"
               >
                 {chapter.title}
               </Link>

@@ -10,6 +10,7 @@ import { useUser } from '@/providers/UserProvider';
 import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 import { useSpendPermissionGuard } from '@/hooks/use-spend-permission-guard';
 import SpendPermissionRequired from '@/components/spend-permission-required';
+import { Input } from '@/components/ui/input';
 
 interface ChapterListModalProps {
   isOpen: boolean;
@@ -34,6 +35,8 @@ export default function ChapterListModal({
   const { user } = useUser();
   const { chapters, isLoading } = useChapters(novelId);
   const { readingProgress } = useNovelReadingProgress((user as any)?.id, novelId);
+
+  const [search, setSearch] = useState('');
 
   // Spend permission guard hook
   const {
@@ -68,6 +71,15 @@ export default function ChapterListModal({
     return percentage >= 95;
   };
 
+  const filteredChapters =
+    chapters && chapters.length > 0 && search.trim()
+      ? chapters.filter(
+          (ch: Chapter) =>
+            ch.title.toLowerCase().includes(search.toLowerCase()) ||
+            String(ch.chapterNumber).includes(search.trim())
+        )
+      : chapters;
+
   if (!isOpen) return null;
 
   return (
@@ -88,15 +100,23 @@ export default function ChapterListModal({
           </Button>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="p-4 pb-0">
+            <Input
+              className="w-full h-11 text-base rounded-lg bg-card border border-border focus:border-purple-400/50 transition-colors px-4 py-3 mb-2"
+              placeholder="Search chapters..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <div className="max-h-[30vh] overflow-y-auto">
             {isLoading ? (
               <div className="p-6 text-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-4"></div>
                 Loading chapters...
               </div>
-            ) : chapters && chapters.length > 0 ? (
+            ) : filteredChapters && filteredChapters.length > 0 ? (
               <div className="space-y-1 p-4">
-                {chapters.map((chapter: Chapter) => {
+                {filteredChapters.map((chapter: Chapter) => {
                   const progress = getChapterProgress(chapter.id);
                   const progressPercentage = getProgressPercentage(chapter.id);
                   const isCompleted = isChapterCompleted(chapter.id);

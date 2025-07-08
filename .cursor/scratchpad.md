@@ -888,3 +888,14 @@ The system is now production-ready with proper performance optimizations. Awaiti
 - The background for both Ranking and Library pages now uses bg-background min-h-screen, ensuring full-viewport ultra-dark consistency.
 - The status badge in the Ranking page now matches the 'NEW CH' style (border, text, and background) from the Library card.
 - Please review visually and confirm if this resolves the issues before marking these tasks as fully complete.
+
+- [x] Make the search bar in the chapters page and chapter list modal thicker and visually consistent (h-12/h-11, text-base, more padding)
+- [x] Add a search bar to the chapter list modal (with filtering)
+- [x] Left-align the chapter title in the chapter cards on the chapters page
+
+## Executor's Feedback or Assistance Requests
+
+- The search bar in both the chapters page and the chapter list modal is now thicker, more visually consistent, and uses the Input component with proper padding and font size.
+- The chapter list modal now includes a search bar at the top, filtering chapters by title or number.
+- Chapter titles in the chapters page are now left-aligned for better readability.
+- Please review visually and confirm if this resolves the issues before marking these tasks as fully complete.
