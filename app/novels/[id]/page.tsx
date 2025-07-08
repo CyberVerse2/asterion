@@ -605,6 +605,51 @@ export default function NovelPage() {
         </div>
       </div>
 
+      {/* Latest Chapters Section */}
+      {Array.isArray(chapters) && chapters.length > 0 && (
+        <section className="mt-12 mb-8 hidden lg:block">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-semibold text-lg">Latest Chapters</h3>
+            <Link
+              href={`/novels/${novelId}/chapters`}
+              className="text-primary text-sm hover:underline font-medium"
+            >
+              View All
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {[...chapters]
+              .sort((a, b) => (b.order ?? b.chapterNumber ?? 0) - (a.order ?? a.chapterNumber ?? 0))
+              .slice(0, 30)
+              .map((chapter) => (
+                <Link
+                  key={chapter.id}
+                  href={`/novels/${novelId}/chapters/${chapter.id}`}
+                  className="block bg-card border border-border rounded-lg shadow-sm px-4 py-3 hover:bg-white/5 transition-all duration-150"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-sm text-white font-semibold truncate">
+                        Chapter {chapter.chapterNumber}: {chapter.title}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                      {chapter.createdAt
+                        ? new Date(chapter.createdAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })
+                        : ''}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+          </div>
+        </section>
+      )}
+
       {/* Spacer for sticky bar */}
       <div className="pb-24"></div>
 

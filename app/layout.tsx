@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <MiniKitContextProvider>
                 <UserProvider>
                   <SWRProvider>
-                    <main>{children}</main>
+                    <main className="bg-background">{children}</main>
                     <BottomNav />
                   </SWRProvider>
                 </UserProvider>
