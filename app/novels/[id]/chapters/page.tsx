@@ -99,7 +99,7 @@ export default function ChapterListPage() {
 
       <div className="mb-6">
         <input
-          className="w-full rounded-lg bg-white/5 backdrop-blur-sm text-white px-4 py-3 outline-none border border-white/10 focus:border-purple-400/50 transition-colors"
+          className="w-full rounded-lg bg-card border border-border focus:border-purple-400/50 transition-colors"
           placeholder="Search with chapter no or title"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -107,34 +107,34 @@ export default function ChapterListPage() {
       </div>
 
       {/* Pagination Info */}
-      <div className="mb-6 text-center text-sm text-gray-400">
+      <div className="mb-6 text-center text-sm text-muted-foreground">
         Showing {(pagination.page - 1) * pagination.limit + 1}-
         {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}{' '}
         chapters
       </div>
 
       {loading ? (
-        <div className="text-gray-400 text-center py-12 text-lg">Loading chapters...</div>
+        <div className="text-muted-foreground text-center py-12 text-lg">Loading chapters...</div>
       ) : filteredChapters.length === 0 ? (
-        <div className="text-gray-400 text-center py-12 text-lg">No chapters found.</div>
+        <div className="text-muted-foreground text-center py-12 text-lg">No chapters found.</div>
       ) : (
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden">
-          <ul className="divide-y divide-white/10">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <ul className="divide-y divide-border">
             {filteredChapters.map((chapter, idx) => (
               <li
                 key={chapter.id}
-                className="py-4 px-6 flex items-center gap-4 hover:bg-white/5 transition-colors"
+                className="py-4 px-6 flex items-center gap-4 hover:bg-muted transition-colors"
               >
-                <span className="w-12 text-right text-gray-500 text-sm font-medium">
+                <span className="w-12 text-right text-muted-foreground text-sm font-medium">
                   {(pagination.page - 1) * pagination.limit + idx + 1}
                 </span>
                 <Link
                   href={`/novels/${params.id}/chapters/${chapter.id}`}
-                  className="flex-1 text-white hover:text-purple-400 font-medium truncate text-base lg:text-lg"
+                  className="flex-1 text-foreground hover:text-purple-400 font-medium truncate text-base lg:text-lg"
                 >
                   {chapter.title}
                 </Link>
-                <span className="text-sm text-gray-500 min-w-[100px] text-right">
+                <span className="text-sm text-muted-foreground min-w-[100px] text-right">
                   {chapter.createdAt
                     ? new Date(chapter.createdAt).toLocaleDateString(undefined, {
                         month: 'short',
@@ -162,7 +162,7 @@ export default function ChapterListPage() {
             Previous
           </Button>
 
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-muted-foreground">
             Page {pagination.page} of {pagination.totalPages}
           </span>
 
