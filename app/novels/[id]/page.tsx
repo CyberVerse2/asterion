@@ -368,6 +368,16 @@ export default function NovelPage() {
   const supporterUsernames = topSupporters.map((s: any) => s.username).filter(Boolean);
   const { data: supporterProfiles } = useSupporterProfilesBatch(supporterUsernames);
 
+  // Add mock mutualsReading data for frontend demo
+  const mockMutualsReading = [
+    { id: '1', username: 'alice', avatarUrl: 'https://i.pravatar.cc/40?u=alice' },
+    { id: '2', username: 'bob', avatarUrl: 'https://i.pravatar.cc/40?u=bob' },
+    { id: '3', username: 'carol', avatarUrl: 'https://i.pravatar.cc/40?u=carol' },
+    { id: '4', username: 'dan', avatarUrl: 'https://i.pravatar.cc/40?u=dan' },
+    { id: '5', username: 'eve', avatarUrl: 'https://i.pravatar.cc/40?u=eve' },
+    { id: '6', username: 'frank', avatarUrl: 'https://i.pravatar.cc/40?u=frank' }
+  ];
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-md">
@@ -448,6 +458,29 @@ export default function NovelPage() {
                   {novel.title}
                 </h1>
                 <p className="text-sm text-gray-400 mb-2">by {novel.author}</p>
+                {/* Mutuals Reading This (frontend mock) */}
+                {mockMutualsReading.length > 0 && (
+                  <div className="flex items-center gap-1 mb-2">
+                    <div className="flex -space-x-2">
+                      {mockMutualsReading.slice(0, 5).map((m) => (
+                        <img
+                          key={m.id}
+                          src={m.avatarUrl}
+                          className="w-6 h-6 rounded-full border-2 border-primary"
+                          alt={m.username}
+                        />
+                      ))}
+                      {mockMutualsReading.length > 5 && (
+                        <span className="text-xs text-primary bg-card rounded-full px-2 py-0.5 ml-1">
+                          +{mockMutualsReading.length - 5}
+                        </span>
+                      )}
+                    </div>
+                      <span className="text-xs text-muted-foreground mr-2">
+                        Reading now
+                      </span>
+                  </div>
+                )}
               </div>
 
               {/* Rating */}

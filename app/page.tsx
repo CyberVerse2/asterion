@@ -111,8 +111,34 @@ export default function HomePage() {
                             href={`/novels/${row0.id}`}
                             className="flex-shrink-0 w-32 flex flex-col items-center group relative"
                           >
-                            {/* Gold rank badge */}
-                            <span className="absolute top-2 left-1/2 -translate-x-1/2 z-30 bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-primary">
+                            {/* Beautiful Gold rank badge */}
+                            <span
+                              className="absolute top-2 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-purple-600 via-yellow-300 to-yellow-400 text-purple-900 text-xs font-bold tracking-wide rounded-full px-2 py-0.5 shadow border border-yellow-400 flex items-center gap-0.5 ring-1 ring-yellow-200/60"
+                              style={{ boxShadow: '0 1px 4px 0 rgba(168,85,247,0.12)' }}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="inline-block w-3 h-3 mr-0.5"
+                                viewBox="0 0 20 20"
+                              >
+                                <defs>
+                                  <linearGradient
+                                    id="star-gold-gradient"
+                                    x1="0"
+                                    y1="0"
+                                    x2="1"
+                                    y2="1"
+                                  >
+                                    <stop offset="0%" stopColor="#ffe066" />
+                                    <stop offset="50%" stopColor="#ffd700" />
+                                    <stop offset="100%" stopColor="#b8860b" />
+                                  </linearGradient>
+                                </defs>
+                                <path
+                                  d="M10 2l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27l-4.77 2.51.91-5.32-3.87-3.77 5.34-.78L10 2z"
+                                  fill="url(#star-gold-gradient)"
+                                />
+                              </svg>
                               {Number(row0.rank) || col * 2 + 1}
                             </span>
                             <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">
@@ -120,7 +146,7 @@ export default function HomePage() {
                                 src={row0.imageUrl || '/placeholder.svg?height=600&width=450'}
                                 alt={row0.title}
                                 width={160}
-                                height={224}
+                                height={230}
                                 className="w-32 h-44 object-contain"
                                 loading="lazy"
                               />
@@ -152,8 +178,34 @@ export default function HomePage() {
                             href={`/novels/${row1.id}`}
                             className="flex-shrink-0 w-32 flex flex-col items-center group relative"
                           >
-                            {/* Gold rank badge */}
-                            <span className="absolute top-2 left-1/2 -translate-x-1/2 z-30 bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-1 shadow border-2 border-primary">
+                            {/* Beautiful Gold rank badge */}
+                            <span
+                              className="absolute top-2 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-purple-600 via-yellow-300 to-yellow-400 text-purple-900 text-xs font-bold tracking-wide rounded-full px-2 py-0.5 shadow border border-yellow-400 flex items-center gap-0.5 ring-1 ring-yellow-200/60"
+                              style={{ boxShadow: '0 1px 4px 0 rgba(168,85,247,0.12)' }}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="inline-block w-3 h-3 mr-0.5"
+                                viewBox="0 0 20 20"
+                              >
+                                <defs>
+                                  <linearGradient
+                                    id="star-gold-gradient"
+                                    x1="0"
+                                    y1="0"
+                                    x2="1"
+                                    y2="1"
+                                  >
+                                    <stop offset="0%" stopColor="#ffe066" />
+                                    <stop offset="50%" stopColor="#ffd700" />
+                                    <stop offset="100%" stopColor="#b8860b" />
+                                  </linearGradient>
+                                </defs>
+                                <path
+                                  d="M10 2l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27l-4.77 2.51.91-5.32-3.87-3.77 5.34-.78L10 2z"
+                                  fill="url(#star-gold-gradient)"
+                                />
+                              </svg>
                               {Number(row1.rank) || col * 2 + 2}
                             </span>
                             <div className="w-32 h-44 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2">

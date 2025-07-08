@@ -939,3 +939,11 @@ The system is now production-ready with proper performance optimizations. Awaiti
 - Please review the new layout and confirm if it meets your expectations, or let me know if further adjustments are needed before marking these tasks as complete.
 - The homepage ranking section now uses the same aspect ratio and sizing for novel cards as the Continue Reading section (w-28, h-36, 112x144 images). This ensures visual consistency between both sections.
 - Please review the new sizing and layout. Let me know if this matches your expectations, or if you need any further adjustments before I mark this task as complete.
+
+## Project Status Board
+
+- [x] Restore Continue Reading section to previous design (show all, old card layout, progress bar, progress label, chapters read/total, no 2-novel limit, keep new sorting)
+
+## Executor's Feedback or Assistance Requests
+
+- The Continue Reading section has been restored to the previous design as requested. All recently read novels are shown, using the old card layout with the progress bar and progress label. Awaiting user review and feedback before marking this task as complete.
