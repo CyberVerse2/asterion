@@ -39,7 +39,7 @@ export default function LibraryPage() {
 
   return (
     <div className="px-0 py-2 w-full">
-      <div className="rounded-2xl ornate-pattern mb-1 sticky top-0 z-30 shadow-lg bg-[#232336]">
+      <div className="rounded-2xl ornate-pattern mb-1 sticky top-0 z-30 shadow-lg">
         <h2 className="text-lg font-semibold text-white mb-1 px-2">Your Library</h2>
         <p className="text-xs text-gray-400 mb-1 px-2">Keep track of your favourite novels</p>
         <div className="flex gap-2 px-2 mb-2">
