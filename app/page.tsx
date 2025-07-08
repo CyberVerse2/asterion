@@ -9,7 +9,7 @@ import MiniappPrompt from '@/components/miniapp-prompt';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useMemo } from 'react';
-import { Star } from 'lucide-react';
+import { Star, BookOpen } from 'lucide-react';
 
 // Lazy load components for better performance
 const NovelGrid = lazy(() => import('@/components/novel-grid'));
@@ -129,13 +129,18 @@ export default function HomePage() {
                               <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-300">
                                 {row0.title}
                               </h3>
-                              <div className="flex items-center justify-center gap-1 mt-1">
-                                <Star className="w-3 h-3 text-primary fill-primary" />
-                                <span className="text-xs text-muted-foreground">
-                                  {row0.rating ? Number(row0.rating).toFixed(1) : '5.0'}
+                              <div className="flex items-center justify-center gap-2 mt-1">
+                                <span className="flex items-center gap-1">
+                                  <BookOpen className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-all duration-300" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {row0.totalChapters || 0} ch
+                                  </span>
                                 </span>
-                                <span className="text-xs text-muted-foreground">
-                                  · {row0.totalChapters || 0} ch
+                                <span className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 text-primary fill-primary" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {row0.rating ? Number(row0.rating).toFixed(1) : '5.0'}
+                                  </span>
                                 </span>
                               </div>
                             </div>
@@ -165,13 +170,18 @@ export default function HomePage() {
                               <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-300">
                                 {row1.title}
                               </h3>
-                              <div className="flex items-center justify-center gap-1 mt-1">
-                                <Star className="w-3 h-3 text-primary fill-primary" />
-                                <span className="text-xs text-muted-foreground">
-                                  {row1.rating ? Number(row1.rating).toFixed(1) : '5.0'}
+                              <div className="flex items-center justify-center gap-2 mt-1">
+                                <span className="flex items-center gap-1">
+                                  <BookOpen className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-all duration-300" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {row1.totalChapters || 0} ch
+                                  </span>
                                 </span>
-                                <span className="text-xs text-muted-foreground">
-                                  · {row1.totalChapters || 0} ch
+                                <span className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 text-primary fill-primary" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {row1.rating ? Number(row1.rating).toFixed(1) : '5.0'}
+                                  </span>
                                 </span>
                               </div>
                             </div>

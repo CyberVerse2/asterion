@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { BookOpen, Clock, ArrowRight } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNovels } from '@/hooks/useNovels';
@@ -155,8 +155,8 @@ export default function RecentlyReadSection({ userId, horizontal }: RecentlyRead
     return null; // Don't show section if no recently read novels
   }
 
-  // Show the two most recent novels
-  const novelsToShow = recentlyRead.slice(0, 2);
+  // Show all recently read novels (up to the fetched limit)
+  const novelsToShow = recentlyRead;
 
   return (
     <div className="mb-6 sm:mb-8">
@@ -174,7 +174,7 @@ export default function RecentlyReadSection({ userId, horizontal }: RecentlyRead
         className={
           horizontal
             ? 'flex gap-4 overflow-x-auto scrollbar-hide pb-2'
-            : 'flex justify-center gap-4'
+            : 'flex gap-4 overflow-x-auto scrollbar-hide pb-2'
         }
       >
         {novelsToShow.map((novel) => (
@@ -215,42 +215,28 @@ export default function RecentlyReadSection({ userId, horizontal }: RecentlyRead
                   {/* Overlay content */}
                   <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 z-10">
                     <h3
-                      className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-foreground group-hover:text-purple-200 transition-colors duration-300"
+                      className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-300 mb-1"
                       style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
                     >
                       {novel.title}
                     </h3>
                     {/* Reading Progress */}
                     <div className="mb-2 sm:mb-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span
-                          className="text-xs text-muted-foreground"
-                          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
-                        >
-                          Progress
+                      <div className="flex items-center justify-center gap-2 mt-1">
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-all duration-300" />
+                          <span className="text-xs text-muted-foreground">
+                            {novel.totalChapters || 0} ch
+                          </span>
                         </span>
-                        <span
-                          className="text-xs font-medium text-primary"
-                          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
-                        >
-                          {novel.chaptersRead}/{novel.totalChapters}
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-primary fill-primary" />
+                          <span className="text-xs text-muted-foreground">
+                            {novel.chaptersRead
+                              ? ((novel.chaptersRead / (novel.totalChapters || 1)) * 5).toFixed(1)
+                              : '5.0'}
+                          </span>
                         </span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-1.5">
-                        <div
-                          className="bg-gradient-to-r from-purple-500 to-purple-400 h-1.5 rounded-full transition-all duration-300"
-                          style={{
-                            width: (() => {
-                              const chaptersRead =
-                                typeof novel.chaptersRead === 'number' ? novel.chaptersRead : 0;
-                              const totalChapters =
-                                typeof novel.totalChapters === 'number' ? novel.totalChapters : 0;
-                              if (totalChapters <= 0) return '0%';
-                              const percent = Math.min((chaptersRead / totalChapters) * 100, 100);
-                              return `${percent}%`;
-                            })()
-                          }}
-                        />
                       </div>
                     </div>
                     {/* Last Read Time */}
