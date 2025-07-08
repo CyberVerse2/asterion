@@ -53,11 +53,14 @@ export default function RankingPage() {
 
   return (
     <div className="w-full max-w-xl mx-auto py-4 px-2 sm:px-0">
+      {/* Title above buttons */}
+      <h2 className="text-lg font-semibold text-white mb-1.5 px-2 mt-2">Browse Novels</h2>
+      <p className="text-xs text-gray-400 mb-2 px-2">Discover the most popular web/light novels</p>
       {/* Sort buttons row */}
       <div className="flex gap-2 px-2">
         <div className="relative flex-1">
           <button
-            className={`w-full border border-purple-500 text-purple-300 bg-transparent rounded-lg py-2 px-2 text-xs font-medium hover:bg-purple-500/10 transition flex items-center justify-between ${
+            className={`w-full border border-gray-500 text-purple-400 bg-zinc-900 rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-between ${
               genre ? 'font-bold' : ''
             }`}
             onClick={() => setShowGenreDropdown((v) => !v)}
@@ -65,7 +68,7 @@ export default function RankingPage() {
           >
             {genre ? genre : 'All'}
             <svg
-              className="ml-2 h-3 w-3 text-purple-400"
+              className="ml-2 h-3 w-3 text-gray-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -79,9 +82,9 @@ export default function RankingPage() {
             </svg>
           </button>
           {showGenreDropdown && (
-            <div className="absolute z-10 left-0 right-0 mt-1 bg-black border border-purple-500 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-10 left-0 right-0 mt-1 bg-black border border-gray-500 rounded-lg shadow-lg max-h-48 overflow-y-auto">
               <button
-                className="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-purple-500/10 rounded-t-lg"
+                className="w-full text-left px-4 py-2 text-xs text-purple-400 hover:bg-white/10 rounded-t-lg"
                 onClick={() => {
                   setGenre(null);
                   setShowGenreDropdown(false);
@@ -94,8 +97,8 @@ export default function RankingPage() {
                   key={g}
                   className={`w-full text-left px-4 py-2 text-xs ${
                     genre === g
-                      ? 'bg-purple-600/20 text-purple-300'
-                      : 'text-gray-300 hover:bg-purple-500/10'
+                      ? 'bg-gray-800 text-purple-400'
+                      : 'text-purple-400 hover:bg-white/10'
                   }`}
                   onClick={() => {
                     setGenre(g);
@@ -109,7 +112,7 @@ export default function RankingPage() {
           )}
         </div>
         <button
-          className="flex-1 border border-purple-500 text-purple-300 bg-transparent rounded-lg py-2 px-2 text-xs font-medium hover:bg-purple-500/10 transition"
+          className="flex-1 border border-gray-500 text-purple-400 bg-zinc-900 rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition"
           onClick={() => {
             setSortType((prev) =>
               prev === 'ranking' ? 'mostRead' : prev === 'mostRead' ? 'chapters' : 'ranking'
@@ -119,7 +122,7 @@ export default function RankingPage() {
           Sort: {sortTypeLabel}
         </button>
         <button
-          className="flex-none border border-purple-500 text-purple-300 bg-transparent rounded-lg py-2 px-2 text-xs font-medium hover:bg-purple-500/10 transition flex items-center justify-center"
+          className="flex-none border border-gray-500 text-purple-400 bg-zinc-900 rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center"
           onClick={() => setSortAsc((v) => !v)}
           title="Reverse sort order"
         >
