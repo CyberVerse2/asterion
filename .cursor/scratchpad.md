@@ -863,6 +863,4 @@ The system is now production-ready with proper performance optimizations. Awaiti
 
 ## Executor's Feedback or Assistance Requests
 
-- The genre filter is now implemented, and the sort buttons are styled as requested. Please review the UI and confirm if it matches your expectations before marking this task as complete.
-- The bottom navigation bar is now hidden on /novels/[id] and /novels/[id]/chapters/[chapterId] pages. Please review and confirm if this matches your expectations.
-- The bottom navigation bar is now a separate Client Component and is conditionally rendered in layout.tsx. Please review and confirm if this resolves the previous error and matches your expectations.
+- The global background is now a softer dark (#181825), and the novel detail page has been fully refactored to match the updated, modern, purple-accented UI. All badges, stats, and sticky bar now use the new color palette and spacing. Please review the UI and let me know if further adjustments are needed before marking this task complete.

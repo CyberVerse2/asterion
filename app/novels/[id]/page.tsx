@@ -119,7 +119,6 @@ export default function NovelPage() {
 
   // Calculate continue reading information
   const continueReadingInfo = useMemo(() => {
-
     if (!readingProgress || !Array.isArray(readingProgress) || !Array.isArray(chapters)) {
       return null;
     }
@@ -142,7 +141,6 @@ export default function NovelPage() {
 
     // Check if the chapter is completed (95% or more)
     const isCompleted = lastReadProgress.currentLine / lastReadProgress.totalLines >= 0.95;
-
 
     // If completed, suggest next chapter, otherwise continue current chapter
     if (isCompleted) {
@@ -313,7 +311,6 @@ export default function NovelPage() {
 
   // Calculate button text
   const readButtonText = useMemo(() => {
-
     if (chaptersLoading || progressLoading) {
       return 'Loading...';
     }
@@ -411,13 +408,13 @@ export default function NovelPage() {
             />
 
             {/* Bottom overlay with enhanced gradient - seamless blend */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent px-4 py-1 transition-all duration-300 group-hover:from-black group-hover:via-black/80">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#181825] via-[#232336]/80 to-transparent px-4 py-1 transition-all duration-300 group-hover:from-[#232336] group-hover:via-[#232336]/90">
               {/* Status and Rank badges */}
               <div className="flex items-center gap-2 mb-3">
-                <Badge className="bg-red-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
+                <Badge className="bg-gray-700/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
                   RANK {novel.rank}
                 </Badge>
-                <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
+                <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
                   {novel.status?.toUpperCase()}
                 </Badge>
               </div>
@@ -460,14 +457,14 @@ export default function NovelPage() {
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-blue-400" />
+                  <Eye className="h-5 w-5 text-purple-400" />
                   <span className="text-base font-medium text-white">{formattedStats.views}</span>
                 </div>
                 <span className="text-xs text-gray-400">Views</span>
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <Library className="h-5 w-5 text-green-400" />
+                  <Library className="h-5 w-5 text-purple-400" />
                   <span className="text-base font-medium text-white">
                     {formattedStats.bookmarks}
                   </span>
@@ -476,7 +473,7 @@ export default function NovelPage() {
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-orange-400" />
+                  <MessageCircle className="h-5 w-5 text-purple-400" />
                   <span className="text-base font-medium text-white">{formattedStats.reviews}</span>
                 </div>
                 <span className="text-xs text-gray-400">Reviews</span>
@@ -553,7 +550,7 @@ export default function NovelPage() {
       <div className="pb-24"></div>
 
       {/* Enhanced Sticky Action Bar with Glass Morphism */}
-      <div className="fixed bottom-0 left-0 w-full z-20 bg-black/95 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-3 sm:py-4">
+      <div className="fixed bottom-0 left-0 w-full z-20 bg-[#181825]/95 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-3 sm:py-4">
         <div className="max-w-4xl mx-auto">
           {/* Single Row Layout */}
           <div className="grid grid-cols-5 gap-3">
@@ -572,7 +569,7 @@ export default function NovelPage() {
             <Button
               className={`relative overflow-hidden py-4 sm:py-5 transition-all duration-300 hover:scale-[1.02] shadow-md group touch-manipulation ${
                 isBookmarked
-                  ? 'bg-green-600/20 border-green-400/50 text-green-400 hover:bg-green-600/30'
+                  ? 'bg-purple-700/30 border-purple-400/50 text-purple-300 hover:bg-purple-700/40'
                   : 'bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:border-white/30'
               }`}
               onClick={handleBookmark}
@@ -581,7 +578,7 @@ export default function NovelPage() {
               <div className="flex flex-col items-center justify-center gap-1">
                 {isBookmarked ? (
                   <svg
-                    className="h-10 w-10 sm:h-14 sm:w-14 transition-all duration-300 text-green-400 fill-current"
+                    className="h-10 w-10 sm:h-14 sm:w-14 transition-all duration-300 text-purple-400 fill-current"
                     viewBox="0 0 24 24"
                   >
                     <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
@@ -647,7 +644,7 @@ export default function NovelPage() {
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
-          <div className="bg-green-600/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg border border-green-500/20">
+          <div className="bg-purple-700/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg border border-purple-500/20">
             <div className="flex items-center gap-2">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

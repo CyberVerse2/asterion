@@ -64,7 +64,7 @@
     @apply border-border;
   }
   body {
-    background: #0a0a0a;
+    background: #181825;
     /* Remove or comment out any global background images */
     /* background-image: none; */
   }
@@ -72,7 +72,7 @@
 
 /* Dark theme styles */
 .dark-theme {
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  background: linear-gradient(135deg, #181825 0%, #232336 100%);
   color: #ffffff;
   min-height: 100vh;
 }
