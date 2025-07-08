@@ -38,7 +38,7 @@ export default function LibraryPage() {
   );
 
   return (
-    <div className="container mx-auto px-0 py-4 max-w-2xl">
+    <div className="px-0 py-4 w-full">
       <div className="flex items-center justify-between mb-1.5">
         <div className="w-full">
           <h2 className="text-lg font-semibold text-white mb-1.5 px-2 mt-2">Your Library</h2>
@@ -69,7 +69,7 @@ export default function LibraryPage() {
       ) : bookmarkedNovels.length === 0 ? (
         <div className="text-gray-400">You have no bookmarked novels yet.</div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-2">
           {bookmarkedNovels.map((novel: any) => {
             // Find all progress entries for this novel
             const novelProgress =

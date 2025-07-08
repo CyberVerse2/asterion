@@ -37,6 +37,21 @@ interface NovelCardProps {
 const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: NovelCardProps) {
   if (libraryStyle) {
     // Library style card (horizontal, minimal, like screenshot)
+    // Calculate progress as chapter X / Y
+    let progressText = 'Not yet read.';
+    if (
+      typeof progress === 'number' &&
+      progress > 0 &&
+      Array.isArray(novel.chapters) &&
+      novel.chapters.length > 0
+    ) {
+      // Find the highest completed chapter (simulate for now as progress% of total)
+      const total = novel.chapters.length;
+      const completed = Math.round((progress / 100) * total);
+      progressText = `Chapter ${completed} / ${total}`;
+    } else if (Array.isArray(novel.chapters) && novel.chapters.length > 0) {
+      progressText = `Chapter 1 / ${novel.chapters.length}`;
+    }
     return (
       <Link href={`/novels/${novel.id}`}>
         <div className="flex gap-3 p-2 hover:bg-white/5 transition border border-white/10 bg-black/90 items-center">
@@ -56,14 +71,8 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
                 {novel.title}
               </h3>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-400">Progress : Not yet read.</span>
+                <span className="text-xs text-gray-400">Progress : {progressText}</span>
               </div>
-              {typeof progress === 'number' && progress > 0 && (
-                <div className="mt-1">
-                  <Progress value={progress} className="h-2 bg-white/10" />
-                  <span className="text-[10px] text-gray-400 ml-1">{progress}% complete</span>
-                </div>
-              )}
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-gray-300 truncate">
                   Latest: Chapter {novel.latestChapter?.chapterNumber || '—'}:{' '}
