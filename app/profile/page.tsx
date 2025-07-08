@@ -270,7 +270,6 @@ export default function ProfilePage() {
 
   // Move handleApproveSpend inside the component
   async function handleApproveSpend() {
-
     setApproving(true);
     setApproveError(null);
     setTransactionStatus(null);
@@ -299,7 +298,6 @@ export default function ProfilePage() {
       const normalizedAccount = getAddress(accountAddress);
       const normalizedSpender = getAddress(process.env.NEXT_PUBLIC_SPENDER_ADDRESS as ViemAddress);
       const normalizedToken = getAddress(USDC_ADDRESS);
-
 
       const spendPermission = {
         account: normalizedAccount,
@@ -459,12 +457,10 @@ export default function ProfilePage() {
 
   // Handle Farcaster approval with connector check
   const handleFarcasterApproval = async () => {
-
     setApproving(true);
     setApproveError(null);
 
     try {
-
       // Save settings first
       if (spendLimit !== profile?.spendLimit) {
         await saveSpendLimit(spendLimit);
@@ -485,7 +481,6 @@ export default function ProfilePage() {
         return;
       }
 
-
       // Call ERC20 approve directly
       writeContract({
         abi: ERC20_ABI,
@@ -504,7 +499,6 @@ export default function ProfilePage() {
   // Consolidated post-approval logic for Farcaster users
   useEffect(() => {
     if (isFarcasterUser && isApproveTxSuccess && profile?.id && approveTxHash) {
-
       // Execute all post-approval tasks in parallel
       const tasks = [];
 
@@ -515,8 +509,7 @@ export default function ProfilePage() {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: profile.id, spendLimit })
-          })
-            .catch((error) => console.error('[Profile] Error saving spend limit:', error))
+          }).catch((error) => console.error('[Profile] Error saving spend limit:', error))
         );
       }
 
@@ -540,8 +533,7 @@ export default function ProfilePage() {
               spendPermission: approvalData,
               spendPermissionSignature: approveTxHash
             })
-          })
-            .catch((error) => console.error('[Profile] Error saving approval data:', error))
+          }).catch((error) => console.error('[Profile] Error saving approval data:', error))
         );
       }
 
@@ -553,7 +545,6 @@ export default function ProfilePage() {
           }
         })
         .then(() => {
-
           // Invalidate novel cache to refresh permission-dependent UI
           if (typeof window !== 'undefined') {
             import('swr').then(({ mutate }) => {

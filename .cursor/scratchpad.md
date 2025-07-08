@@ -271,6 +271,58 @@ Users report that after reading progress is saved, the page sometimes jumps up o
     - Integrated with reading progress hooks
     - **Success Criteria:** Embedded chapter reader tracks reading progress.
 
+# NEW TASK: Redesign Ranking Page to Match Provided Screenshot
+
+## Background and Motivation
+
+The user wants the Ranking page to visually match the provided mobile screenshot. This design is a dark-themed, mobile-friendly list of novels with clear ranking, stats, and status badges, similar to popular web novel apps. The goal is to improve usability, aesthetics, and information density for users browsing top-ranked novels.
+
+## Key Challenges and Analysis
+
+- **Layout:** Each novel should be a card/row with a left-aligned cover image and right-aligned details, separated by a thin line.
+- **Image Handling:** Show a placeholder for missing covers. Images should be square or slightly rectangular, matching the screenshot.
+- **Status Badges:** Display "ONGOING" (green) or "COMPLETED" (blue) badges next to chapter count.
+- **Stats:** Show star rating (with count), rank, and three stats (views, likes, comments) with icons, all in a single row.
+- **Responsiveness:** Must look good on mobile and desktop, with no horizontal scrolling.
+- **Dark Theme:** Use dark backgrounds, white text, and purple highlights.
+- **Performance:** Use SWR for data fetching and caching as in the rest of the app.
+
+## High-level Task Breakdown
+
+1. **Design Card Layout**
+
+   - Create a new card/row component for each novel in the ranking list.
+   - **Success Criteria:** Card matches screenshot layout, with image, title, badges, and stats in correct positions.
+
+2. **Implement Image Handling**
+
+   - Ensure cover images are displayed with correct aspect ratio and placeholder for missing images.
+   - **Success Criteria:** All novels have a visible image or placeholder, no broken images.
+
+3. **Add Status Badges**
+
+   - Display "ONGOING" (green) or "COMPLETED" (blue) badges next to chapter count.
+   - **Success Criteria:** Badge color and text match status, positioned as in screenshot.
+
+4. **Display Stats Row**
+
+   - Show star rating (with count), rank, and three stats (views, likes, comments) with icons.
+   - **Success Criteria:** All stats are visible, icons match screenshot, and numbers are formatted (e.g., 194M).
+
+5. **Add List Separators**
+
+   - Add a thin line between each card/row.
+   - **Success Criteria:** Each novel is visually separated from the next.
+
+6. **Ensure Responsiveness and Theming**
+
+   - Test on mobile and desktop, ensure no horizontal scrolling, and colors match dark theme.
+   - **Success Criteria:** Layout is mobile-friendly and visually matches screenshot.
+
+7. **Testing and User Feedback**
+   - Test with real data, check for edge cases (missing data, long titles, etc.), and get user feedback.
+   - **Success Criteria:** User confirms the Ranking page matches the provided screenshot and is bug-free.
+
 # Project Status Board
 
 ## Completed Tasks ✅
