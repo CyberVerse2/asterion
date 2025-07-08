@@ -52,9 +52,9 @@ export default function RankingPage() {
     sortType === 'ranking' ? 'Ranking' : sortType === 'mostRead' ? 'Most Read' : 'Chapters';
 
   return (
-    <div className="w-full max-w-xl mx-auto py-4 px-2 sm:px-0">
+    <div className="w-full max-w-xl mx-auto py-2 px-2 sm:px-0">
       {/* Title above buttons */}
-      <h2 className="text-lg font-semibold text-white mb-1.5 px-2 mt-2">Browse Novels</h2>
+      <h2 className="text-lg font-semibold text-white mb-1.5 px-2">Browse Novels</h2>
       <p className="text-xs text-gray-400 mb-2 px-2">Discover the most popular web/light novels</p>
       {/* Sort buttons row */}
       <div className="flex gap-2 px-2">
@@ -134,7 +134,7 @@ export default function RankingPage() {
           <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
             <div className="flex gap-3 p-2 hover:bg-white/5 transition">
               {/* Cover Image */}
-              <div className="flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+              <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
                 <Image
                   src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
                   alt={novel.title}

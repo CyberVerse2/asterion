@@ -93,6 +93,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                           <span className="text-xs">Ranking</span>
                         </Link>
                         <Link
+                          href="/library"
+                          className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                            />
+                          </svg>
+                          <span className="text-xs">Library</span>
+                        </Link>
+                        <Link
                           href="/history"
                           className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
                         >
