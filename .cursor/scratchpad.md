@@ -909,3 +909,10 @@ The system is now production-ready with proper performance optimizations. Awaiti
 - The chapter card hover background is now a subtle dark shade (hover:bg-white/5), not white or light.
 - The chapter number is at the far left, the title is left-aligned and fills the space, and the date is at the far right, all with text-sm for a more compact look.
 - Please review visually and confirm if this resolves the issues before marking these tasks as fully complete.
+
+- [x] Add extra bottom padding (pb-24) to the chapters page to prevent pagination controls from being hidden by the BottomNav
+
+## Executor's Feedback or Assistance Requests
+
+- The chapters page now has extra bottom padding (pb-24), so the previous/next pagination controls should always be visible above the BottomNav.
+- Please review visually and confirm if this resolves the issue before marking this task as fully complete.

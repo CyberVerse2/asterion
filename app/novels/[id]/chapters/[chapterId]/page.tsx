@@ -253,8 +253,7 @@ export default function IndividualChapterPage() {
               totalLines: offsets.length,
               scrollPosition: idx
             })
-              .then((result) => {
-              })
+              .then((result) => {})
               .catch((error) => {
                 console.error('[SaveProgress] Failed to save progress:', error);
               });
@@ -480,7 +479,7 @@ export default function IndividualChapterPage() {
     if (previousChapter) {
       const proceedWithNavigation = async () => {
         // Save current reading progress before navigating
-        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {  
+        if (hasRestoredRef.current && currentLine > 0 && totalLines > 0) {
           await saveProgress({
             userId: (user as any)?.id,
             chapterId,
@@ -623,7 +622,7 @@ export default function IndividualChapterPage() {
               <Button
                 onClick={goToPrevious}
                 disabled={!previousChapter}
-                className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
+                className="flex items-center gap-2 bg-transparent border border-primary text-gray-400 hover:text-white hover:bg-white/10"
               >
                 <ChevronLeft className="h-4 w-4" />
                 {previousChapter ? 'Previous' : 'First Chapter'}
@@ -641,7 +640,7 @@ export default function IndividualChapterPage() {
               <Button
                 onClick={goToNext}
                 disabled={!nextChapter}
-                className="flex items-center gap-2 bg-transparent border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
+                className="flex items-center gap-2 bg-transparent border border-primary text-gray-400 hover:text-white hover:bg-white/10"
               >
                 {nextChapter ? 'Next' : 'Last Chapter'}
                 <ChevronRight className="h-4 w-4" />

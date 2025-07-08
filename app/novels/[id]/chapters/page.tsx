@@ -79,7 +79,7 @@ export default function ChapterListPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl bg-background">
+    <div className="container mx-auto px-4 py-6 max-w-4xl bg-background pb-24">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.push(`/novels/${params.id}`)}>
           <ArrowLeft className="h-5 w-5" />
@@ -155,7 +155,7 @@ export default function ChapterListPage() {
             size="sm"
             onClick={() => handlePageChange(pagination.page - 1)}
             disabled={!pagination.hasPrev}
-            className="flex items-center gap-2 px-4 py-2"
+            className="flex items-center gap-2 px-4 py-2 border border-primary"
           >
             <ChevronLeft className="h-4 w-4" />
             Previous
@@ -170,7 +170,7 @@ export default function ChapterListPage() {
             size="sm"
             onClick={() => handlePageChange(pagination.page + 1)}
             disabled={!pagination.hasNext}
-            className="flex items-center gap-2 px-4 py-2"
+            className="flex items-center gap-2 px-4 py-2 border border-primary"
           >
             Next
             <ChevronRight className="h-4 w-4" />
