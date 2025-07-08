@@ -176,7 +176,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
             href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
             className="w-[159px]"
           >
-            <Card className="w-[159px] h-auto hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
+            <Card className="w-[159px] h-auto shadow-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
               <CardContent className="p-0">
                 <div className="relative w-[159px] h-[200px] overflow-hidden group rounded-lg mx-auto shadow-2xl">
                   <Image
@@ -191,7 +191,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                   />
                   {novel.status && (
                     <div className="absolute top-2 right-2 z-20">
-                      <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-xs px-2 py-1">
+                      <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-[10px] px-1.5 py-0.5">
                         {novel.status.toUpperCase()}
                       </Badge>
                     </div>
@@ -201,21 +201,31 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                     className="absolute inset-0 pointer-events-none rounded-lg"
                     style={{
                       background:
-                        'linear-gradient(to top, transparent 0%, transparent 60%, rgba(0,0,0,0.85) 100%)',
+                        'linear-gradient(to top, rgba(24,24,37,0.92) 0%, transparent 70%)',
                       zIndex: 1
                     }}
                   />
                   {/* Overlay content */}
                   <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 z-10">
-                    <h3 className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-white group-hover:text-purple-200 transition-colors duration-300">
+                    <h3
+                      className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-white group-hover:text-purple-200 transition-colors duration-300"
+                      style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
+                    >
                       {novel.title}
                     </h3>
-                    <p className="text-xs text-gray-400 mb-1 sm:mb-2">by {novel.author}</p>
                     {/* Reading Progress */}
                     <div className="mb-2 sm:mb-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-300">Progress</span>
-                        <span className="text-xs font-medium text-purple-400">
+                        <span
+                          className="text-xs text-gray-300"
+                          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
+                        >
+                          Progress
+                        </span>
+                        <span
+                          className="text-xs font-medium text-purple-400"
+                          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
+                        >
                           {novel.chaptersRead}/{novel.totalChapters}
                         </span>
                       </div>
@@ -237,7 +247,10 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                       </div>
                     </div>
                     {/* Last Read Time */}
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <div
+                      className="flex items-center gap-1 text-xs text-gray-400"
+                      style={{ textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}
+                    >
                       <Clock className="h-3 w-3" />
                       <span>
                         {(() => {
