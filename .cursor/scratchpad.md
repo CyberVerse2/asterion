@@ -916,3 +916,13 @@ The system is now production-ready with proper performance optimizations. Awaiti
 
 - The chapters page now has extra bottom padding (pb-24), so the previous/next pagination controls should always be visible above the BottomNav.
 - Please review visually and confirm if this resolves the issue before marking this task as fully complete.
+
+- [x] Move the progress bar in the novelreader page to the absolute top (top-0) and make it full width
+- [x] Update the novelreader page to use the correct dark theme: bg-background for the page, bg-card for cards, border-border, and primary accent for buttons and highlights
+- [x] Remove all glassmorphism, white/gray overlays, and ensure floating action buttons use bg-card and border-border
+
+## Executor's Feedback or Assistance Requests
+
+- The novelreader page now has the progress bar at the very top, full width, with no offset for a navbar.
+- The entire page and all cards/buttons use the correct dark theme: bg-background, bg-card, border-border, and primary accent colors. No glassmorphism or white/gray overlays remain.
+- Please review visually and confirm if this resolves the issues before I mark these tasks as fully complete.

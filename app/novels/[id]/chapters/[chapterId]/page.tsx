@@ -569,12 +569,12 @@ export default function IndividualChapterPage() {
   }
 
   return (
-    <div className="container mx-auto py-2 max-w-4xl">
+    <div className="container mx-auto py-2 max-w-4xl bg-background min-h-screen">
       {/* Pinned Progress Bar - Minimal and always visible */}
-      <div className="fixed top-16 left-0 right-0 z-[60] bg-black/60 backdrop-blur-sm">
-        <div className="h-1 bg-gray-800/50">
+      <div className="fixed top-0 left-0 right-0 z-[60] w-full bg-background">
+        <div className="h-1 w-full bg-border">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-300 ease-out"
+            className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-300 ease-out"
             style={{ width: `${progressPercentage}%` }}
             title={`${progressPercentage}% complete`}
           />
@@ -582,12 +582,12 @@ export default function IndividualChapterPage() {
       </div>
 
       {/* Add top padding to account for pinned bar */}
-      <div className="pt-2">
+      <div className="pt-4">
         {/* Back Button */}
         <div className="mb-3 px-2">
           <Button
             onClick={goBackToNovel}
-            className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300"
+            className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-300"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
             Back to Novel
@@ -595,7 +595,7 @@ export default function IndividualChapterPage() {
         </div>
 
         {/* Chapter Content */}
-        <Card className="bg-white/5 backdrop-blur-sm border-white/10 mx-0.5">
+        <Card className="bg-card border border-border mx-0.5">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -618,7 +618,7 @@ export default function IndividualChapterPage() {
             {tradeError && <div className="text-red-400 mt-4">{tradeError}</div>}
 
             {/* Navigation */}
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
+            <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
               <Button
                 onClick={goToPrevious}
                 disabled={!previousChapter}
@@ -631,7 +631,7 @@ export default function IndividualChapterPage() {
               {/* Chapter List Button */}
               <Button
                 onClick={() => setIsChapterListOpen(true)}
-                className="flex items-center gap-2 bg-purple-600/20 border-purple-500/30 text-purple-300 hover:text-white hover:bg-purple-600/30 transition-all duration-200"
+                className="flex items-center gap-2 bg-primary/10 border border-primary text-primary hover:text-white hover:bg-primary/20 transition-all duration-200"
               >
                 <List className="h-4 w-4" />
                 <span className="hidden sm:inline">Chapters</span>
@@ -665,7 +665,7 @@ export default function IndividualChapterPage() {
         <button
           type="button"
           onClick={goBackToNovel}
-          className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-full p-2 md:p-3 text-gray-400 hover:text-white hover:bg-white/20 active:bg-white/30 focus:bg-white/20 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation mb-1"
+          className="bg-card border border-border rounded-full p-2 md:p-3 text-gray-400 hover:text-primary hover:bg-primary/10 active:bg-primary/20 focus:bg-primary/20 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation mb-1"
           aria-label="Back to Novel"
         >
           <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
@@ -674,8 +674,8 @@ export default function IndividualChapterPage() {
           type="button"
           onClick={(event) => handleLove(event)}
           disabled={hasLoved || tradePending}
-          className={`focus:outline-none bg-white/5 backdrop-blur-sm border border-white/10 rounded-full p-2 md:p-3 text-gray-400 hover:text-red-500 hover:bg-red-100/20 active:bg-red-100/30 focus:bg-red-100/20 transition-all duration-300 shadow-lg ${
-            hasLoved ? 'text-red-500 bg-red-100/20' : ''
+          className={`focus:outline-none bg-card border border-border rounded-full p-2 md:p-3 text-gray-400 hover:text-red-500 hover:bg-red-500/10 active:bg-red-500/20 focus:bg-red-500/20 transition-all duration-300 shadow-lg ${
+            hasLoved ? 'text-red-500 bg-red-500/10' : ''
           }`}
           aria-label={`Love this chapter ${tipAmountDisplay} USDC`}
         >
@@ -683,7 +683,7 @@ export default function IndividualChapterPage() {
             className={`h-4 w-4 md:h-5 md:w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`}
           />
         </button>
-        <span className="text-xs text-gray-300 font-semibold bg-black/40 rounded px-1.5 py-0.5 md:px-2 md:py-1 mt-1 shadow-md select-none">
+        <span className="text-xs text-gray-300 font-semibold bg-background rounded px-1.5 py-0.5 md:px-2 md:py-1 mt-1 shadow-md select-none">
           {tipCount}
         </span>
       </div>
