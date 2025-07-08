@@ -201,3 +201,41 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
+
+.reader-content {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 1.25rem;
+  line-height: 2;
+  color: #e5e5e5;
+}
+
+.reader-content p {
+  margin-bottom: 1.5em;
+  /* margin-top: 1.5em; */
+}
+
+.reader-content h1,
+.reader-content h2,
+.reader-content h3,
+.reader-content h4 {
+  font-weight: bold;
+  margin-bottom: 1em;
+  margin-top: 2em;
+  color: #fff;
+}
+
+.reader-content h1 {
+  font-size: 2rem;
+}
+
+.reader-content h2 {
+  font-size: 1.5rem;
+}
+
+.reader-content h3 {
+  font-size: 1.25rem;
+}
+
+.reader-content h4 {
+  font-size: 1.1rem;
+}

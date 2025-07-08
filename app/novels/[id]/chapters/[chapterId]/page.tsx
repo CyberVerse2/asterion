@@ -5,7 +5,15 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Clock, Heart, List } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  Clock,
+  DollarSign,
+  List
+} from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import {
   useReadingProgress,
@@ -513,6 +521,38 @@ export default function IndividualChapterPage() {
     fetchNavigation();
   }, [fetchChapter, fetchNavigation]);
 
+  // --- Preprocess chapter content for readability ---
+  function preprocessContent(raw: string): string {
+    // Remove all <h4>...</h4> tags and their content
+    let noH4 = raw.replace(/<h4[^>]*>[\s\S]*?<\/h4>/gi, '');
+    // Remove spam message about NovelFire.net
+    noH4 = noH4.replace(
+      /Search the NovelFire\.net website on Google to access chapters of novels early and in the highest quality\./gi,
+      ''
+    );
+    // If already contains <p> or <h1>, <h2>, <ul>, <ol>, <li>, <blockquote>, assume it's HTML
+    if (/<\s*(p|h1|h2|h3|ul|ol|li|blockquote)[^>]*>/i.test(noH4)) {
+      return noH4;
+    }
+    // Otherwise, split by double newlines or single newlines and wrap in <p>
+    // Remove leading/trailing whitespace
+    const trimmed = noH4.trim();
+    // Split by two or more newlines (paragraphs)
+    const paras = trimmed
+      .split(/\n{2,}/)
+      .map((para) => para.trim())
+      .filter(Boolean);
+    // If only one paragraph, try splitting by single newlines
+    const finalParas =
+      paras.length > 1
+        ? paras
+        : trimmed
+            .split(/\n/)
+            .map((para) => para.trim())
+            .filter(Boolean);
+    return finalParas.map((para) => `<p>${para}</p>`).join('');
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -568,14 +608,21 @@ export default function IndividualChapterPage() {
 
       {/* Add top padding to account for pinned bar */}
       <div className="pt-4">
-        {/* Back Button */}
-        <div className="mb-3 px-2">
+        {/* Back and Chapters Buttons */}
+        <div className="mb-3 px-2 flex gap-2">
           <Button
             onClick={goBackToNovel}
             className="group flex items-center gap-2 bg-transparent text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-300"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
             Back to Novel
+          </Button>
+          <Button
+            onClick={() => setIsChapterListOpen(true)}
+            className="flex items-center gap-2 bg-primary/10 border border-primary text-primary hover:text-white hover:bg-primary/20 transition-all duration-200"
+          >
+            <List className="h-4 w-4" />
+            <span className="hidden sm:inline">Chapters</span>
           </Button>
         </div>
 
@@ -596,40 +643,51 @@ export default function IndividualChapterPage() {
           <CardContent>
             <div
               ref={contentRef}
-              className="prose prose-lg max-w-none leading-relaxed text-gray-300"
-              style={{ lineHeight: '1.8' }}
-              dangerouslySetInnerHTML={{ __html: chapter.content }}
+              className="reader-content max-w-none px-2"
+              dangerouslySetInnerHTML={{ __html: preprocessContent(chapter.content) }}
             />
             {tradeError && <div className="text-red-400 mt-4">{tradeError}</div>}
 
-            {/* Navigation */}
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
-              <Button
-                onClick={goToPrevious}
-                disabled={!previousChapter}
-                className="flex items-center gap-2 bg-transparent border border-primary text-gray-400 hover:text-white hover:bg-white/10"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                {previousChapter ? 'Previous' : 'First Chapter'}
-              </Button>
+            {/* Navigation with Tip Button */}
+            <div className="flex flex-col items-center mt-8 pt-6 border-t border-border">
+              <div className="flex justify-between items-center w-full gap-2">
+                <Button
+                  onClick={goToPrevious}
+                  disabled={!previousChapter}
+                  className="flex items-center gap-2 bg-transparent border border-primary text-gray-400 hover:text-white hover:bg-white/10"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  {previousChapter ? 'Previous' : 'First Chapter'}
+                </Button>
 
-              {/* Chapter List Button */}
-              <Button
-                onClick={() => setIsChapterListOpen(true)}
-                className="flex items-center gap-2 bg-primary/10 border border-primary text-primary hover:text-white hover:bg-primary/20 transition-all duration-200"
-              >
-                <List className="h-4 w-4" />
-                <span className="hidden sm:inline">Chapters</span>
-              </Button>
+                {/* Tip Button Section */}
+                <div className="flex flex-col items-center mx-2">
+                  <Button
+                    onClick={handleLove}
+                    disabled={hasLoved || tradePending}
+                    className={`flex items-center gap-2 bg-primary text-white border border-primary px-4 py-2 rounded-lg shadow-lg transition-all duration-200 ${
+                      hasLoved ? 'bg-primary/30 text-primary' : ''
+                    }`}
+                    aria-label={`Tip this chapter ${tipAmountDisplay} USDC`}
+                  >
+                    <DollarSign className="h-5 w-5" />
+                    <span>{hasLoved ? 'Tipped!' : `Tip ${tipAmountDisplay} USDC`}</span>
+                  </Button>
+                  <span className="text-xs text-gray-400 mt-1">{tipCount} tips</span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Support the author by tipping!
+                  </span>
+                </div>
 
-              <Button
-                onClick={goToNext}
-                disabled={!nextChapter}
-                className="flex items-center gap-2 bg-transparent border border-primary text-gray-400 hover:text-white hover:bg-white/10"
-              >
-                {nextChapter ? 'Next' : 'Last Chapter'}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+                <Button
+                  onClick={goToNext}
+                  disabled={!nextChapter}
+                  className="flex items-center gap-2 bg-transparent border border-primary text-gray-400 hover:text-white hover:bg-white/10"
+                >
+                  {nextChapter ? 'Next' : 'Last Chapter'}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -644,34 +702,6 @@ export default function IndividualChapterPage() {
           onComplete={() => removeLoveAnimation(animation.id)}
         />
       ))}
-
-      {/* Floating Action Buttons - Back and Love, stacked and responsive */}
-      <div className="fixed left-1 md:left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 md:gap-4 opacity-40 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
-        <button
-          type="button"
-          onClick={goBackToNovel}
-          className="bg-card border border-border rounded-full p-2 md:p-3 text-gray-400 hover:text-primary hover:bg-primary/10 active:bg-primary/20 focus:bg-primary/20 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation mb-1"
-          aria-label="Back to Novel"
-        >
-          <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
-        </button>
-        <button
-          type="button"
-          onClick={(event) => handleLove(event)}
-          disabled={hasLoved || tradePending}
-          className={`focus:outline-none bg-card border border-border rounded-full p-2 md:p-3 text-gray-400 hover:text-primary hover:bg-primary/10 active:bg-primary/20 focus:bg-primary/20 transition-all duration-300 shadow-lg ${
-            hasLoved ? 'text-primary bg-primary/10' : ''
-          }`}
-          aria-label={`Love this chapter ${tipAmountDisplay} USDC`}
-        >
-          <Heart
-            className={`h-4 w-4 md:h-5 md:w-5 ${hasLoved ? 'fill-primary text-primary' : ''}`}
-          />
-        </button>
-        <span className="text-xs text-gray-300 font-semibold bg-background rounded px-1.5 py-0.5 md:px-2 md:py-1 mt-1 shadow-md select-none">
-          {tipCount}
-        </span>
-      </div>
 
       {/* Chapter List Modal */}
       <ChapterListModal
