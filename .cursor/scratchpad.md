@@ -861,8 +861,10 @@ The system is now production-ready with proper performance optimizations. Awaiti
 
 - [x] Implement genre filtering for the first button. All three buttons now have purple borders, transparent backgrounds, increased height, and the margin around the button row is removed. Linter error fixed. (awaiting user review)
 - [x] Hide the bottom navigation bar on novel detail and reading pages by checking the route with usePathname. (awaiting user review)
+- [x] Refactor: Move bottom navigation bar to a separate Client Component (BottomNav) and conditionally render it in layout.tsx. (awaiting user review)
 
 ## Executor's Feedback or Assistance Requests
 
 - The genre filter is now implemented, and the sort buttons are styled as requested. Please review the UI and confirm if it matches your expectations before marking this task as complete.
 - The bottom navigation bar is now hidden on /novels/[id] and /novels/[id]/chapters/[chapterId] pages. Please review and confirm if this matches your expectations.
+- The bottom navigation bar is now a separate Client Component and is conditionally rendered in layout.tsx. Please review and confirm if this resolves the previous error and matches your expectations.
