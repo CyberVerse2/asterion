@@ -9,11 +9,57 @@ import MiniappPrompt from '@/components/miniapp-prompt';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useMemo } from 'react';
+import useSWR from 'swr';
 import { Star, BookOpen } from 'lucide-react';
 
 // Lazy load components for better performance
 const NovelGrid = lazy(() => import('@/components/novel-grid'));
 const RecentlyReadSection = lazy(() => import('@/components/recently-read-section'));
+
+// --- FarcasterReadingSection component ---
+function FarcasterReadingSection() {
+  const { data, error } = useSWR('/api/farcaster-reading', (url) =>
+    fetch(url).then((r) => r.json())
+  );
+  if (error) return null;
+  if (!data || !Array.isArray(data) || data.length === 0) return null;
+  return (
+    <div className="mb-10">
+      <h2 className="text-xl font-bold text-white mb-2">Farcaster users are reading</h2>
+      <div className="overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-4" style={{ minWidth: '100%' }}>
+          {data.map((novel: any) => (
+            <Link
+              key={novel.id}
+              href={`/novels/${novel.id}`}
+              className="flex-shrink-0 w-32 flex flex-col items-center group relative bg-card border border-border rounded-lg shadow-md hover:bg-primary/5 transition-all duration-200"
+            >
+              <div className="w-32 h-44 rounded-lg overflow-hidden flex items-center justify-center mb-2">
+                <Image
+                  src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
+                  alt={novel.title}
+                  width={160}
+                  height={230}
+                  className="w-32 h-44 object-contain"
+                  loading="lazy"
+                />
+              </div>
+              <div className="w-full text-center">
+                <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-300">
+                  {novel.title}
+                </h3>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{novel.author}</p>
+                <span className="text-[10px] text-primary font-semibold mt-0.5 block">
+                  {novel.count} Farcaster user{novel.count > 1 ? 's' : ''} reading
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { setFrameReady, isFrameReady } = useMiniKit();
@@ -50,6 +96,9 @@ export default function HomePage() {
             <RecentlyReadSection userId={user.id} horizontal />
           </Suspense>
         )}
+
+        {/* Farcaster users are reading section (real data) */}
+        <FarcasterReadingSection />
         <h2 className="text-2xl font-bold text-white mb-1">Ranking</h2>
         <p className="text-sm text-muted-foreground mb-6">
           The best ones and users&apos; favorites
