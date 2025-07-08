@@ -176,7 +176,10 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
         >
           <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-white/10 hover:border-purple-400/50 group">
             <CardContent className="p-0">
-              <div className="relative w-full h-48 overflow-hidden group rounded-lg">
+              <div
+                className="relative w-full overflow-hidden group rounded-lg"
+                style={{ maxHeight: '22vh' }}
+              >
                 <Image
                   src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
                   alt={novel.title}
@@ -187,8 +190,17 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                   placeholder="blur"
                   blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                 />
-                {/* Progress overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-2 sm:p-4">
+                {/* Gradient overlay: transparent at bottom, fades to black from 60% upward */}
+                <div
+                  className="absolute inset-0 pointer-events-none rounded-lg"
+                  style={{
+                    background:
+                      'linear-gradient(to top, transparent 0%, transparent 60%, rgba(0,0,0,0.85) 100%)',
+                    zIndex: 1
+                  }}
+                />
+                {/* Overlay content */}
+                <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 z-10">
                   <h3 className="font-bold text-sm sm:text-lg mb-1 line-clamp-2 text-white group-hover:text-purple-200 transition-colors duration-300">
                     {novel.title}
                   </h3>
@@ -241,15 +253,15 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                       })()}
                     </span>
                   </div>
+                  {/* Status Badge */}
+                  {novel.status && (
+                    <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-20">
+                      <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-1 sm:px-2 py-0.5 sm:py-1">
+                        {novel.status.toUpperCase()}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
-                {/* Status Badge */}
-                {novel.status && (
-                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
-                    <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-1 sm:px-2 py-0.5 sm:py-1">
-                      {novel.status.toUpperCase()}
-                    </Badge>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>

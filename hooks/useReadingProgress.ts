@@ -170,4 +170,3 @@ export const getReadingStreak = (progressList: ReadingProgress[]): number => {
 
   return streak;
 };
- 
