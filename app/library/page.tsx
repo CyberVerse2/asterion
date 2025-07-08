@@ -1,3 +1,4 @@
+'use client';
 import { useUser } from '@/providers/UserProvider';
 import { useNovels } from '@/hooks/useNovels';
 import Link from 'next/link';
