@@ -49,13 +49,13 @@ export default function LibraryPage() {
           <div className="flex gap-2 px-2 mb-2 pb-1.5">
             <Link
               href="/history"
-              className="flex-1 bg-muted border border-border text-primary rounded-lg px-3 py-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center gap-1"
+              className="flex-1 bg-card border border-border text-primary rounded-lg px-3 py-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center gap-1"
             >
               <BookOpen className="h-4 w-4 mr-1" />
               History
             </Link>
             <button
-              className="flex-1 w-full border border-border text-primary bg-muted rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center"
+              className="flex-1 w-full border border-border text-primary bg-card rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center"
               onClick={() => {
                 const idx = filterOptions.indexOf(filter);
                 setFilter(filterOptions[(idx + 1) % filterOptions.length]);
@@ -77,7 +77,7 @@ export default function LibraryPage() {
           ) : bookmarkedNovels.length === 0 ? (
             <div className="text-muted-foreground">You have no bookmarked novels yet.</div>
           ) : (
-            <div className="divide-y divide-white/20 bg-card/90 rounded-2xl shadow-lg">
+            <div className="divide-y divide-white/20 bg-card rounded-2xl shadow-lg">
               {bookmarkedNovels.map((novel: any) => {
                 // Find all progress entries for this novel
                 const novelProgress =

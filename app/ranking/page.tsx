@@ -64,7 +64,7 @@ export default function RankingPage() {
           <div className="flex gap-2 px-2 pb-1.5">
             <div className="relative flex-1">
               <button
-                className={`w-full border border-border text-primary bg-muted rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-between ${
+                className={`w-full border border-border text-primary bg-card rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-between ${
                   genre ? 'font-bold' : ''
                 }`}
                 onClick={() => setShowGenreDropdown((v) => !v)}
@@ -86,7 +86,7 @@ export default function RankingPage() {
                 </svg>
               </button>
               {showGenreDropdown && (
-                <div className="absolute z-10 left-0 right-0 mt-1 bg-muted border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-10 left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   <button
                     className="w-full text-left px-4 py-2 text-xs text-primary hover:bg-white/10 rounded-t-lg"
                     onClick={() => {
@@ -100,7 +100,7 @@ export default function RankingPage() {
                     <button
                       key={g}
                       className={`w-full text-left px-4 py-2 text-xs ${
-                        genre === g ? 'bg-muted text-primary' : 'text-primary hover:bg-white/10'
+                        genre === g ? 'bg-card text-primary' : 'text-primary hover:bg-white/10'
                       }`}
                       onClick={() => {
                         setGenre(g);
@@ -114,7 +114,7 @@ export default function RankingPage() {
               )}
             </div>
             <button
-              className="flex-1 border border-border text-primary bg-muted rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition"
+              className="flex-1 border border-border text-primary bg-card rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition"
               onClick={() => {
                 setSortType((prev) =>
                   prev === 'ranking' ? 'mostRead' : prev === 'mostRead' ? 'chapters' : 'ranking'
@@ -124,7 +124,7 @@ export default function RankingPage() {
               Sort: {sortTypeLabel}
             </button>
             <button
-              className="flex-none border border-border text-primary bg-muted rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center"
+              className="flex-none border border-border text-primary bg-card rounded-lg py-2 px-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center"
               onClick={() => setSortAsc((v) => !v)}
               title="Reverse sort order"
             >
@@ -138,12 +138,12 @@ export default function RankingPage() {
           className="overflow-y-auto scrollbar-hide pb-24"
           style={{ maxHeight: 'calc(100vh - 90px)' }}
         >
-          <div className="divide-y divide-white/20 bg-muted rounded-2xl shadow-lg mt-4">
+          <div className="divide-y divide-white/20 bg-card rounded-2xl shadow-lg mt-4">
             {filteredNovels.map((novel, idx) => (
               <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
                 <div className="flex gap-3 p-2 hover:bg-white/5 transition">
                   {/* Cover Image */}
-                  <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-muted border border-border flex items-center justify-center">
+                  <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
                     <Image
                       src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
                       alt={novel.title}
