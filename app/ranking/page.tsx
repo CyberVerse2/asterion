@@ -4,26 +4,130 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Star, Eye, ThumbsUp, MessageCircle } from 'lucide-react';
+import { Star, Eye, ThumbsUp, MessageCircle, SortAsc } from 'lucide-react';
+import { useState, useMemo } from 'react';
 
 export default function RankingPage() {
   const { novels, isLoading, error } = useNovels();
+
+  const [sortType, setSortType] = useState<'ranking' | 'mostRead' | 'chapters'>('ranking');
+  const [sortAsc, setSortAsc] = useState(true);
+  const [genre, setGenre] = useState<string | null>(null); // Placeholder for genre
+  const [showGenreDropdown, setShowGenreDropdown] = useState(false);
+
+  // Get all unique genres from the novels list
+  const allGenres = useMemo(() => {
+    const genreSet = new Set<string>();
+    novels?.forEach((novel: any) => {
+      (novel.genres || []).forEach((g: string) => genreSet.add(g));
+    });
+    return Array.from(genreSet).sort();
+  }, [novels]);
 
   if (isLoading) return <div className="p-8 text-center text-white">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-400">Error: {error.message}</div>;
   if (!novels || novels.length === 0)
     return <div className="p-8 text-center text-gray-400">No novels found.</div>;
 
-  // Sort novels by rank (assume lower rank is better)
-  const sortedNovels = [...novels].sort(
-    (a, b) => (Number(a.rank) || 9999) - (Number(b.rank) || 9999)
-  );
+  // Sorting logic
+  let sortedNovels = [...novels];
+  if (sortType === 'ranking') {
+    sortedNovels.sort((a, b) => (Number(a.rank) || 9999) - (Number(b.rank) || 9999));
+  } else if (sortType === 'mostRead') {
+    sortedNovels.sort((a, b) => (Number(b.views) || 0) - (Number(a.views) || 0));
+  } else if (sortType === 'chapters') {
+    sortedNovels.sort((a, b) => (Number(b.totalChapters) || 0) - (Number(a.totalChapters) || 0));
+  }
+  if (!sortAsc) {
+    sortedNovels.reverse();
+  }
+
+  // Filter by genre if selected
+  let filteredNovels = genre
+    ? sortedNovels.filter((novel) => (novel.genres || []).includes(genre))
+    : sortedNovels;
+
+  // Sort type label
+  const sortTypeLabel =
+    sortType === 'ranking' ? 'Ranking' : sortType === 'mostRead' ? 'Most Read' : 'Chapters';
 
   return (
     <div className="w-full max-w-xl mx-auto py-4 px-2 sm:px-0">
-      <h1 className="text-xl font-bold text-white mb-4 px-2">Ranking</h1>
-      <div className="divide-y divide-white/10 bg-black/90 rounded-2xl shadow-lg overflow-hidden">
-        {sortedNovels.map((novel, idx) => (
+      {/* Sort buttons row */}
+      <div className="flex gap-2 px-2">
+        <div className="relative flex-1">
+          <button
+            className={`w-full border border-purple-500 text-purple-300 bg-transparent rounded-lg py-2 px-2 text-xs font-medium hover:bg-purple-500/10 transition flex items-center justify-between ${
+              genre ? 'font-bold' : ''
+            }`}
+            onClick={() => setShowGenreDropdown((v) => !v)}
+            type="button"
+          >
+            {genre ? genre : 'All'}
+            <svg
+              className="ml-2 h-3 w-3 text-purple-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+          {showGenreDropdown && (
+            <div className="absolute z-10 left-0 right-0 mt-1 bg-black border border-purple-500 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              <button
+                className="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-purple-500/10 rounded-t-lg"
+                onClick={() => {
+                  setGenre(null);
+                  setShowGenreDropdown(false);
+                }}
+              >
+                All Genres
+              </button>
+              {allGenres.map((g) => (
+                <button
+                  key={g}
+                  className={`w-full text-left px-4 py-2 text-xs ${
+                    genre === g
+                      ? 'bg-purple-600/20 text-purple-300'
+                      : 'text-gray-300 hover:bg-purple-500/10'
+                  }`}
+                  onClick={() => {
+                    setGenre(g);
+                    setShowGenreDropdown(false);
+                  }}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          className="flex-1 border border-purple-500 text-purple-300 bg-transparent rounded-lg py-2 px-2 text-xs font-medium hover:bg-purple-500/10 transition"
+          onClick={() => {
+            setSortType((prev) =>
+              prev === 'ranking' ? 'mostRead' : prev === 'mostRead' ? 'chapters' : 'ranking'
+            );
+          }}
+        >
+          Sort: {sortTypeLabel}
+        </button>
+        <button
+          className="flex-none border border-purple-500 text-purple-300 bg-transparent rounded-lg py-2 px-2 text-xs font-medium hover:bg-purple-500/10 transition flex items-center justify-center"
+          onClick={() => setSortAsc((v) => !v)}
+          title="Reverse sort order"
+        >
+          <SortAsc className={`h-4 w-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} />
+        </button>
+      </div>
+      <div className="divide-y divide-white/10 bg-black/90 rounded-2xl shadow-lg overflow-hidden mt-4">
+        {filteredNovels.map((novel, idx) => (
           <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
             <div className="flex gap-3 p-2 hover:bg-white/5 transition">
               {/* Cover Image */}

@@ -859,8 +859,8 @@ The system is now production-ready with proper performance optimizations. Awaiti
 
 ## Project Status Board
 
-- [x] Increase the space between the title and status/chapters row by adding mb-2 to the title. (awaiting user review)
+- [x] Implement genre filtering for the first button. All three buttons now have purple borders, transparent backgrounds, increased height, and the margin around the button row is removed. Linter error fixed. (awaiting user review)
 
 ## Executor's Feedback or Assistance Requests
 
-- The space between the title and the status/chapters row has been increased. Please review the UI and confirm if it matches your expectations before marking this task as complete.
+- The genre filter is now implemented, and the sort buttons are styled as requested. Please review the UI and confirm if it matches your expectations before marking this task as complete.
