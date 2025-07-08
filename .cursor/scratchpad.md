@@ -856,3 +856,11 @@ The system is now production-ready with proper performance optimizations. Awaiti
 - "History" tab shows the user's full reading history.
 - "Profile" tab links to the existing profile page.
 - All navigation works on both desktop and mobile.
+
+## Project Status Board
+
+- [x] Refactor the details div in the novel card so the bottom group now has the rating as a row at the top, and all stats (rank, views, likes, comments) are together in a single row below the rating. (awaiting user review)
+
+## Executor's Feedback or Assistance Requests
+
+- The bottom group now displays the rating as a row at the top, and all stats (rank, views, likes, comments) together in a single row below. Please review the UI and confirm if it matches your expectations before marking this task as complete.
