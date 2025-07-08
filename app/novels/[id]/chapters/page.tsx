@@ -123,18 +123,18 @@ export default function ChapterListPage() {
           {filteredChapters.map((chapter, idx) => (
             <div
               key={chapter.id}
-              className="flex items-center gap-4 bg-card border border-border rounded-lg shadow-sm px-4 py-2 hover:bg-muted transition-all duration-150"
+              className="flex items-center bg-card border border-border rounded-lg shadow-sm px-4 py-2 hover:bg-white/5 transition-all duration-150"
             >
-              <span className="w-10 text-right text-muted-foreground text-sm font-semibold">
+              <span className="w-10 text-left text-muted-foreground text-sm font-semibold flex-shrink-0">
                 {(pagination.page - 1) * pagination.limit + idx + 1}
               </span>
               <Link
                 href={`/novels/${params.id}/chapters/${chapter.id}`}
-                className="flex-1 text-foreground hover:text-primary font-medium text-base lg:text-lg text-left"
+                className="flex-1 text-foreground hover:text-primary font-medium text-sm text-left truncate"
               >
                 {chapter.title}
               </Link>
-              <span className="text-sm text-muted-foreground min-w-[100px] text-right">
+              <span className="text-sm text-muted-foreground min-w-[90px] text-right flex-shrink-0">
                 {chapter.createdAt
                   ? new Date(chapter.createdAt).toLocaleDateString(undefined, {
                       month: 'short',

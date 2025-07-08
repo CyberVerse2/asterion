@@ -899,3 +899,13 @@ The system is now production-ready with proper performance optimizations. Awaiti
 - The chapter list modal now includes a search bar at the top, filtering chapters by title or number.
 - Chapter titles in the chapters page are now left-aligned for better readability.
 - Please review visually and confirm if this resolves the issues before marking these tasks as fully complete.
+
+- [x] Change chapter card hover background to a subtle dark shade (hover:bg-white/5)
+- [x] Align chapter number to the far left, title to the left and fill, date to the far right in chapter cards
+- [x] Reduce font size of number, title, and date to text-sm for compactness
+
+## Executor's Feedback or Assistance Requests
+
+- The chapter card hover background is now a subtle dark shade (hover:bg-white/5), not white or light.
+- The chapter number is at the far left, the title is left-aligned and fills the space, and the date is at the far right, all with text-sm for a more compact look.
+- Please review visually and confirm if this resolves the issues before marking these tasks as fully complete.
