@@ -40,7 +40,7 @@ export default function RankingPage() {
               {/* Details */}
               <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
                 <div>
-                  <h3 className="font-bold text-base sm:text-lg m-0 p-0 text-white truncate group-hover:text-purple-200 transition-colors duration-300">
+                  <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 text-white truncate group-hover:text-purple-200 transition-colors duration-300">
                     {novel.title}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">

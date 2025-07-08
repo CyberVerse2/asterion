@@ -859,8 +859,8 @@ The system is now production-ready with proper performance optimizations. Awaiti
 
 ## Project Status Board
 
-- [x] Refactor the details div in the novel card so the bottom group now has the rating as a row at the top, and all stats (rank, views, likes, comments) are together in a single row below the rating. (awaiting user review)
+- [x] Reduce the size and font weight of the novel title on mobile, keeping the current size and weight on larger screens. (awaiting user review)
 
 ## Executor's Feedback or Assistance Requests
 
-- The bottom group now displays the rating as a row at the top, and all stats (rank, views, likes, comments) together in a single row below. Please review the UI and confirm if it matches your expectations before marking this task as complete.
+- The novel title is now smaller and less bold on mobile, but remains as before on larger screens. Please review the UI and confirm if it matches your expectations before marking this task as complete.
