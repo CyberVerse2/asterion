@@ -78,7 +78,7 @@ export default function LibraryPage() {
             <div className="text-muted-foreground">You have no bookmarked novels yet.</div>
           ) : (
             <div className="bg-card rounded-2xl shadow-lg mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4 md:gap-6">
-              {bookmarkedNovels.map((novel: any) => {
+              {bookmarkedNovels.map((novel: any, idx: number) => {
                 // Find all progress entries for this novel
                 const novelProgress =
                   allProgress && Array.isArray(allProgress)
@@ -92,7 +92,13 @@ export default function LibraryPage() {
                   progress = Math.round((completed / novelProgress.length) * 100);
                 }
                 return (
-                  <NovelCard key={novel.id} novel={novel} libraryStyle={true} progress={progress} />
+                  <NovelCard
+                    key={novel.id}
+                    novel={novel}
+                    libraryStyle={true}
+                    progress={progress}
+                    showDivider={idx !== bookmarkedNovels.length - 1}
+                  />
                 );
               })}
             </div>

@@ -55,7 +55,7 @@ export default function RankingPage() {
     <div className="w-full bg-background min-h-screen">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
-        <div className="ornate-pattern bg-card pt-1 max-w-xl mx-auto shadow-lg">
+        <div className="ornate-pattern bg-card pt-1 w-full px-2 shadow-lg">
           <h2 className="text-lg font-semibold text-foreground mb-0.5 px-2">Browse Novels</h2>
           <p className="text-xs text-muted-foreground mb-1.5 px-2">
             Discover the most popular web/light novels
@@ -133,7 +133,7 @@ export default function RankingPage() {
           </div>
         </div>
       </div>
-      <div className="mx-auto w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl">
+      <div className="mx-auto w-full px-2">
         <div
           className="overflow-y-auto scrollbar-hide pb-24"
           style={{ maxHeight: 'calc(100vh - 90px)' }}
@@ -142,7 +142,11 @@ export default function RankingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredNovels.map((novel, idx) => (
                 <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
-                  <div className="flex gap-3 p-2 hover:bg-white/5 transition">
+                  <div
+                    className={`flex gap-3 p-2 hover:bg-white/5 transition ${
+                      idx !== filteredNovels.length - 1 ? 'border-b border-border' : ''
+                    }`}
+                  >
                     {/* Cover Image */}
                     <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
                       <Image

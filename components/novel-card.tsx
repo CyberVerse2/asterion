@@ -32,9 +32,15 @@ interface NovelCardProps {
   };
   libraryStyle?: boolean;
   progress?: number;
+  showDivider?: boolean;
 }
 
-const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: NovelCardProps) {
+const NovelCard = memo(function NovelCard({
+  novel,
+  libraryStyle,
+  progress,
+  showDivider
+}: NovelCardProps) {
   if (libraryStyle) {
     // Library style card (horizontal, minimal, like screenshot)
     // Calculate progress as chapter X / Y
@@ -55,7 +61,9 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
     return (
       <Link
         href={`/novels/${novel.id}`}
-        className="flex gap-3 p-2 hover:bg-white/5 transition items-center block"
+        className={`flex gap-3 p-2 hover:bg-white/5 transition items-center block ${
+          showDivider ? 'border-b border-border' : ''
+        }`}
       >
         <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
           <Image
@@ -105,7 +113,11 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
 
   return (
     <Link href={`/novels/${novel.id}`}>
-      <Card className="h-full bg-card hover:shadow-2xl transition-all duration-300 cursor-pointer border-border hover:border-primary/50 flex flex-col group">
+      <Card
+        className={`h-full bg-card hover:shadow-2xl transition-all duration-300 cursor-pointer border-border hover:border-primary/50 flex flex-col group ${
+          showDivider ? 'border-b border-border' : ''
+        }`}
+      >
         <CardHeader className="p-0">
           <div className="relative aspect-[3/4] w-full overflow-hidden">
             <Image
