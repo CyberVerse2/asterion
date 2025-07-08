@@ -24,10 +24,53 @@ interface NovelCardProps {
     genres?: string[];
     summary?: string;
     status?: string;
+    latestChapter?: { number: number; title: string; updatedAt: string };
+    updatedAt?: string;
+    progress?: string;
   };
+  libraryStyle?: boolean;
 }
 
-const NovelCard = memo(function NovelCard({ novel }: NovelCardProps) {
+const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProps) {
+  if (libraryStyle) {
+    // Library style card (horizontal, minimal, like screenshot)
+    return (
+      <Link href={`/novels/${novel.id}`}>
+        <div className="flex gap-3 p-3 bg-black border border-white/10 rounded-lg hover:border-purple-400/50 transition group items-center">
+          <div className="flex-shrink-0 w-16 h-20 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+            <Image
+              src={novel.imageUrl || '/placeholder.svg?height=400&width=300'}
+              alt={novel.title}
+              width={64}
+              height={80}
+              className="object-cover w-full h-full"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-base text-white truncate group-hover:text-purple-200 transition-colors duration-300">
+                {novel.title}
+              </h3>
+            </div>
+            <div className="text-xs text-gray-400 mt-0.5">Progress : Not yet read.</div>
+            <div className="text-xs text-gray-300 truncate mt-0.5">
+              Latest: Chapter {novel.latestChapter?.number || '—'}:{' '}
+              {novel.latestChapter?.title || '—'}
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="bg-purple-900 text-purple-200 text-[10px] font-semibold rounded px-2 py-0.5">
+                NEW CH
+              </span>
+              <span className="text-xs text-gray-400">
+                Update: {novel.latestChapter?.updatedAt || novel.updatedAt || '—'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   const rating = (4.0 + Math.random() * 1.0).toFixed(1);
 
   return (
