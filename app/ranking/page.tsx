@@ -52,10 +52,10 @@ export default function RankingPage() {
     sortType === 'ranking' ? 'Ranking' : sortType === 'mostRead' ? 'Most Read' : 'Chapters';
 
   return (
-    <div className="w-full bg-background min-h-screen max-w-screen-xl mx-auto px-2 sm:px-4">
+    <div className="w-full bg-background min-h-screen">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
-        <div className="ornate-pattern bg-card pt-1 max-w-screen-xl mx-auto shadow-lg">
+        <div className="ornate-pattern bg-card pt-1 max-w-xl mx-auto shadow-lg">
           <h2 className="text-lg font-semibold text-foreground mb-0.5 px-2">Browse Novels</h2>
           <p className="text-xs text-muted-foreground mb-1.5 px-2">
             Discover the most popular web/light novels
@@ -133,82 +133,86 @@ export default function RankingPage() {
           </div>
         </div>
       </div>
-      <div className="max-w-screen-xl mx-auto px-2 sm:px-4">
+      <div className="mx-auto w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl">
         <div
           className="overflow-y-auto scrollbar-hide pb-24"
           style={{ maxHeight: 'calc(100vh - 90px)' }}
         >
-          <div className="divide-y divide-white/20 bg-card rounded-2xl shadow-lg mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4 md:gap-6">
-            {filteredNovels.map((novel, idx) => (
-              <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 lg:gap-6 p-2 hover:bg-white/5 transition h-full">
-                  {/* Cover Image */}
-                  <div className="flex-shrink-0 w-full sm:w-24 md:w-32 lg:w-40 h-40 sm:h-32 md:h-40 lg:h-56 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
-                    <Image
-                      src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
-                      alt={novel.title}
-                      width={96}
-                      height={120}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                  {/* Details */}
-                  <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-foreground truncate group-hover:text-primary transition-colors duration-300">
-                        {novel.title}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {novel.status && (
-                          <Badge className="text-[10px] px-1 py-0 rounded border border-primary text-primary bg-transparent font-semibold">
-                            {novel.status.toUpperCase()}
-                          </Badge>
-                        )}
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium whitespace-nowrap">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 text-muted-foreground"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <rect x="3" y="6" width="18" height="12" rx="2" strokeWidth="2" />
-                          </svg>
-                          {novel.totalChapters || 0} chs.
+          <div className="divide-y divide-white/20 bg-card rounded-2xl shadow-lg mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredNovels.map((novel, idx) => (
+                <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
+                  <div className="flex gap-3 p-2 hover:bg-white/5 transition">
+                    {/* Cover Image */}
+                    <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
+                      <Image
+                        src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
+                        alt={novel.title}
+                        width={96}
+                        height={120}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    {/* Details */}
+                    <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-foreground truncate group-hover:text-primary transition-colors duration-300">
+                          {novel.title}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          {novel.status && (
+                            <Badge className="text-[10px] px-1 py-0 rounded border border-primary text-primary bg-transparent font-semibold">
+                              {novel.status.toUpperCase()}
+                            </Badge>
+                          )}
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium whitespace-nowrap">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 text-muted-foreground"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <rect x="3" y="6" width="18" height="12" rx="2" strokeWidth="2" />
+                            </svg>
+                            {novel.totalChapters || 0} chs.
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-0.5">
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                          <span className="font-semibold text-foreground">
+                            {novel.rating ? Number(novel.rating).toFixed(1) : '5.0'}
+                          </span>
+                          <span className="text-muted-foreground">
+                            ({novel.ratingCount || '0'})
+                          </span>
                         </span>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="flex items-center gap-1 text-primary font-bold">
+                            Rank {novel.rank}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-4 h-4 text-primary" />
+                            {formatNumber(novel.views || 0)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ThumbsUp className="w-4 h-4 text-primary" />
+                            {formatNumber(novel.likes || 0)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="w-4 h-4 text-primary" />
+                            {formatNumber(novel.comments || 0)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-0.5">
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span className="font-semibold text-foreground">
-                          {novel.rating ? Number(novel.rating).toFixed(1) : '5.0'}
-                        </span>
-                        <span className="text-muted-foreground">({novel.ratingCount || '0'})</span>
-                      </span>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-primary font-bold">
-                          Rank {novel.rank}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye className="w-4 h-4 text-primary" />
-                          {formatNumber(novel.views || 0)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ThumbsUp className="w-4 h-4 text-primary" />
-                          {formatNumber(novel.likes || 0)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="w-4 h-4 text-primary" />
-                          {formatNumber(novel.comments || 0)}
-                        </span>
-                      </div>
-                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
