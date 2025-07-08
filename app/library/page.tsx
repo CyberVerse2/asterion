@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
 import NovelCard from '@/components/novel-card';
 import { useState } from 'react';
+import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 
 export default function LibraryPage() {
   const { user, userLoading } = useUser();
@@ -63,9 +64,20 @@ export default function LibraryPage() {
         <div className="text-gray-400">You have no bookmarked novels yet.</div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {bookmarkedNovels.map((novel: any) => (
-            <NovelCard key={novel.id} novel={novel} libraryStyle={true} />
-          ))}
+          {bookmarkedNovels.map((novel: any) => {
+            const { readingProgress } = useNovelReadingProgress(user?.id || null, novel.id);
+            // Calculate overall progress percentage (average or max of all chapters)
+            let progress = 0;
+            if (readingProgress && readingProgress.length > 0) {
+              const completed = readingProgress.filter(
+                (p: any) => p.progressPercentage >= 95
+              ).length;
+              progress = Math.round((completed / readingProgress.length) * 100);
+            }
+            return (
+              <NovelCard key={novel.id} novel={novel} libraryStyle={true} progress={progress} />
+            );
+          })}
         </div>
       )}
     </div>

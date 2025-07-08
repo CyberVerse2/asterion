@@ -37,7 +37,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProp
     // Library style card (horizontal, minimal, like screenshot)
     return (
       <Link href={`/novels/${novel.id}`}>
-        <div className="flex gap-3 p-2 hover:bg-white/5 transition border border-white/10 rounded-2xl bg-black/90 items-center">
+        <div className="flex gap-3 p-2 hover:bg-white/5 transition border border-white/10 bg-black/90 items-center">
           <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
             <Image
               src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
@@ -56,15 +56,15 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProp
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-xs text-gray-400">Progress : Not yet read.</span>
               </div>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-gray-300 truncate">
                   Latest: Chapter {novel.latestChapter?.chapterNumber || '—'}:{' '}
                   {novel.latestChapter?.title || '—'}
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="bg-purple-600 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-[10px] px-1 py-0 rounded border border-purple-700 text-purple-400 bg-transparent font-semibold">
                 NEW CH
               </span>
               <span className="text-xs text-gray-400">
