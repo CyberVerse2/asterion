@@ -674,13 +674,13 @@ export default function IndividualChapterPage() {
           type="button"
           onClick={(event) => handleLove(event)}
           disabled={hasLoved || tradePending}
-          className={`focus:outline-none bg-card border border-border rounded-full p-2 md:p-3 text-gray-400 hover:text-red-500 hover:bg-red-500/10 active:bg-red-500/20 focus:bg-red-500/20 transition-all duration-300 shadow-lg ${
-            hasLoved ? 'text-red-500 bg-red-500/10' : ''
+          className={`focus:outline-none bg-card border border-border rounded-full p-2 md:p-3 text-gray-400 hover:text-primary hover:bg-primary/10 active:bg-primary/20 focus:bg-primary/20 transition-all duration-300 shadow-lg ${
+            hasLoved ? 'text-primary bg-primary/10' : ''
           }`}
           aria-label={`Love this chapter ${tipAmountDisplay} USDC`}
         >
           <Heart
-            className={`h-4 w-4 md:h-5 md:w-5 ${hasLoved ? 'fill-red-500 text-red-500' : ''}`}
+            className={`h-4 w-4 md:h-5 md:w-5 ${hasLoved ? 'fill-primary text-primary' : ''}`}
           />
         </button>
         <span className="text-xs text-gray-300 font-semibold bg-background rounded px-1.5 py-0.5 md:px-2 md:py-1 mt-1 shadow-md select-none">

@@ -14,6 +14,7 @@ import { useNovel, useChapters } from '@/hooks/useNovels';
 import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 import { useSpendPermissionGuard } from '@/hooks/use-spend-permission-guard';
 import SpendPermissionRequired from '@/components/spend-permission-required';
+import useSWR from 'swr';
 
 interface Novel {
   id: string;
@@ -58,6 +59,36 @@ const formatNumber = (num: number | string): string => {
   }
   return numValue.toLocaleString();
 };
+
+// Helper to fetch user profile by username
+const fetchUserProfile = async (username: string) => {
+  const res = await fetch(`/api/users?username=${encodeURIComponent(username)}`);
+  if (!res.ok) return null;
+  return res.json();
+};
+
+// Helper to fetch user profiles for an array of usernames (batch)
+function useSupporterProfilesBatch(usernames: string[]) {
+  return useSWR(
+    usernames.length > 0 ? ['/api/users/batch', ...usernames] : null,
+    async () => {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernames })
+      });
+      if (!res.ok) return {};
+      const users = await res.json();
+      // Map username (lowercase) to profile for easy lookup
+      const map: Record<string, any> = {};
+      users.forEach((u: any) => {
+        if (u.username) map[u.username.toLowerCase()] = u;
+      });
+      return map;
+    },
+    { revalidateOnFocus: false }
+  );
+}
 
 export default function NovelPage() {
   const params = useParams();
@@ -348,6 +379,11 @@ export default function NovelPage() {
     }
   }, [user, novel?.id]);
 
+  // Fetch top supporter usernames for avatars
+  const topSupporters = novel?.supporters?.slice(0, 10) || [];
+  const supporterUsernames = topSupporters.map((s: any) => s.username).filter(Boolean);
+  const { data: supporterProfiles } = useSupporterProfilesBatch(supporterUsernames);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-md">
@@ -533,49 +569,52 @@ export default function NovelPage() {
                 Top Tippers
               </h3>
               <div className="flex flex-wrap gap-2">
-                {novel.supporters.map((supporter: any, index: number) => (
-                  <div
-                    key={index}
-                    className={`flex items-center gap-2 px-3 py-1 rounded-full bg-card border border-border text-white text-xs font-medium ${
-                      index === 0 ? 'border-primary bg-primary/20 text-primary' : ''
-                    }`}
-                  >
-                    {/* Animated, gradient, glowing star for top tipper */}
-                    {index === 0 && (
-                      <svg
-                        className="w-4 h-4 mr-1 animate-bounce"
-                        viewBox="0 0 20 20"
-                        fill="url(#gold-gradient)"
-                        style={{ filter: 'drop-shadow(0 0 6px #facc15)' }}
-                      >
-                        <defs>
-                          <linearGradient id="gold-gradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#fffbe6" />
-                            <stop offset="50%" stopColor="#facc15" />
-                            <stop offset="100%" stopColor="#b45309" />
-                          </linearGradient>
-                        </defs>
-                        <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z" />
-                      </svg>
-                    )}
-                    {/* Avatar or fallback */}
-                    {supporter.avatarUrl ? (
-                      <img
-                        src={supporter.avatarUrl}
-                        alt={supporter.username}
-                        className="w-5 h-5 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px] font-bold uppercase">
-                        {supporter.username?.[0] || '?'}
-                      </div>
-                    )}
-                    <span>{supporter.username}</span>
-                    <span className="ml-1 text-purple-300 font-bold">
-                      ${supporter.totalTipped.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+                {topSupporters.map((supporter: any, index: number) => {
+                  const pfpUrl = supporterProfiles?.[supporter.username?.toLowerCase()]?.pfpUrl;
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center gap-2 px-3 py-1 rounded-full bg-card border border-border text-white text-xs font-medium ${
+                        index === 0 ? 'border-primary bg-primary/20 text-primary' : ''
+                      }`}
+                    >
+                      {/* Animated, gradient, glowing star for top tipper */}
+                      {index === 0 && (
+                        <svg
+                          className="w-4 h-4 mr-1 animate-bounce"
+                          viewBox="0 0 20 20"
+                          fill="url(#gold-gradient)"
+                          style={{ filter: 'drop-shadow(0 0 6px #facc15)' }}
+                        >
+                          <defs>
+                            <linearGradient id="gold-gradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#fffbe6" />
+                              <stop offset="50%" stopColor="#facc15" />
+                              <stop offset="100%" stopColor="#b45309" />
+                            </linearGradient>
+                          </defs>
+                          <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z" />
+                        </svg>
+                      )}
+                      {/* Avatar or fallback */}
+                      {pfpUrl ? (
+                        <img
+                          src={pfpUrl}
+                          alt={supporter.username}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px] font-bold uppercase">
+                          {supporter.username?.[0] || '?'}
+                        </div>
+                      )}
+                      <span>{supporter.username}</span>
+                      <span className="ml-1 text-purple-300 font-bold">
+                        ${supporter.totalTipped.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}

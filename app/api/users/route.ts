@@ -64,8 +64,26 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { fid, username, pfpUrl, walletAddress } = await req.json();
+    const { fid, username, pfpUrl, walletAddress, usernames } = await req.json();
 
+    // Batch user profile fetch
+    if (Array.isArray(usernames)) {
+      // Fetch all users by username (case-insensitive)
+      const users = await prisma.user.findMany({
+        where: {
+          username: {
+            in: usernames,
+            mode: 'insensitive'
+          }
+        },
+        select: {
+          id: true,
+          username: true,
+          pfpUrl: true
+        }
+      });
+      return NextResponse.json(users);
+    }
 
     // Validate input: either (fid AND username) OR walletAddress must be provided
     if ((!fid || !username) && !walletAddress) {
@@ -184,7 +202,6 @@ export async function POST(req: NextRequest) {
 
     // Handle existing user without wallet address - update with current wallet
     if (user && !user.walletAddress && walletAddress) {
-
       // Check if this wallet address is already associated with another user
       const isWalletUnique = await checkWalletAddressUniqueness(walletAddress);
       if (!isWalletUnique) {
@@ -466,7 +483,7 @@ export async function PATCH(req: NextRequest) {
           where: { id: userId },
           data: updateData
         });
-        } catch (updateError) {
+      } catch (updateError) {
         console.error('[PATCH /api/users] Prisma update error details:', updateError);
         throw updateError; // Re-throw to trigger the outer catch
       }
