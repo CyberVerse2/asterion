@@ -25,7 +25,7 @@ interface NovelCardProps {
     genres?: string[];
     summary?: string;
     status?: string;
-    latestChapter?: { number: number; title: string; updatedAt: string };
+    latestChapter?: { chapterNumber: number; title: string; updatedAt: string };
     updatedAt?: string;
     progress?: string;
   };
@@ -37,26 +37,31 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle }: NovelCardProp
     // Library style card (horizontal, minimal, like screenshot)
     return (
       <Link href={`/novels/${novel.id}`}>
-        <div className="flex gap-3 p-3 bg-black border border-white/10 rounded-lg hover:border-purple-400/50 transition group items-center">
-          <div className="flex-shrink-0 w-16 h-20 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+        <div className="flex gap-3 p-2 hover:bg-white/5 transition border border-white/10 rounded-2xl bg-black/90 items-center">
+          <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
             <Image
-              src={novel.imageUrl || '/placeholder.svg?height=400&width=300'}
+              src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
               alt={novel.title}
-              width={64}
-              height={80}
-              className="object-cover w-full h-full"
+              width={96}
+              height={120}
+              className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-white text-base truncate group-hover:text-purple-200 transition-colors duration-300">
+          <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
+            <div>
+              <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-white truncate group-hover:text-purple-200 transition-colors duration-300">
                 {novel.title}
               </h3>
-            </div>
-            <div className="text-xs text-gray-400 mt-0.5">Progress : Not yet read.</div>
-            <div className="text-xs text-gray-300 truncate mt-0.5">
-              Latest: Chapter {novel.latestChapter?.number || '—'}:{' '}
-              {novel.latestChapter?.title || '—'}
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-400">Progress : Not yet read.</span>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-300 truncate">
+                  Latest: Chapter {novel.latestChapter?.chapterNumber || '—'}:{' '}
+                  {novel.latestChapter?.title || '—'}
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="bg-purple-600 text-white text-[10px] font-bold rounded-full px-2 py-0.5">

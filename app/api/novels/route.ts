@@ -10,15 +10,36 @@ export async function GET() {
       }
     });
 
-    // Calculate totalTips for each novel and sort by rank
-    const novelsWithTotalTips = novels.map((novel: any) => ({
-      ...novel,
-      totalTips: novel.tips.reduce((sum: number, tip: any) => sum + tip.amount, 0),
-      tipCount: novel.tips.length
-    }));
+    // For each novel, fetch the latest chapter
+    const novelsWithLatest = await Promise.all(
+      novels.map(async (novel: any) => {
+        const latestChapter = await prisma.chapter.findFirst({
+          where: { novel: novel.id },
+          orderBy: [{ chapterNumber: 'desc' }, { createdAt: 'desc' }],
+          select: {
+            id: true,
+            chapterNumber: true,
+            title: true,
+            updatedAt: true
+          }
+        });
+        return {
+          ...novel,
+          totalTips: novel.tips.reduce((sum: number, tip: any) => sum + tip.amount, 0),
+          tipCount: novel.tips.length,
+          latestChapter: latestChapter
+            ? {
+                chapterNumber: latestChapter.chapterNumber,
+                title: latestChapter.title,
+                updatedAt: latestChapter.updatedAt
+              }
+            : null
+        };
+      })
+    );
 
     // Sort by rank (convert to number for proper sorting)
-    const sortedNovels = novelsWithTotalTips.sort((a: any, b: any) => {
+    const sortedNovels = novelsWithLatest.sort((a: any, b: any) => {
       const rankA = parseInt(a.rank) || 999999; // Default to high number if rank is missing/invalid
       const rankB = parseInt(b.rank) || 999999;
       return rankA - rankB; // Ascending order (rank 1 first)

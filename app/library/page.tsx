@@ -23,6 +23,11 @@ export default function LibraryPage() {
       ? novels.filter((novel: any) => user.bookmarks.includes(novel.id))
       : [];
 
+  // Debug: Log bookmarks for user
+  if (typeof window !== 'undefined') {
+    console.log('Bookmarked novels:', bookmarkedNovels);
+  }
+
   // Optionally sort/filter based on filter state (not implemented yet)
 
   return (
