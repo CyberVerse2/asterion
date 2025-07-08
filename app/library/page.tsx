@@ -38,7 +38,7 @@ export default function LibraryPage() {
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-background min-h-screen">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
         <div className="ornate-pattern bg-card pt-1 max-w-2xl mx-auto shadow-lg">

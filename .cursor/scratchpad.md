@@ -877,3 +877,14 @@ The system is now production-ready with proper performance optimizations. Awaiti
 ## Executor's Feedback or Assistance Requests
 
 - Chapter list now visually matches the ranking card style, but is thinner and more compact as requested. All theme and layout inconsistencies for these areas are resolved.
+
+## Project Status Board
+
+- [x] Add bg-background min-h-screen to Ranking and Library top-level divs for consistent ultra-dark background
+- [x] Update status badge in Ranking page to match 'NEW CH' style from Library card
+
+## Executor's Feedback or Assistance Requests
+
+- The background for both Ranking and Library pages now uses bg-background min-h-screen, ensuring full-viewport ultra-dark consistency.
+- The status badge in the Ranking page now matches the 'NEW CH' style (border, text, and background) from the Library card.
+- Please review visually and confirm if this resolves the issues before marking these tasks as fully complete.

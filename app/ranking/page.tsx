@@ -52,7 +52,7 @@ export default function RankingPage() {
     sortType === 'ranking' ? 'Ranking' : sortType === 'mostRead' ? 'Most Read' : 'Chapters';
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-background min-h-screen">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
         <div className="ornate-pattern bg-card pt-1 max-w-xl mx-auto shadow-lg">
@@ -161,10 +161,7 @@ export default function RankingPage() {
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         {novel.status && (
-                          <Badge
-                            variant="default"
-                            className="text-xs bg-primary text-primary-foreground"
-                          >
+                          <Badge className="text-[10px] px-1 py-0 rounded border border-primary text-primary bg-transparent font-semibold">
                             {novel.status.toUpperCase()}
                           </Badge>
                         )}
