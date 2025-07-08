@@ -699,12 +699,6 @@ export default function ProfilePage() {
                     <BookOpen className="h-4 w-4" />
                     Reader
                   </span>
-                  {profile?.fid && (
-                    <span className="flex items-center gap-1">
-                      <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                      FID: {profile.fid}
-                    </span>
-                  )}
                   {profile?.walletAddress && (
                     <span className="flex items-center gap-1 max-w-[120px] sm:max-w-[200px]">
                       <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
@@ -767,13 +761,13 @@ export default function ProfilePage() {
           </div>
 
           {/* Enhanced Tipping History */}
-          <Card className="novel-card-dark border-border">
-            <CardHeader className="bg-card/10 rounded-t-lg p-3 space-y-0">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-1 text-foreground">
+          <Card className="bg-card border border-border rounded-2xl shadow-lg">
+            <CardHeader className="bg-card rounded-t-2xl p-4 border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
                 Recent Tips
                 <Badge
                   variant="secondary"
-                  className="ml-auto bg-primary/20 text-primary border-primary/30"
+                  className="ml-auto bg-primary/20 text-primary border-primary/30 rounded-lg px-2 py-1 text-xs"
                 >
                   {Array.isArray(profile?.tips) ? (profile.tips as TipWithNovel[]).length : 0}
                 </Badge>
@@ -785,7 +779,7 @@ export default function ProfilePage() {
                   (tip, index) => (
                     <div
                       key={index}
-                      className="p-4 hover:bg-card/5 transition-colors cursor-pointer"
+                      className="p-4 hover:bg-primary/5 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0 mr-3">
@@ -801,9 +795,9 @@ export default function ProfilePage() {
                             {tip.date ? new Date(tip.date).toLocaleDateString() : 'Unknown date'}
                           </div>
                         </div>
-                        <Badge className="flex items-center flex-shrink-0 bg-success/20 text-success border-success/30 px-1">
+                        <Badge className="flex items-center flex-shrink-0 bg-success/20 text-success border-success/30 px-2 py-1 rounded-lg">
                           <DollarSign className="h-3 w-3" />
-                          <span className="text-xs">
+                          <span className="text-xs ml-1">
                             {typeof tip.amount === 'number' ? tip.amount.toFixed(2) : '0.00'}
                           </span>
                         </Badge>
@@ -813,7 +807,7 @@ export default function ProfilePage() {
                 )}
                 {(!Array.isArray(profile?.tips) || profile.tips.length === 0) && (
                   <div className="text-center text-muted-foreground py-12">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-card/5 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-card/10 rounded-full flex items-center justify-center">
                       <Heart className="h-8 w-8 text-gray-500" />
                     </div>
                     <p className="text-sm sm:text-base font-medium">No tips yet</p>
@@ -839,14 +833,16 @@ export default function ProfilePage() {
           </div>
 
           {/* Enhanced Spend Settings */}
-          <Card className="novel-card-dark border-border">
-            <CardHeader className="bg-card/10 rounded-t-lg p-3 space-y-0">
-              <CardTitle className="flex items-center gap-1 text-base sm:text-lg text-foreground">
+          <Card className="bg-card border border-border rounded-2xl shadow-lg">
+            <CardHeader className="bg-card rounded-t-2xl p-4 border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
                 Spend Settings
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-blue-400 transition-colors" />
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Info className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Control how much USDC the app can spend on your behalf</p>
@@ -855,7 +851,7 @@ export default function ProfilePage() {
                 </TooltipProvider>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-4 sm:p-6 space-y-6 pb-24">
               {/* Spend Limit Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -872,7 +868,7 @@ export default function ProfilePage() {
                       max={100000}
                       value={spendLimit}
                       onChange={(e) => setSpendLimit(Number(e.target.value))}
-                      className="border border-border rounded-lg px-3 py-2 w-20 text-center text-foreground bg-card focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+                      className="border border-border rounded-lg px-3 py-2 w-20 text-center text-foreground bg-background focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                       disabled={saving}
                     />
                   </div>
@@ -884,10 +880,10 @@ export default function ProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setSpendLimit(amount)}
-                      className={`text-xs px-3 py-1 ${
+                      className={`text-xs px-3 py-1 rounded-lg border border-border transition-colors duration-200 ${
                         spendLimit === amount
                           ? 'bg-primary/20 border-primary/50 text-primary'
-                          : 'bg-card border-border text-muted-foreground hover:bg-primary/10'
+                          : 'bg-background border-border text-muted-foreground hover:bg-primary/10'
                       }`}
                       disabled={saving}
                     >
@@ -914,7 +910,7 @@ export default function ProfilePage() {
                       step={0.01}
                       value={chapterTipAmount}
                       onChange={(e) => setChapterTipAmount(Number(e.target.value))}
-                      className="border border-border rounded-lg px-3 py-2 w-20 text-center text-foreground bg-card focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+                      className="border border-border rounded-lg px-3 py-2 w-20 text-center text-foreground bg-background focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                       disabled={saving}
                     />
                   </div>
@@ -926,10 +922,10 @@ export default function ProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setChapterTipAmount(amount)}
-                      className={`text-xs px-3 py-1 ${
+                      className={`text-xs px-3 py-1 rounded-lg border border-border transition-colors duration-200 ${
                         chapterTipAmount === amount
                           ? 'bg-primary/20 border-primary/50 text-primary'
-                          : 'bg-card border-border text-muted-foreground hover:bg-primary/10'
+                          : 'bg-background border-border text-muted-foreground hover:bg-primary/10'
                       }`}
                       disabled={saving}
                     >
