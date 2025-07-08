@@ -161,7 +161,10 @@ export default function RankingPage() {
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         {novel.status && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge
+                            variant="default"
+                            className="text-xs bg-primary text-primary-foreground"
+                          >
                             {novel.status.toUpperCase()}
                           </Badge>
                         )}

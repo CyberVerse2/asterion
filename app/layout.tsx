@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <MiniKitContextProvider>
                 <UserProvider>
                   <SWRProvider>
-                    <main className="ornate-pattern">{children}</main>
+                    <main>{children}</main>
                     <BottomNav />
                   </SWRProvider>
                 </UserProvider>

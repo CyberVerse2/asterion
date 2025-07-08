@@ -381,7 +381,7 @@ export default function NovelPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 lg:pt-8">
+    <div className="container mx-auto max-w-4xl px-4 lg:pt-8 bg-background">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Left Column - Cover Image and Stats */}
         <div className="lg:col-span-2 space-y-6">
@@ -408,13 +408,13 @@ export default function NovelPage() {
             />
 
             {/* Bottom overlay with enhanced gradient - seamless blend */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#181825] via-[#232336]/80 to-transparent px-4 py-1 transition-all duration-300 group-hover:from-[#232336] group-hover:via-[#232336]/90">
+            <div className="absolute bottom-0 left-0 right-0 bg-card px-4 py-1 transition-all duration-300">
               {/* Status and Rank badges */}
               <div className="flex items-center gap-2 mb-3">
-                <Badge className="bg-gray-700/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
+                <Badge className="bg-primary text-primary-foreground border-0 text-xs px-3 py-1 rounded-full">
                   RANK {novel.rank}
                 </Badge>
-                <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-xs px-3 py-1 rounded-full">
+                <Badge className="bg-primary text-primary-foreground border-0 text-xs px-3 py-1 rounded-full">
                   {novel.status?.toUpperCase()}
                 </Badge>
               </div>
@@ -444,11 +444,11 @@ export default function NovelPage() {
           </div>
 
           {/* Stats Section - Under the image */}
-          <div className="bg-[#232336]/90 shadow-2xl rounded-lg p-6 border border-white/10">
+          <div className="bg-card shadow-2xl rounded-lg p-6 border border-border">
             <div className="grid grid-cols-4 gap-8">
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-purple-400" />
+                  <BookOpen className="h-5 w-5 text-primary" />
                   <span className="text-base font-medium text-white">
                     {formattedStats.chapters}
                   </span>
@@ -457,14 +457,14 @@ export default function NovelPage() {
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-purple-400" />
+                  <Eye className="h-5 w-5 text-primary" />
                   <span className="text-base font-medium text-white">{formattedStats.views}</span>
                 </div>
                 <span className="text-xs text-gray-400">Views</span>
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <Library className="h-5 w-5 text-purple-400" />
+                  <Library className="h-5 w-5 text-primary" />
                   <span className="text-base font-medium text-white">
                     {formattedStats.bookmarks}
                   </span>
@@ -473,7 +473,7 @@ export default function NovelPage() {
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-purple-400" />
+                  <MessageCircle className="h-5 w-5 text-primary" />
                   <span className="text-base font-medium text-white">{formattedStats.reviews}</span>
                 </div>
                 <span className="text-xs text-gray-400">Reviews</span>
@@ -485,7 +485,7 @@ export default function NovelPage() {
         {/* Right Column - Content */}
         <div className="lg:col-span-3 space-y-6">
           {/* Synopsis */}
-          <div className="bg-[#232336]/90 rounded-lg px-3 py-1 border border-white/10">
+          <div className="bg-card rounded-lg px-3 py-1 border border-border">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-white font-semibold text-base">Synopsis</h3>
               <Button
@@ -505,7 +505,7 @@ export default function NovelPage() {
           </div>
 
           {/* Categories */}
-          <div className="bg-[#232336]/90 rounded-lg p-4 border border-white/10">
+          <div className="bg-card rounded-lg p-4 border border-border">
             <h3 className="text-white font-semibold mb-4 text-lg">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {(novel.genres || []).map((category: string) => (
@@ -523,17 +523,15 @@ export default function NovelPage() {
           {Array.isArray(novel.supporters) && novel.supporters.length > 0 && (
             <section className="mt-6">
               <h3 className="text-white font-semibold mb-3 text-lg flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-purple-400" />
+                <DollarSign className="h-5 w-5 text-primary" />
                 Top Tippers
               </h3>
               <div className="flex flex-wrap gap-2">
                 {novel.supporters.map((supporter: any, index: number) => (
                   <div
                     key={index}
-                    className={`flex items-center gap-2 px-3 py-1 rounded-full bg-[#232336] border border-white/10 text-white text-xs font-medium ${
-                      index === 0
-                        ? 'border-purple-400/60 bg-purple-900/60 text-purple-200 shadow-md'
-                        : ''
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full bg-card border border-border text-white text-xs font-medium ${
+                      index === 0 ? 'border-primary bg-primary/20 text-primary' : ''
                     }`}
                   >
                     {/* Animated, gradient, glowing star for top tipper */}
@@ -582,7 +580,7 @@ export default function NovelPage() {
       <div className="pb-24"></div>
 
       {/* Enhanced Sticky Action Bar with Glass Morphism */}
-      <div className="fixed bottom-0 left-0 w-full z-20 bg-[#181825]/95 backdrop-blur-xl border-t border-white/20 shadow-2xl px-4 py-3 sm:py-4">
+      <div className="fixed bottom-0 left-0 w-full z-20 bg-card border-t border-border shadow-2xl px-4 py-3 sm:py-4">
         <div className="max-w-4xl mx-auto">
           {/* Single Row Layout */}
           <div className="grid grid-cols-5 gap-3">
