@@ -72,7 +72,7 @@ export default function LibraryPage() {
           ) : bookmarkedNovels.length === 0 ? (
             <div className="text-gray-400">You have no bookmarked novels yet.</div>
           ) : (
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-2 ">
               {bookmarkedNovels.map((novel: any) => {
                 // Find all progress entries for this novel
                 const novelProgress =
