@@ -52,10 +52,10 @@ export default function RankingPage() {
     sortType === 'ranking' ? 'Ranking' : sortType === 'mostRead' ? 'Most Read' : 'Chapters';
 
   return (
-    <div className="w-full bg-background min-h-screen">
+    <div className="w-full bg-background min-h-screen max-w-screen-xl mx-auto px-2 sm:px-4">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
-        <div className="ornate-pattern bg-card pt-1 max-w-xl mx-auto shadow-lg">
+        <div className="ornate-pattern bg-card pt-1 max-w-screen-xl mx-auto shadow-lg">
           <h2 className="text-lg font-semibold text-foreground mb-0.5 px-2">Browse Novels</h2>
           <p className="text-xs text-muted-foreground mb-1.5 px-2">
             Discover the most popular web/light novels
@@ -133,17 +133,17 @@ export default function RankingPage() {
           </div>
         </div>
       </div>
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-screen-xl mx-auto px-2 sm:px-4">
         <div
           className="overflow-y-auto scrollbar-hide pb-24"
           style={{ maxHeight: 'calc(100vh - 90px)' }}
         >
-          <div className="divide-y divide-white/20 bg-card rounded-2xl shadow-lg mt-4">
+          <div className="divide-y divide-white/20 bg-card rounded-2xl shadow-lg mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4 md:gap-6">
             {filteredNovels.map((novel, idx) => (
               <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
-                <div className="flex gap-3 p-2 hover:bg-white/5 transition">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 lg:gap-6 p-2 hover:bg-white/5 transition h-full">
                   {/* Cover Image */}
-                  <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
+                  <div className="flex-shrink-0 w-full sm:w-24 md:w-32 lg:w-40 h-40 sm:h-32 md:h-40 lg:h-56 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
                     <Image
                       src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
                       alt={novel.title}

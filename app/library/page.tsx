@@ -38,15 +38,15 @@ export default function LibraryPage() {
   );
 
   return (
-    <div className="w-full bg-background min-h-screen">
+    <div className="w-full bg-background min-h-screen max-w-screen-xl mx-auto px-2 sm:px-4">
       {/* Sticky ornate header full width */}
       <div className="sticky top-0 z-30 w-full">
-        <div className="ornate-pattern bg-card pt-1 max-w-2xl mx-auto shadow-lg">
+        <div className="ornate-pattern bg-card pt-1 max-w-screen-xl mx-auto shadow-lg">
           <h2 className="text-lg font-semibold text-foreground mb-0.5 px-2">Your Library</h2>
           <p className="text-xs text-muted-foreground mb-1.5 px-2">
             Keep track of your favourite novels
           </p>
-          <div className="flex gap-2 px-2 mb-2 pb-1.5">
+          <div className="flex gap-2 sm:gap-3 md:gap-4 px-2 mb-2 pb-1.5">
             <Link
               href="/history"
               className="flex-1 bg-card border border-border text-primary rounded-lg px-3 py-2 text-xs font-medium hover:bg-white/10 transition flex items-center justify-center gap-1"
@@ -67,7 +67,7 @@ export default function LibraryPage() {
           </div>
         </div>
       </div>
-      <div className="px-0 py-2 w-full max-w-2xl mx-auto">
+      <div className="px-0 py-2 w-full max-w-screen-xl mx-auto">
         <div
           className="overflow-y-auto scrollbar-hide pb-24"
           style={{ maxHeight: 'calc(100vh - 90px)' }}
@@ -77,7 +77,7 @@ export default function LibraryPage() {
           ) : bookmarkedNovels.length === 0 ? (
             <div className="text-muted-foreground">You have no bookmarked novels yet.</div>
           ) : (
-            <div className="divide-y divide-white/20 bg-card rounded-2xl shadow-lg">
+            <div className="bg-card rounded-2xl shadow-lg mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4 md:gap-6">
               {bookmarkedNovels.map((novel: any) => {
                 // Find all progress entries for this novel
                 const novelProgress =
