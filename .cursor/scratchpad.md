@@ -859,9 +859,7 @@ The system is now production-ready with proper performance optimizations. Awaiti
 
 ## Project Status Board
 
-- [x] Implement genre filtering for the first button. All three buttons now have purple borders, transparent backgrounds, increased height, and the margin around the button row is removed. Linter error fixed. (awaiting user review)
-- [x] Hide the bottom navigation bar on novel detail and reading pages by checking the route with usePathname. (awaiting user review)
-- [x] Refactor: Move bottom navigation bar to a separate Client Component (BottomNav) and conditionally render it in layout.tsx. (awaiting user review)
+- [x] Update status/rank badge colors from green/red to purple/gray in novel-card and recently-read-section for theme consistency
 
 ## Executor's Feedback or Assistance Requests
 

@@ -64,7 +64,9 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    background: #0a0a0a;
+    /* Remove or comment out any global background images */
+    /* background-image: none; */
   }
 }
 

@@ -256,7 +256,7 @@ export default function RecentlyReadSection({ userId }: RecentlyReadSectionProps
                   {/* Status Badge */}
                   {novel.status && (
                     <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-20">
-                      <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs px-1 sm:px-2 py-0.5 sm:py-1">
+                      <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-xs px-1 sm:px-2 py-0.5 sm:py-1">
                         {novel.status.toUpperCase()}
                       </Badge>
                     </div>

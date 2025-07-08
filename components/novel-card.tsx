@@ -120,12 +120,12 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
 
             {/* Top badges */}
             <div className="absolute top-2 right-2 z-10">
-              <Badge className="bg-green-600/90 backdrop-blur-sm text-white border-0 text-xs">
+              <Badge className="bg-purple-700/90 backdrop-blur-sm text-white border-0 text-xs">
                 {novel.status?.toUpperCase()}
               </Badge>
             </div>
             <div className="absolute top-2 left-2 z-10">
-              <Badge className="bg-red-600/90 backdrop-blur-sm text-white border-0 text-xs">
+              <Badge className="bg-gray-700/90 backdrop-blur-sm text-white border-0 text-xs">
                 RANK {novel.rank}
               </Badge>
             </div>
