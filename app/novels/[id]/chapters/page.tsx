@@ -118,33 +118,31 @@ export default function ChapterListPage() {
       ) : filteredChapters.length === 0 ? (
         <div className="text-muted-foreground text-center py-12 text-lg">No chapters found.</div>
       ) : (
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <ul className="divide-y divide-border">
-            {filteredChapters.map((chapter, idx) => (
-              <li
-                key={chapter.id}
-                className="py-4 px-6 flex items-center gap-4 hover:bg-muted transition-colors"
+        <div className="space-y-2">
+          {filteredChapters.map((chapter, idx) => (
+            <div
+              key={chapter.id}
+              className="flex items-center gap-4 bg-card border border-border rounded-lg shadow-sm px-4 py-2 hover:bg-muted transition-all duration-150"
+            >
+              <span className="w-10 text-right text-muted-foreground text-sm font-semibold">
+                {(pagination.page - 1) * pagination.limit + idx + 1}
+              </span>
+              <Link
+                href={`/novels/${params.id}/chapters/${chapter.id}`}
+                className="flex-1 text-foreground hover:text-primary font-medium truncate text-base lg:text-lg"
               >
-                <span className="w-12 text-right text-muted-foreground text-sm font-medium">
-                  {(pagination.page - 1) * pagination.limit + idx + 1}
-                </span>
-                <Link
-                  href={`/novels/${params.id}/chapters/${chapter.id}`}
-                  className="flex-1 text-foreground hover:text-purple-400 font-medium truncate text-base lg:text-lg"
-                >
-                  {chapter.title}
-                </Link>
-                <span className="text-sm text-muted-foreground min-w-[100px] text-right">
-                  {chapter.createdAt
-                    ? new Date(chapter.createdAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        year: 'numeric'
-                      })
-                    : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
+                {chapter.title}
+              </Link>
+              <span className="text-sm text-muted-foreground min-w-[100px] text-right">
+                {chapter.createdAt
+                  ? new Date(chapter.createdAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      year: 'numeric'
+                    })
+                  : ''}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
