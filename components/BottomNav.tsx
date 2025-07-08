@@ -10,14 +10,14 @@ export default function BottomNav() {
     (pathname.split('/').length === 3 || pathname.split('/').length === 5);
   if (hideNav) return null;
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#181825]/95 border-t border-purple-900/40 rounded-t-3xl shadow-2xl backdrop-blur-xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border rounded-t-3xl shadow-2xl">
       <div className="container mx-auto px-4 h-16 flex items-center justify-around">
         <Link
           href="/"
           className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
             pathname === '/'
-              ? 'text-purple-400 bg-purple-900/20'
-              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+              ? 'text-primary bg-primary/20'
+              : 'text-muted-foreground hover:text-primary hover:bg-card'
           }`}
         >
           <svg
@@ -40,8 +40,8 @@ export default function BottomNav() {
           href="/ranking"
           className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
             pathname === '/ranking'
-              ? 'text-purple-400 bg-purple-900/20'
-              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+              ? 'text-primary bg-primary/20'
+              : 'text-muted-foreground hover:text-primary hover:bg-card'
           }`}
         >
           <svg
@@ -64,8 +64,8 @@ export default function BottomNav() {
           href="/library"
           className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
             pathname === '/library'
-              ? 'text-purple-400 bg-purple-900/20'
-              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+              ? 'text-primary bg-primary/20'
+              : 'text-muted-foreground hover:text-primary hover:bg-card'
           }`}
         >
           <svg
@@ -88,8 +88,8 @@ export default function BottomNav() {
           href="/profile"
           className={`flex flex-col items-center gap-1 transition-colors rounded-xl px-2 py-1 ${
             pathname === '/profile'
-              ? 'text-purple-400 bg-purple-900/20'
-              : 'text-gray-400 hover:text-purple-300 hover:bg-white/5'
+              ? 'text-primary bg-primary/20'
+              : 'text-muted-foreground hover:text-primary hover:bg-card'
           }`}
         >
           <svg

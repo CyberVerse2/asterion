@@ -78,7 +78,7 @@ export default function ChapterListPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="container mx-auto px-4 py-6 max-w-4xl bg-background">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.push(`/novels/${params.id}`)}>
           <ArrowLeft className="h-5 w-5" />

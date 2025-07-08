@@ -57,7 +57,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
         href={`/novels/${novel.id}`}
         className="flex gap-3 p-2 hover:bg-white/5 transition items-center block"
       >
-        <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-muted border border-border flex items-center justify-center">
+        <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
           <Image
             src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
             alt={novel.title}
@@ -105,7 +105,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
 
   return (
     <Link href={`/novels/${novel.id}`}>
-      <Card className="h-full hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-border hover:border-primary/50 flex flex-col group">
+      <Card className="h-full bg-card hover:shadow-2xl transition-all duration-300 cursor-pointer border-border hover:border-primary/50 flex flex-col group">
         <CardHeader className="p-0">
           <div className="relative aspect-[3/4] w-full overflow-hidden">
             <Image
@@ -121,14 +121,12 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
 
             {/* Top badges */}
             <div className="absolute top-2 right-2 z-10">
-              <Badge className="bg-primary/90 backdrop-blur-sm text-white border-0 text-xs">
+              <Badge className="bg-primary text-primary-foreground border-0 text-xs">
                 {novel.status?.toUpperCase()}
               </Badge>
             </div>
             <div className="absolute top-2 left-2 z-10">
-              <Badge className="bg-muted/90 backdrop-blur-sm text-white border-0 text-xs">
-                RANK {novel.rank}
-              </Badge>
+              <Badge className="bg-card text-primary border-0 text-xs">RANK {novel.rank}</Badge>
             </div>
 
             {/* Genre tags */}
@@ -137,7 +135,7 @@ const NovelCard = memo(function NovelCard({ novel, libraryStyle, progress }: Nov
                 {novel.genres.slice(0, 3).map((genre, index) => (
                   <Badge
                     key={index}
-                    className="bg-muted/10 backdrop-blur-md text-white border-0 text-xs px-2 py-1"
+                    className="bg-card text-muted-foreground border-0 text-xs px-2 py-1"
                   >
                     {genre}
                   </Badge>

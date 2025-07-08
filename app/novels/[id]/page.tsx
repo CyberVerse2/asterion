@@ -408,7 +408,10 @@ export default function NovelPage() {
             />
 
             {/* Bottom overlay with enhanced gradient - seamless blend */}
-            <div className="absolute bottom-0 left-0 right-0 bg-card px-4 py-1 transition-all duration-300">
+            <div
+              className="absolute bottom-0 left-0 right-0 px-4 py-1 transition-all duration-300"
+              style={{ background: 'linear-gradient(to top, #08080b 0%, transparent 100%)' }}
+            >
               {/* Status and Rank badges */}
               <div className="flex items-center gap-2 mb-3">
                 <Badge className="bg-primary text-primary-foreground border-0 text-xs px-3 py-1 rounded-full">

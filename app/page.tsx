@@ -23,7 +23,7 @@ export default function HomePage() {
   }, [setFrameReady, isFrameReady]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <section className="container mx-auto px-4 py-8">
         {/* Recently Read Section - Only show if user is logged in */}
         {user && (
