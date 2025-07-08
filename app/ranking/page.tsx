@@ -25,7 +25,7 @@ export default function RankingPage() {
       <div className="divide-y divide-white/10 bg-black/90 rounded-2xl shadow-lg overflow-hidden">
         {sortedNovels.map((novel, idx) => (
           <Link key={novel.id} href={`/novels/${novel.id}`} className="block group">
-            <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition">
+            <div className="flex items-start gap-3 p-2 hover:bg-white/5 transition">
               {/* Cover Image */}
               <div className="flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
                 <Image
@@ -38,68 +38,70 @@ export default function RankingPage() {
                 />
               </div>
               {/* Details */}
-              <div className="flex-1 min-w-0 h-24 flex flex-col justify-between py-1">
-                {/* Title Row */}
-                <div className="w-full">
+              <div className="flex-1 min-w-0 h-full flex flex-col">
+                {/* Title at the very top */}
+                <div className="w-full mb-auto">
                   <h3 className="font-bold text-base sm:text-lg m-0 p-0 text-white truncate group-hover:text-purple-200 transition-colors duration-300">
                     {novel.title}
                   </h3>
                 </div>
-                {/* Badge and Chapter Count Row */}
-                <div className="flex items-center gap-2 mb-0.5">
-                  {novel.status && (
-                    <span
-                      className={`text-[10px] px-1 py-0 rounded border ${
-                        novel.status.toLowerCase() === 'completed'
-                          ? 'border-blue-700 text-blue-400'
-                          : 'border-green-700 text-green-400'
-                      }`}
-                    >
-                      {novel.status.toUpperCase()}
+                {/* Everything else at the bottom */}
+                <div className="mt-auto pt-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    {novel.status && (
+                      <span
+                        className={`text-[10px] px-1 py-0 rounded border ${
+                          novel.status.toLowerCase() === 'completed'
+                            ? 'border-blue-700 text-blue-400'
+                            : 'border-green-700 text-green-400'
+                        }`}
+                      >
+                        {novel.status.toUpperCase()}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1 text-xs text-gray-300 font-medium whitespace-nowrap">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <rect x="3" y="6" width="18" height="12" rx="2" strokeWidth="2" />
+                      </svg>
+                      {novel.totalChapters || 0} chs.
                     </span>
-                  )}
-                  <span className="flex items-center gap-1 text-xs text-gray-300 font-medium whitespace-nowrap">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <rect x="3" y="6" width="18" height="12" rx="2" strokeWidth="2" />
-                    </svg>
-                    {novel.totalChapters || 0} chs.
-                  </span>
-                </div>
-                {/* Stats row: Rank, Views, Likes, Comments */}
-                <div className="flex items-center gap-4 text-xs text-gray-300 mb-0.5">
-                  {/* Rank */}
-                  <span className="flex items-center gap-1 text-purple-400 font-bold">
-                    Rank {novel.rank}
-                  </span>
-                  {/* Views */}
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-4 h-4 text-purple-400" />
-                    {formatNumber(novel.views || 0)}
-                  </span>
-                  {/* Likes */}
-                  <span className="flex items-center gap-1">
-                    <ThumbsUp className="w-4 h-4 text-purple-400" />
-                    {formatNumber(novel.likes || 0)}
-                  </span>
-                  {/* Comments */}
-                  <span className="flex items-center gap-1">
-                    <MessageCircle className="w-4 h-4 text-purple-400" />
-                    {formatNumber(novel.comments || 0)}
-                  </span>
-                </div>
-                {/* Star rating row (bottom aligned) */}
-                <div className="flex items-center gap-0.5 text-xs text-gray-300 mt-auto">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span className="font-semibold text-white">
-                    {novel.rating ? Number(novel.rating).toFixed(1) : '5.0'}
-                  </span>
-                  <span className="text-gray-400">({novel.ratingCount || '0'})</span>
+                  </div>
+                  <div className="flex items-center gap-0.5 text-xs text-gray-300">
+                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    <span className="font-semibold text-white">
+                      {novel.rating ? Number(novel.rating).toFixed(1) : '5.0'}
+                    </span>
+                    <span className="text-gray-400">({novel.ratingCount || '0'})</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-gray-300">
+                    <span className="flex items-center gap-1 text-purple-400 font-bold">
+                      Rank {novel.rank}
+                    </span>
+                    {/* Views */}
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-4 h-4 text-purple-400" />
+                      {formatNumber(novel.views || 0)}
+                    </span>
+                    {/* Likes */}
+                    <span className="flex items-center gap-1">
+                      <ThumbsUp className="w-4 h-4 text-purple-400" />
+                      {formatNumber(novel.likes || 0)}
+                    </span>
+                    {/* Comments */}
+                    <span className="flex items-center gap-1">
+                      <MessageCircle className="w-4 h-4 text-purple-400" />
+                      {formatNumber(novel.comments || 0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-0.5 text-xs text-gray-300">
+                    
+                  </div>
                 </div>
               </div>
             </div>
