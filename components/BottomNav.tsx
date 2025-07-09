@@ -1,9 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useUser } from '@/providers/UserProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { user } = useUser();
   // Hide nav on novel detail and reading pages
   const hideNav =
     pathname?.startsWith('/novels/') &&
@@ -92,20 +94,34 @@ export default function BottomNav() {
               : 'text-muted-foreground hover:text-primary hover:bg-card'
           }`}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z"
-            />
-          </svg>
+          {user && user.pfpUrl ? (
+            <span className="relative flex items-center justify-center">
+              <img
+                src={user.pfpUrl}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover border-1 border-primary ring-2 ring-[#8260c2] shadow"
+              />
+              <span
+                className="absolute inset-0 rounded-full ring-2 ring-[#8260c2] animate-pulse"
+                style={{ zIndex: 1 }}
+              />
+            </span>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z"
+              />
+            </svg>
+          )}
           <span className="text-xs">Profile</span>
         </Link>
       </div>

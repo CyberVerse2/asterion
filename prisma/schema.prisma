@@ -111,3 +111,10 @@ model ReadingProgress {
   @@index([lastReadAt], name: "last_read_idx")
   @@map("reading_progress")
 }
+
+model PreSave {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String?  // Optional email for notification
+  userId    String?  // Optional reference to User (if logged in)
+  createdAt DateTime @default(now())
+}

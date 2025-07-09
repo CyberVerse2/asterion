@@ -955,3 +955,90 @@ The system is now production-ready with proper performance optimizations. Awaiti
 ## Executor's Feedback or Assistance Requests
 
 - The MiniappPrompt logic has been reviewed and confirmed: it only shows when the user is loaded, has not added the miniapp, and isFrameReady is true (i.e., running in the Farcaster mini app environment). No code changes needed unless you want to override for local testing. Please confirm if this matches your requirements or if you need further adjustments.
+
+## Background and Motivation
+
+- **Goal:** Implement a viral launch strategy for the app, as described in item 8 of the referenced article.
+- **Motivation:** Build early momentum, create a solid user base before launch, and maximize virality and engagement at launch.
+
+## Key Challenges and Analysis
+
+- Designing a referral or pre-save system that is simple, effective, and secure.
+- Integrating with Warpcast notifications for pre-savers.
+- Rewarding early signups in a way that is meaningful and technically feasible (badges, waitlist, early access, etc.).
+- Optionally, implementing a challenge or leaderboard to drive competition and engagement.
+- Ensuring a smooth transition from pre-launch to launch (notifying users, enabling access, etc.).
+- Preventing abuse (e.g., fake signups, referral spam).
+
+## High-level Task Breakdown (Updated for One-Page Pre-save System)
+
+### 1. Pre-save Landing Page (One Page, Non-scrollable)
+
+- [ ] Design a visually striking, non-scrollable landing page with:
+  - App name: **Asterion**
+  - Tagline: "Read your favourite novels on Farcaster while tipping authors"
+  - Horizontally auto-scrolling bar (1 row) showing up to 10 novels (covers, titles)
+  - Prominent "Pre-save" button
+- [ ] Ensure the page is fully responsive and visually centered (no vertical scroll)
+
+### 2. Pre-save Button & User Flow
+
+- [ ] When user clicks "Pre-save":
+  - Trigger Farcaster miniapp add flow (or fallback to email if not on Farcaster)
+  - Save user info (fid, username, wallet, etc.) to DB as a pre-saver
+  - Send instant notification: "Thank you for joining our waitlist. We'll send you a notification when we launch."
+  - (Optional) Show a confirmation state or animation
+
+### 3. Backend Support
+
+- [ ] Add endpoint to save pre-saver info (with deduplication by fid/email)
+- [ ] Store timestamp and any referral info (if referral links are used in future)
+
+### 4. Notification Integration
+
+- [ ] Integrate with Warpcast (or fallback email) to send instant "Thank you" notification
+- [ ] Ensure notification is sent only once per user
+- [ ] Prepare for launch notification (to be sent later)
+
+### 5. Testing & Analytics
+
+- [ ] Test the full pre-save flow (Farcaster and fallback)
+- [ ] Add analytics for pre-saves, button clicks, and notification delivery
+
+## Project Status Board (Pre-save MVP)
+
+- [x] Design and implement one-page, non-scrollable pre-save landing
+- [x] Implement horizontally auto-scrolling row of 10 novels (real data, infinite scroll)
+- [x] Add pre-save button and backend save logic
+- [ ] Notification Integration: Instantly notify users when they pre-save (Warpcast DM, email, or in-app message)
+  - [ ] Integrate with Warpcast API or email service
+  - [ ] Show confirmation in UI when notification is sent
+  - **Success Criteria:** User receives a notification immediately after pre-saving
+- [ ] Deduplication & Analytics: Prevent duplicate pre-saves and track pre-save events
+  - [ ] Update backend to check for existing entries by userId/email before creating
+  - [ ] Add analytics event logging for pre-saves
+  - **Success Criteria:** No duplicate entries; analytics dashboard or logs show pre-save events
+- [ ] UI/UX Polish: Add a Share button to the pre-save landing
+  - [ ] Add a share button (Web Share API or copy link)
+  - [ ] Show confirmation/toast when link is shared or copied
+  - **Success Criteria:** Users can easily share the pre-save page; confirmation is shown
+
+## Success Criteria (Pre-save MVP)
+
+- Landing page is non-scrollable, visually striking, and centered
+- 10 novels are shown in a horizontally auto-scrolling row
+- Pre-save button works and saves user info to DB
+- User receives instant "Thank you" notification
+- All flows are tested and analytics are in place
+
+# Project Status Board
+
+- [x] Add PreSave model to Prisma schema
+- [x] Create /api/presave endpoint
+- [x] Wire up pre-save button to POST to /api/presave (works for both logged-in and email users)
+- [x] Show error and success states on pre-save landing
+
+# Executor's Feedback or Assistance Requests
+
+- Pre-save landing is now fully functional: users can pre-save with email (if not logged in) or as logged-in users. Button disables appropriately, errors are shown, and success is confirmed.
+- Linter lesson: Do not assume user.email exists on the User object; only use email from input for non-logged-in users.

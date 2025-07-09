@@ -10,7 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "latest",
+    "@coinbase/onchainkit": "^0.38.16",
     "@farcaster/miniapp-wagmi-connector": "^1.0.0",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.11.0",

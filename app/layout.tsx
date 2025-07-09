@@ -12,6 +12,7 @@ import SWRProvider from '@/providers/SWRProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import HeaderWallet from '@/components/header-wallet';
 import BottomNav from '@/components/BottomNav';
+import AppShell from '@/components/AppShell';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -49,8 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <MiniKitContextProvider>
                 <UserProvider>
                   <SWRProvider>
-                    <main className="bg-background">{children}</main>
-                    <BottomNav />
+                    <AppShell>{children}</AppShell>
                   </SWRProvider>
                 </UserProvider>
               </MiniKitContextProvider>
