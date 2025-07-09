@@ -8,6 +8,7 @@ import type { Novel } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useAddFrame } from '@coinbase/onchainkit/minikit';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ export default function PreSaveLanding() {
   const { toast } = useToast();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const addFrame = useAddFrame();
 
   // Memoize sortedNovels
   const sortedNovels = useMemo(
@@ -71,6 +73,11 @@ export default function PreSaveLanding() {
       setPresaved(true);
       setShareModalOpen(true);
       toast({ title: 'Pre-saved!', description: 'You have joined the waitlist.' });
+      // Add frame after successful presave
+      const result = await addFrame();
+      if (result) {
+        console.log('Frame added:', result.url, result.token);
+      }
     } catch (err) {
       setError('Failed to pre-save. Please try again.');
     } finally {

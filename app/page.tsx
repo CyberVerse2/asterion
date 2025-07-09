@@ -1,4 +1,14 @@
-'use client';
+import { redirect } from 'next/navigation';
+
+// Temporary redirect to /presave
+export default function HomeRedirect() {
+  redirect('/presave');
+  return null;
+}
+
+// --- Original homepage preserved below ---
+
+('use client');
 
 import { useEffect, Suspense, lazy } from 'react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
@@ -163,7 +173,7 @@ function FarcasterReadingSection() {
   );
 }
 
-export default function HomePage() {
+export function HomePage() {
   const { setFrameReady, isFrameReady } = useMiniKit();
   const { novels, isLoading, error } = useNovels();
   const { user } = useUser();
