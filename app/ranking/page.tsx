@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, Eye, ThumbsUp, MessageCircle, SortAsc } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 export default function RankingPage() {
   const { novels, isLoading, error } = useNovels();
@@ -24,8 +26,20 @@ export default function RankingPage() {
     return Array.from(genreSet).sort();
   }, [novels]);
 
-  if (isLoading) return <div className="p-8 text-center text-white">Loading...</div>;
-  if (error) return <div className="p-8 text-center text-red-400">Error: {error.message}</div>;
+  if (isLoading)
+    return (
+      <div className="p-8 text-center">
+        <Spinner size={32} />
+      </div>
+    );
+  if (error)
+    return (
+      <ErrorState
+        message={error.message || 'Failed to load novels.'}
+        onRetry={() => window.location.reload()}
+        className="p-8"
+      />
+    );
   if (!novels || novels.length === 0)
     return <div className="p-8 text-center text-gray-400">No novels found.</div>;
 

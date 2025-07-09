@@ -13,6 +13,8 @@ import { useUser } from '@/providers/UserProvider';
 import { useNovel, useChapters } from '@/hooks/useNovels';
 import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 import useSWR from 'swr';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 interface Novel {
   id: string;
@@ -380,27 +382,25 @@ export default function NovelPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-700/50 rounded mb-4 w-1/3"></div>
-          <div className="aspect-[4/3] bg-gray-700/50 rounded-lg mb-6 w-full mx-auto"></div>
-          <div className="space-y-4">
-            <div className="h-6 bg-gray-700/50 rounded"></div>
-            <div className="h-4 bg-gray-700/50 rounded w-2/3 mx-auto"></div>
-            <div className="h-20 bg-gray-700/50 rounded"></div>
-          </div>
-        </div>
+      <div className="py-12 text-center">
+        <Spinner size={32} />
       </div>
     );
   }
+  if (error) {
+    return (
+      <ErrorState
+        message={error.message || 'Failed to load novel.'}
+        onRetry={() => window.location.reload()}
+        className="py-12"
+      />
+    );
+  }
 
-  if (error || !novel) {
+  if (!novel) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-white">
-          {error ? 'Error loading novel' : 'Novel not found'}
-        </h1>
-        {error && <p className="text-red-400 mb-4">{error.message}</p>}
+        <h1 className="text-2xl font-bold mb-4 text-white">Novel not found</h1>
         <Link href="/">
           <Button className="bg-purple-600 hover:bg-purple-700 transition-colors">
             Back to Home
@@ -476,9 +476,7 @@ export default function NovelPage() {
                         </span>
                       )}
                     </div>
-                      <span className="text-xs text-muted-foreground mr-2">
-                        Reading now
-                      </span>
+                    <span className="text-xs text-muted-foreground mr-2">Reading now</span>
                   </div>
                 )}
               </div>

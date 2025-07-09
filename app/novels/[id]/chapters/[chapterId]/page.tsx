@@ -23,6 +23,8 @@ import {
 } from '@/hooks/useReadingProgress';
 import LoveAnimation from '@/components/love-animation';
 import ChapterListModal from '@/components/chapter-list-modal';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 interface Chapter {
   id: string;
@@ -558,41 +560,27 @@ export default function IndividualChapterPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-700/50 rounded mb-4 w-1/3"></div>
-          <div className="h-64 bg-gray-700/50 rounded"></div>
-        </div>
+      <div className="py-12 text-center">
+        <Spinner size={32} />
       </div>
     );
   }
-
-  if (error || !chapter) {
+  if (error) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-white">{error || 'Chapter not found'}</h1>
-        {error && !error.includes('not found') && (
-          <p className="text-gray-400 mb-6">
-            There was a problem loading this chapter. This might be a temporary network issue.
-          </p>
-        )}
-        <div className="space-y-3">
-          {error && !error.includes('not found') && (
-            <Button
-              onClick={() => {
-                setError(null);
-                fetchChapter();
-              }}
-              className="bg-green-600 hover:bg-green-700 mr-3"
-            >
-              Try Again
-            </Button>
-          )}
-          <Button onClick={goBackToNovel} className="bg-purple-600 hover:bg-purple-700">
-            Back to Novel
-          </Button>
-        </div>
-      </div>
+      <ErrorState
+        message={error || 'Failed to load chapter.'}
+        onRetry={() => window.location.reload()}
+        className="py-12"
+      />
+    );
+  }
+  if (!chapter) {
+    return (
+      <ErrorState
+        message="Chapter not found."
+        onRetry={() => window.location.reload()}
+        className="py-12"
+      />
     );
   }
 

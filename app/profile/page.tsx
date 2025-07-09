@@ -32,6 +32,8 @@ import { ERC20_ABI } from '@/lib/abi/ERC20';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useRouter } from 'next/navigation';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -572,60 +574,18 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-4 sm:py-8">
-        <div className="max-w-2xl sm:max-w-4xl mx-auto space-y-4 sm:space-y-6">
-          {/* Enhanced Skeleton Loading */}
-          <div className="animate-pulse">
-            {/* Mobile header skeleton */}
-            <div className="flex items-center gap-3 mb-4 sm:hidden">
-              <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
-              <div className="h-6 bg-gray-200 rounded w-20"></div>
-            </div>
-
-            {/* Profile header skeleton */}
-            <div className="flex items-center gap-3 sm:gap-6 mb-6">
-              <div className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 bg-gray-200 rounded-full flex-shrink-0"></div>
-              <div className="flex-1 space-y-2">
-                <div className="h-6 bg-gray-200 rounded w-32"></div>
-                <div className="h-4 bg-gray-200 rounded w-16"></div>
-              </div>
-            </div>
-
-            {/* Stats cards skeleton */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-6">
-              <div className="h-24 sm:h-32 bg-gray-200 rounded-lg"></div>
-              <div className="h-24 sm:h-32 bg-gray-200 rounded-lg"></div>
-              <div className="h-24 sm:h-32 bg-gray-200 rounded-lg col-span-2 sm:col-span-1"></div>
-            </div>
-
-            {/* Content skeleton */}
-            <div className="space-y-4">
-              <div className="h-48 bg-gray-200 rounded-lg"></div>
-              <div className="h-64 bg-gray-200 rounded-lg"></div>
-            </div>
-          </div>
-        </div>
+      <div className="py-12 text-center">
+        <Spinner size={32} />
       </div>
     );
   }
-
   if (userError) {
     return (
-      <div className="container mx-auto px-4 py-4 sm:py-8">
-        <div className="max-w-2xl sm:max-w-4xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <div className="text-red-600 text-lg font-medium mb-2">Something went wrong</div>
-            <div className="text-red-500 text-sm mb-4">{userError}</div>
-            <Button
-              onClick={() => window.location.reload()}
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ErrorState
+        message={userError || 'Failed to load profile.'}
+        onRetry={() => window.location.reload()}
+        className="py-12"
+      />
     );
   }
 

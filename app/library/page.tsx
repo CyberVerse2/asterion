@@ -7,6 +7,8 @@ import NovelCard from '@/components/novel-card';
 import { useState } from 'react';
 import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 import useSWR from 'swr';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 export default function LibraryPage() {
   const { user, userLoading } = useUser();
@@ -73,7 +75,11 @@ export default function LibraryPage() {
           style={{ maxHeight: 'calc(100vh - 90px)' }}
         >
           {userLoading || isLoading ? (
-            <div className="text-muted-foreground">Loading your bookmarks...</div>
+            <div className="py-12 text-center">
+              <Spinner size={32} />
+            </div>
+          ) : !user ? (
+            <ErrorState message="You must be logged in to view your library." className="py-12" />
           ) : bookmarkedNovels.length === 0 ? (
             <div className="text-muted-foreground">You have no bookmarked novels yet.</div>
           ) : (

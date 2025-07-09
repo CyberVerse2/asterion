@@ -13,6 +13,8 @@ import useSWR from 'swr';
 import { Star, BookOpen } from 'lucide-react';
 import NovelCard from '@/components/novel-card';
 import { useRouter } from 'next/navigation';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 // Lazy load components for better performance
 const NovelGrid = lazy(() => import('@/components/novel-grid'));
@@ -237,9 +239,15 @@ export default function HomePage() {
         </div>
         {/* Horizontal scrollable row of small cards */}
         {isLoading ? (
-          <div className="text-white py-12 text-center">Loading...</div>
+          <div className="py-12 text-center">
+            <Spinner size={32} />
+          </div>
         ) : error ? (
-          <div className="text-red-500">Error: {error.message}</div>
+          <ErrorState
+            message={error.message || 'Failed to load novels.'}
+            onRetry={() => window.location.reload()}
+            className="py-12"
+          />
         ) : (
           <>
             <div className="overflow-x-auto pb-4 scrollbar-hide mt-4">

@@ -515,37 +515,63 @@ The user wants the Ranking page to visually match the provided mobile screenshot
    - Test that no unwanted jumps occur after progress saves
    - **Success Criteria:** Smooth reading experience without unwanted scroll jumps
 
+# Project Status Board
+
+- [x] Audit and catalog all loading/error states (Planner phase complete)
+- [x] Standardize loading skeletons and spinners (Library, Novel, Chapter reader, Profile page complete)
+- [ ] Standardize error handling and fallbacks (in progress)
+- [ ] Improve Suspense and SWR fallbacks
+- [ ] Audit user state loading everywhere
+- [ ] Test all flows and edge cases
+- [ ] Document and refactor
+
+# Executor's Feedback or Assistance Requests
+
+- The Profile page now uses the standardized <Spinner /> and <ErrorState /> components for all loading and error states. Ad-hoc loading skeletons and error UI have been replaced. Ready for user review before proceeding to the next major page (Presave, modals, etc.).
+
+# Loading/Error State Optimization Plan (June 2024)
+
+## Background and Motivation
+
+The Asterion app uses SWR and custom hooks for data fetching, but loading and error states are handled inconsistently. Some areas use skeletons, some use spinners or plain text, and some return `null` or nothing at all. This leads to a suboptimal user experience, especially on slow networks or with backend/API errors.
+
+## Key Challenges and Analysis
+
+- Inconsistent loading UI (skeletons, spinners, text, or nothing)
+- Error handling gaps (some pages show errors, others do not)
+- No standardization (no single reusable loading/error component)
+- Missing fallbacks (Suspense/SWR boundaries)
+- API error propagation (ambiguous errors)
+- User state loading sometimes ignored
+
+## High-level Task Breakdown
+
+1. Audit and catalog all loading/error states ✅
+2. Standardize loading skeletons and spinners (in progress)
+3. Standardize error handling and fallbacks
+4. Improve Suspense and SWR fallbacks
+5. Audit user state loading everywhere
+6. Test all flows and edge cases
+7. Document and refactor
+
+## Success Criteria
+
+- Every major page/component shows a consistent, visually appealing loading state
+- Every major page/component shows a clear, actionable error state if data fails to load
+- No page/component ever returns `null` or nothing during loading or error states
+- User state loading is handled everywhere
+- All Suspense and SWR boundaries have meaningful fallbacks
+- The codebase uses a small set of standardized loading and error components
+- All changes are tested on slow networks and with simulated API errors
+
 # Current Status / Progress Tracking
 
-## Most Recent Update
+- Planner phase complete: audit and plan written
+- Executor phase started: standardizing loading and error components (step 2)
 
-**Date:** Current session  
-**Status:** 🔧 Fixed tracking initialization timing issue  
-**Context:** Tracking wasn't being initialized because user data wasn't available when content was ready
+# Executor's Feedback or Assistance Requests
 
-## Analysis Summary
-
-The reading progress tracking wasn't being initialized at all. The issue was:
-
-1. **✅ Content Ready**: Content container had proper dimensions and was ready for tracking
-2. **❌ User Not Ready**: User data wasn't available when content was ready
-3. **❌ Tracking Not Initialized**: The useEffect only ran once when `hasInitializedTrackingRef.current` was false, but at that time user wasn't available
-4. **❌ No Retry**: Once `hasInitializedTrackingRef.current` was set to true, the useEffect wouldn't run again even when user became available
-
-**Root Cause Identified**: The `useEffect` that initializes tracking only runs once when `hasInitializedTrackingRef.current` is false, but at that time the user data wasn't available. When the user became available later, the `useEffect` wouldn't run again because `hasInitializedTrackingRef.current` was already true.
-
-**Fix Applied**:
-
-- Added user availability check to the `useEffect` condition: `user && (user as any)?.id`
-- Added `user` to the dependency array so the `useEffect` runs when user becomes available
-- Fixed the user reset logic to reset `hasInitializedTrackingRef.current = false` when user becomes available
-- Removed the unnecessary condition `!hasInitializedTrackingRef.current` from the user reset logic
-
-**Expected Result**:
-
-- Tracking should now be initialized when both content and user are available
-- The `useEffect` should run when user becomes available, even if content was ready earlier
-- Reading progress tracking should start working properly
+- Will report after implementing standardized loading and error components and refactoring first major page/component.
 
 ## Next Steps
 
