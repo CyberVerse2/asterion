@@ -2,8 +2,6 @@
 
 import { usePathname } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
-import NProgress from 'nprogress';
-import 'nprogress/nprogress.css';
 import { useEffect, useRef, useState, createContext, useCallback } from 'react';
 import Spinner from '@/components/ui/Spinner';
 import { createPortal } from 'react-dom';
@@ -32,11 +30,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const show = useCallback(() => {
     setShowOverlay(true);
-    NProgress.start();
   }, []);
   const hide = useCallback(() => {
     setShowOverlay(false);
-    NProgress.done();
   }, []);
 
   useEffect(() => {

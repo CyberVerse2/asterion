@@ -565,8 +565,8 @@ export default function IndividualChapterPage() {
 
   if (loading) {
     return (
-      <div className="py-12 text-center">
-        <Spinner size={32} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+        <Spinner size={24} />
       </div>
     );
   }

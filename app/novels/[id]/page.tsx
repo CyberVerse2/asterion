@@ -389,7 +389,7 @@ export default function NovelPage() {
   if (isLoading) {
     return (
       <div className="bg-background min-h-screen flex items-center justify-center">
-        <Spinner size={32} />
+        <Spinner size={24} />
       </div>
     );
   }
