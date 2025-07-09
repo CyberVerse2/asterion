@@ -4,38 +4,55 @@ import { usePathname } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, createContext, useCallback } from 'react';
 import Spinner from '@/components/ui/Spinner';
+import { createPortal } from 'react-dom';
+
+export const NavigationLoadingContext = createContext<{
+  show: () => void;
+  hide: () => void;
+} | null>(null);
+
+function GlobalSpinnerOverlay({ show }: { show: boolean }) {
+  if (typeof window === 'undefined') return null;
+  return show
+    ? createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 transition-opacity">
+          <Spinner size={48} />
+        </div>,
+        document.body
+      )
+    : null;
+}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const prevPathRef = useRef(pathname);
   const [showOverlay, setShowOverlay] = useState(false);
 
+  const show = useCallback(() => {
+    setShowOverlay(true);
+    NProgress.start();
+  }, []);
+  const hide = useCallback(() => {
+    setShowOverlay(false);
+    NProgress.done();
+  }, []);
+
   useEffect(() => {
     if (prevPathRef.current !== pathname) {
-      setShowOverlay(true);
-      NProgress.start();
-      // Simulate a short delay for demo; in real app, tie to data loading
-      setTimeout(() => {
-        NProgress.done();
-        setShowOverlay(false);
-      }, 400);
+      hide();
       prevPathRef.current = pathname;
     }
-  }, [pathname]);
+  }, [pathname, hide]);
 
   const showBottomNav = pathname !== '/presave';
 
   return (
-    <>
-      {showOverlay && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 transition-opacity">
-          <Spinner size={48} />
-        </div>
-      )}
+    <NavigationLoadingContext.Provider value={{ show, hide }}>
+      <GlobalSpinnerOverlay show={showOverlay} />
       <main className="bg-background">{children}</main>
       {showBottomNav && <BottomNav />}
-    </>
+    </NavigationLoadingContext.Provider>
   );
 }

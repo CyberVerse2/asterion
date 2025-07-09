@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { memo } from 'react';
+import { memo, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Spinner from '@/components/ui/Spinner';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 interface NovelCardProps {
   novel: {
@@ -50,11 +51,13 @@ const NovelCard = memo(function NovelCard({
 }: NovelCardProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const navLoading = useContext(NavigationLoadingContext);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isLoading) return;
     setIsLoading(true);
+    if (navLoading) navLoading.show();
     router.push(`/novels/${novel.id}`);
   };
 
@@ -102,7 +105,7 @@ const NovelCard = memo(function NovelCard({
         </div>
         <div className="flex-1 min-w-0 h-24 flex flex-col justify-between">
           <div>
-            <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-foreground truncate group-hover:text-primary transition-colors duration-300">
+            <h3 className="font-semibold text-sm sm:font-bold sm:text-lg m-0 p-0 mb-2 text-foreground truncate group-hover:text-primary transition-colors duration-300 text-left">
               {novel.title}
             </h3>
             <div className="flex items-center gap-2 mt-1">

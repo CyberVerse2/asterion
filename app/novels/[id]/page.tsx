@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useContext } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 import useSWR from 'swr';
 import Spinner from '@/components/ui/Spinner';
 import ErrorState from '@/components/ui/ErrorState';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 interface Novel {
   id: string;
@@ -250,19 +251,23 @@ export default function NovelPage() {
     }
   }, [user, novel]);
 
+  const navLoading = useContext(NavigationLoadingContext);
+
   const handleReadNow = useCallback(() => {
     if (!novel) return;
     if (continueReadingInfo) {
+      if (navLoading) navLoading.show();
       router.push(`/novels/${novelId}/chapters/${continueReadingInfo.chapterId}?restore=true`);
       return;
     }
     if (chapters && chapters.length > 0) {
+      if (navLoading) navLoading.show();
       const firstChapter = chapters[0];
       router.push(`/novels/${novelId}/chapters/${firstChapter.id}`);
       return;
     }
     // Do nothing if no chapters available - button should be disabled
-  }, [novel, continueReadingInfo, router, novelId, chapters]);
+  }, [novel, continueReadingInfo, router, novelId, chapters, navLoading]);
 
   const handleChapterTipped = useCallback(
     (chapterId: string, newTipCount: number) => {
@@ -293,8 +298,9 @@ export default function NovelPage() {
   }, []);
 
   const handleChaptersNavigation = useCallback(() => {
+    if (navLoading) navLoading.show();
     router.push(`/novels/${params.id}/chapters`);
-  }, [router, params.id]);
+  }, [router, params.id, navLoading]);
 
   // Toast notification handler
   const showToastNotification = useCallback((message: string) => {

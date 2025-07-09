@@ -11,7 +11,7 @@ import {
 import { Wallet } from '@coinbase/onchainkit/wallet';
 import { useUser } from '@/providers/UserProvider';
 import type { User } from '@/lib/types';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import {
   useAccount,
   useChainId,
@@ -34,6 +34,7 @@ import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/Spinner';
 import ErrorState from '@/components/ui/ErrorState';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 interface UserProfile {
   farcasterUsername: string;
@@ -178,6 +179,7 @@ export default function ProfilePage() {
   const [transactionStatus, setTransactionStatus] = useState<string | null>(null);
   const [transactionUrl, setTransactionUrl] = useState<string | null>(null);
   const { context } = useMiniKit();
+  const navLoading = useContext(NavigationLoadingContext);
 
   // Check if user has Farcaster context
   const hasFarcasterContext =
@@ -244,6 +246,7 @@ export default function ProfilePage() {
 
   // Optimized back navigation with fallback logic
   const handleBackNavigation = () => {
+    if (navLoading) navLoading.show();
     // Check if there's browser history to go back to
     if (window.history.length > 1) {
       router.back();
@@ -595,7 +598,6 @@ export default function ProfilePage() {
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="max-w-2xl sm:max-w-4xl mx-auto space-y-4 sm:space-y-6">
-
           {/* Enhanced Profile Header with Background */}
           <div className="relative bg-card/40 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-border shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 rounded-2xl opacity-50"></div>

@@ -13,6 +13,8 @@ import SpendPermissionRequired from '@/components/spend-permission-required';
 import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/Spinner';
 import ErrorState from '@/components/ui/ErrorState';
+import { useContext } from 'react';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 interface ChapterListModalProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ export default function ChapterListModal({
   currentChapterId
 }: ChapterListModalProps) {
   const router = useRouter();
+  const navLoading = useContext(NavigationLoadingContext);
   const { user } = useUser();
   const { chapters, isLoading } = useChapters(novelId);
   const { readingProgress } = useNovelReadingProgress((user as any)?.id, novelId);
@@ -48,6 +51,7 @@ export default function ChapterListModal({
   } = useSpendPermissionGuard();
 
   const handleChapterClick = (chapterId: string) => {
+    if (navLoading) navLoading.show();
     const proceedWithNavigation = () => {
       router.push(`/novels/${novelId}/chapters/${chapterId}`);
       onClose();

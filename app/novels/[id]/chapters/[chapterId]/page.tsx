@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,7 @@ import LoveAnimation from '@/components/love-animation';
 import ChapterListModal from '@/components/chapter-list-modal';
 import Spinner from '@/components/ui/Spinner';
 import ErrorState from '@/components/ui/ErrorState';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 interface Chapter {
   id: string;
@@ -69,6 +70,7 @@ export default function IndividualChapterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const navLoading = useContext(NavigationLoadingContext);
 
   const novelId = params.id as string;
   const chapterId = params.chapterId as string;
@@ -492,6 +494,7 @@ export default function IndividualChapterPage() {
           scrollPosition: currentLine
         });
       }
+      if (navLoading) navLoading.show();
       router.push(`/novels/${novelId}/chapters/${previousChapter.id}`);
     }
   };
@@ -508,11 +511,13 @@ export default function IndividualChapterPage() {
           scrollPosition: currentLine
         });
       }
+      if (navLoading) navLoading.show();
       router.push(`/novels/${novelId}/chapters/${nextChapter.id}?startFromTop=true`);
     }
   };
 
   const goBackToNovel = () => {
+    if (navLoading) navLoading.show();
     router.push(`/novels/${novelId}`);
   };
 

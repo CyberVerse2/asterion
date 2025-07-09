@@ -1,10 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { BookOpen, ArrowLeft, RefreshCw, SortAsc, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 export default function ChapterListPage() {
   const params = useParams();
@@ -22,6 +23,8 @@ export default function ChapterListPage() {
     hasNext: false,
     hasPrev: false
   });
+
+  const navLoading = useContext(NavigationLoadingContext);
 
   const fetchChapters = async (page = 1) => {
     setLoading(true);
@@ -81,7 +84,14 @@ export default function ChapterListPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl bg-background pb-24">
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push(`/novels/${params.id}`)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            if (navLoading) navLoading.show();
+            router.push(`/novels/${params.id}`);
+          }}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h2 className="font-bold text-xl lg:text-2xl flex-1 truncate">Novel Chapters</h2>

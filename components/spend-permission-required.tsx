@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   isSpendPermissionExpiringSoon,
   getSpendPermissionTimeRemaining
 } from '@/lib/utils/spend-permission';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 interface SpendPermissionRequiredProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export default function SpendPermissionRequired({
 }: SpendPermissionRequiredProps) {
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const navLoading = useContext(NavigationLoadingContext);
 
   if (!isOpen) return null;
 
@@ -44,8 +46,14 @@ export default function SpendPermissionRequired({
       onApproveClick();
     } else {
       setIsRedirecting(true);
+      if (navLoading) navLoading.show();
       router.push('/profile');
     }
+  };
+
+  const handleGoToProfile = () => {
+    if (navLoading) navLoading.show();
+    router.push('/profile');
   };
 
   const getStatusIcon = () => {
