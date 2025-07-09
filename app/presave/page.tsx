@@ -246,21 +246,19 @@ export default function PreSaveLanding() {
                     aria-label="Share on Farcaster"
                     ref={shareButtonRef}
                     onClick={() => {
-                      // Share the URL directly so Farcaster can scrape the meta tags
+                      const deepLink =
+                        'https://farcaster.xyz/~/mini-apps/launch?domain=v0-asterion-next-js-application.vercel.app';
                       if (navigator.share) {
                         navigator.share({
-                          title: 'Asterion - Pre-save',
-                          text: 'Check out Asterion - Read novels on Farcaster while tipping authors',
-                          url: 'https://v0-asterion-next-js-application.vercel.app/presave'
+                          title: 'Check out Asterion!',
+                          text: 'Read novels on Farcaster while tipping authors.',
+                          url: deepLink
                         });
                       } else {
-                        // Fallback: copy URL to clipboard
-                        navigator.clipboard.writeText(
-                          'https://v0-asterion-next-js-application.vercel.app/presave'
-                        );
+                        navigator.clipboard.writeText(deepLink);
                         toast({
-                          title: 'URL copied!',
-                          description: 'Paste this URL in Warpcast to share with rich embed.'
+                          title: 'Link copied!',
+                          description: 'Paste this link in Warpcast to share the mini-app.'
                         });
                       }
                     }}
