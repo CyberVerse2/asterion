@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/providers/UserProvider';
 import { useNovels } from '@/hooks/useNovels';
@@ -28,13 +28,25 @@ export default function PreSaveLanding() {
   const [error, setError] = useState('');
   const { toast } = useToast();
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Sort by rank if available
-  const sortedNovels = ((novels as Novel[]) || [])
-    .slice()
-    .sort(
-      (a: any, b: any) => (Number((a as any).rank) || 9999) - (Number((b as any).rank) || 9999)
-    );
+  // Memoize sortedNovels
+  const sortedNovels = useMemo(
+    () =>
+      ((novels as Novel[]) || [])
+        .slice()
+        .sort(
+          (a: any, b: any) => (Number((a as any).rank) || 9999) - (Number((b as any).rank) || 9999)
+        ),
+    [novels]
+  );
+
+  // Focus the share button when modal opens
+  useEffect(() => {
+    if (shareModalOpen && shareButtonRef.current) {
+      shareButtonRef.current.focus();
+    }
+  }, [shareModalOpen]);
 
   async function handlePreSave() {
     setLoading(true);
@@ -86,20 +98,23 @@ export default function PreSaveLanding() {
         />
       </Head>
       <div
-        className="min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-hidden"
+        className="min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-hidden px-2 sm:px-0"
         style={{ height: '100vh' }}
       >
-        <h1 className="text-4xl font-extrabold text-primary mb-2 tracking-tight">Asterion</h1>
-        <p className="text-lg text-muted-foreground mb-8 text-center max-w-md">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-primary mb-2 tracking-tight text-center">
+          Asterion
+        </h1>
+        <p className="text-base sm:text-lg text-muted-foreground mb-8 text-center max-w-xs sm:max-w-md">
           Read your favourite novels on Farcaster while tipping authors
         </p>
-        <div className="relative w-full max-w-xl h-44 flex items-center justify-center mb-8 overflow-hidden">
+        <div className="relative w-full max-w-xl h-40 sm:h-44 flex items-center justify-center mb-8 overflow-x-auto">
           <div className="absolute left-0 top-0 w-full h-full pointer-events-none bg-gradient-to-r from-background via-transparent to-background z-10" />
           <div
-            className="flex gap-6 animate-scroll-x"
+            className="flex gap-3 sm:gap-6 animate-scroll-x flex-nowrap"
             style={{
               animation: 'scroll-x 24s linear infinite',
-              minWidth: '1200px'
+              minWidth: '600px',
+              maxWidth: '100%'
             }}
           >
             {novelsLoading ? (
@@ -110,8 +125,8 @@ export default function PreSaveLanding() {
               <div className="text-muted-foreground text-center w-full">No novels found</div>
             ) : (
               sortedNovels.concat(sortedNovels).map((novel: Novel, idx: number) => (
-                <div key={novel.id + '-' + idx} className="flex flex-col items-center w-28">
-                  <div className="w-28 h-36 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2 relative">
+                <div key={novel.id + '-' + idx} className="flex flex-col items-center w-20 sm:w-28">
+                  <div className="w-20 h-28 sm:w-28 sm:h-36 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center mb-2 relative">
                     {/* Overlayed Rank badge */}
                     <span
                       className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-purple-600 via-yellow-300 to-yellow-400 text-purple-900 border border-yellow-400 shadow ring-1 ring-yellow-200/60"
@@ -122,13 +137,13 @@ export default function PreSaveLanding() {
                     <Image
                       src={(novel as any).imageUrl || '/placeholder.svg?height=400&width=300'}
                       alt={novel.title}
-                      width={112}
-                      height={144}
-                      className="w-28 h-36 object-cover"
+                      width={80}
+                      height={112}
+                      className="w-20 h-28 sm:w-28 sm:h-36 object-cover"
                       loading="lazy"
                     />
                   </div>
-                  <span className="text-xs text-foreground text-center line-clamp-2">
+                  <span className="text-xs text-foreground text-center line-clamp-2 max-w-[4.5rem] sm:max-w-none">
                     {novel.title}
                   </span>
                 </div>
@@ -141,7 +156,7 @@ export default function PreSaveLanding() {
                 transform: translateX(0);
               }
               100% {
-                transform: translateX(-600px);
+                transform: translateX(-300px);
               }
             }
           `}</style>
@@ -151,7 +166,7 @@ export default function PreSaveLanding() {
             {!user && (
               <input
                 type="email"
-                className="mb-4 px-4 py-2 rounded border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="mb-4 px-4 py-2 rounded border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary w-full max-w-xs sm:max-w-md"
                 placeholder="Enter your email to get notified"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -160,11 +175,38 @@ export default function PreSaveLanding() {
               />
             )}
             <Button
-              className="bg-primary text-primary-foreground px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-primary/90 transition disabled:opacity-60"
+              className="bg-primary text-primary-foreground px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-primary/90 transition disabled:opacity-60 w-full max-w-xs sm:max-w-md"
               onClick={handlePreSave}
               disabled={loading || (!user && !email)}
+              aria-label="Pre-save"
             >
-              {loading ? 'Saving...' : 'Pre-save'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    ></path>
+                  </svg>
+                  Saving...
+                </span>
+              ) : (
+                'Pre-save'
+              )}
             </Button>
             {error && <div className="text-red-500 mt-2 text-sm">{error}</div>}
           </>
@@ -176,22 +218,31 @@ export default function PreSaveLanding() {
               We&apos;ll send you a notification when we launch!
             </div>
             <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
-              <DialogContent>
+              <DialogContent
+                role="dialog"
+                aria-modal="true"
+                className="max-w-full w-[98vw] sm:w-full"
+              >
                 <DialogHeader>
                   <DialogTitle>Share Asterion on Farcaster</DialogTitle>
                   <DialogDescription>
                     Help us go viral! Share your pre-save with your Farcaster friends.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col items-center gap-4 mt-2">
-                  <img
+                <div className="flex flex-col items-center gap-4 mt-2 w-full">
+                  <Image
                     src="/api/og/presave"
                     alt="Asterion Pre-save Viral Image"
-                    className="rounded-lg border border-border w-full max-w-md shadow-lg"
+                    width={600}
+                    height={400}
+                    className="rounded-lg border border-border w-full max-w-xs sm:max-w-md shadow-lg"
                     style={{ aspectRatio: '3/2', objectFit: 'cover' }}
+                    priority
                   />
                   <Button
                     className="w-full bg-primary text-primary-foreground text-lg font-bold mt-2"
+                    aria-label="Share on Farcaster"
+                    ref={shareButtonRef}
                     onClick={() => {
                       window.open(
                         `https://warpcast.com/~/compose?text=${encodeURIComponent(
@@ -203,13 +254,18 @@ export default function PreSaveLanding() {
                   >
                     Share on Farcaster
                   </Button>
-                  <Button variant="secondary" className="w-full mt-2" onClick={handleCopyLink}>
+                  <Button
+                    variant="secondary"
+                    className="w-full mt-2 max-w-xs sm:max-w-md"
+                    aria-label="Copy Link"
+                    onClick={handleCopyLink}
+                  >
                     Copy Link
                   </Button>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant="ghost" className="w-full mt-2">
+                    <Button variant="ghost" className="w-full mt-2" aria-label="Close Modal">
                       Close
                     </Button>
                   </DialogClose>
