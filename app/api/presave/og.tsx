@@ -29,9 +29,7 @@ export async function GET() {
       >
         {/* Logo */}
         <img
-          src={
-            'https://asterion.xyz/og.png' // Replace with your logo or asterion.xyz/logo.png
-          }
+          src={'/placeholder.png'}
           width={120}
           height={120}
           style={{ borderRadius: '24px', marginBottom: 32 }}

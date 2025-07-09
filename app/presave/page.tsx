@@ -92,11 +92,11 @@ export default function PreSaveLanding() {
       <Head>
         <meta
           name="fc:miniapp"
-          content='{"version":"1","imageUrl":"/api/og/presave","button":{"title":"🚀 Pre-save Asterion","action":{"type":"launch_miniapp","url":"https://asterion.xyz/presave"}}}'
+          content='{"version":"1","imageUrl":"https://v0-asterion-next-js-application.vercel.app/api/og/presave","button":{"title":"🚀 Pre-save Asterion","action":{"type":"launch_miniapp","url":"https://v0-asterion-next-js-application.vercel.app/presave"}}}'
         />
         <meta
           name="fc:frame"
-          content='{"version":"1","imageUrl":"/api/og/presave","button":{"title":"🚀 Pre-save Asterion","action":{"type":"launch_frame","url":"https://asterion.xyz/presave"}}}'
+          content='{"version":"1","imageUrl":"https://v0-asterion-next-js-application.vercel.app/api/og/presave","button":{"title":"🚀 Pre-save Asterion","action":{"type":"launch_frame","url":"https://v0-asterion-next-js-application.vercel.app/presave"}}}'
         />
       </Head>
       <div
@@ -246,12 +246,23 @@ export default function PreSaveLanding() {
                     aria-label="Share on Farcaster"
                     ref={shareButtonRef}
                     onClick={() => {
-                      window.open(
-                        `https://warpcast.com/~/compose?text=${encodeURIComponent(
-                          'Check out Asterion 🚀 https://asterion.xyz/presave'
-                        )}`,
-                        '_blank'
-                      );
+                      // Share the URL directly so Farcaster can scrape the meta tags
+                      if (navigator.share) {
+                        navigator.share({
+                          title: 'Asterion - Pre-save',
+                          text: 'Check out Asterion - Read novels on Farcaster while tipping authors',
+                          url: 'https://v0-asterion-next-js-application.vercel.app/presave'
+                        });
+                      } else {
+                        // Fallback: copy URL to clipboard
+                        navigator.clipboard.writeText(
+                          'https://v0-asterion-next-js-application.vercel.app/presave'
+                        );
+                        toast({
+                          title: 'URL copied!',
+                          description: 'Paste this URL in Warpcast to share with rich embed.'
+                        });
+                      }
                     }}
                   >
                     Share on Farcaster
