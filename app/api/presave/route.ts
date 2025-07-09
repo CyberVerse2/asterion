@@ -21,15 +21,6 @@ export async function POST(req: NextRequest) {
         }
       });
     }
-    // Analytics: log pre-save event
-    console.log('[PreSave] Pre-save event:', {
-      userId,
-      email,
-      id: entry.id,
-      createdAt: entry.createdAt
-    });
-    // TODO: Notification integration (Warpcast/email)
-    // e.g., await sendWarpcastDM(userId) or sendEmail(email)
     return NextResponse.json({ success: true, entry, deduped: !!existing });
   } catch (error) {
     console.error('[POST /api/presave] Error:', error);

@@ -171,7 +171,7 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.fid && user.username !== 'thecyberverse') {
+    if (user && user.fid) {
       router.replace('/presave');
     }
   }, [user, router]);
