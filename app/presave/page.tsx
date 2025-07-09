@@ -248,19 +248,15 @@ export default function PreSaveLanding() {
                     onClick={() => {
                       const deepLink =
                         'https://farcaster.xyz/~/mini-apps/launch?domain=v0-asterion-next-js-application.vercel.app';
-                      if (navigator.share) {
-                        navigator.share({
-                          title: 'Check out Asterion!',
-                          text: 'Read novels on Farcaster while tipping authors.',
-                          url: deepLink
-                        });
-                      } else {
-                        navigator.clipboard.writeText(deepLink);
-                        toast({
-                          title: 'Link copied!',
-                          description: 'Paste this link in Warpcast to share the mini-app.'
-                        });
-                      }
+                      navigator.clipboard.writeText(deepLink);
+                      toast({
+                        title: 'Link copied!',
+                        description: 'Paste this link in Warpcast to share your mini-app.'
+                      });
+                      window.open(
+                        `https://warpcast.com/~/compose?text=${encodeURIComponent(deepLink)}`,
+                        '_blank'
+                      );
                     }}
                   >
                     Share on Farcaster
