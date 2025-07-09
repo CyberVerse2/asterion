@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/providers/UserProvider';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useContext } from 'react';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 const NAV_ITEMS = [
   {
@@ -75,6 +76,7 @@ export default function BottomNav() {
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
+  const navLoading = useContext(NavigationLoadingContext);
 
   // Determine active index
   const activeIndex = NAV_ITEMS.findIndex((item) =>
@@ -126,6 +128,7 @@ export default function BottomNav() {
             }`}
             onMouseEnter={() => setHoveredIndex(idx)}
             onMouseLeave={() => setHoveredIndex(null)}
+            onClick={() => navLoading?.show()}
           >
             {item.href === '/profile' ? (
               user && user.pfpUrl ? (

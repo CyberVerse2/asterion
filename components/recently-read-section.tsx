@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useContext } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { BookOpen, Clock, ArrowRight, Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNovels } from '@/hooks/useNovels';
+import { NavigationLoadingContext } from '@/components/AppShell';
 
 interface RecentlyReadSectionProps {
   userId: string;
@@ -29,6 +30,7 @@ export default function RecentlyReadSection({ userId, horizontal }: RecentlyRead
   const [recentlyRead, setRecentlyRead] = useState<NovelWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { novels } = useNovels();
+  const navLoading = useContext(NavigationLoadingContext);
 
   // Memoize the novels data to prevent unnecessary re-renders
   const novelsMap = useMemo(() => {
@@ -189,6 +191,7 @@ export default function RecentlyReadSection({ userId, horizontal }: RecentlyRead
             key={novel.id}
             href={`/novels/${novel.id}/chapters/${novel.lastReadChapterId}?restore=true`}
             className="w-32 flex-shrink-0"
+            onClick={() => navLoading?.show()}
           >
             <Card className="w-32 h-auto shadow-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer novel-card-dark border-border hover:border-primary/50 group">
               <CardContent className="p-0">
