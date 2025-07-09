@@ -595,19 +595,6 @@ export default function ProfilePage() {
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="max-w-2xl sm:max-w-4xl mx-auto space-y-4 sm:space-y-6">
-          {/* Mobile Back Button */}
-          <div className="flex items-center gap-2 sm:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackNavigation}
-              className="p-0.5 h-6 w-6 hover:bg-white/80 transition-colors focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
-              aria-label="Go back to previous page"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-lg font-semibold">Profile</h1>
-          </div>
 
           {/* Enhanced Profile Header with Background */}
           <div className="relative bg-card/40 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-border shadow-lg">

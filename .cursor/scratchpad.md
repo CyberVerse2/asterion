@@ -518,60 +518,43 @@ The user wants the Ranking page to visually match the provided mobile screenshot
 # Project Status Board
 
 - [x] Audit and catalog all loading/error states (Planner phase complete)
-- [x] Standardize loading skeletons and spinners (Library, Novel, Chapter reader, Profile page complete)
-- [ ] Standardize error handling and fallbacks (in progress)
-- [ ] Improve Suspense and SWR fallbacks
-- [ ] Audit user state loading everywhere
-- [ ] Test all flows and edge cases
+- [x] Standardize loading skeletons and spinners (Library, Novel, Chapter reader, Profile, Presave, ChapterListModal, TipModal, FarcasterReadingSection complete)
+- [ ] Add global navigation/loading feedback (NProgress or similar)
+- [ ] Add local loading state to navigation buttons and cards
+- [ ] Audit all async buttons for visible feedback
+- [ ] Test all flows for feedback
 - [ ] Document and refactor
 
-# Executor's Feedback or Assistance Requests
-
-- The Profile page now uses the standardized <Spinner /> and <ErrorState /> components for all loading and error states. Ad-hoc loading skeletons and error UI have been replaced. Ready for user review before proceeding to the next major page (Presave, modals, etc.).
-
-# Loading/Error State Optimization Plan (June 2024)
+# Button/Navigation Feedback UX Improvement Plan (June 2024)
 
 ## Background and Motivation
 
-The Asterion app uses SWR and custom hooks for data fetching, but loading and error states are handled inconsistently. Some areas use skeletons, some use spinners or plain text, and some return `null` or nothing at all. This leads to a suboptimal user experience, especially on slow networks or with backend/API errors.
+Users report that clicking navigation buttons, novel cards, and other interactive elements does not provide visible feedback while the next page or modal is loading. This leads to a perception of unresponsiveness, especially on slow networks.
 
 ## Key Challenges and Analysis
 
-- Inconsistent loading UI (skeletons, spinners, text, or nothing)
-- Error handling gaps (some pages show errors, others do not)
-- No standardization (no single reusable loading/error component)
-- Missing fallbacks (Suspense/SWR boundaries)
-- API error propagation (ambiguous errors)
-- User state loading sometimes ignored
+- Next.js navigation is client-side and does not show a loading spinner or disable the button by default.
+- Async action buttons may not always show a spinner or loading state.
+- Need to provide both global and local feedback for best UX.
 
 ## High-level Task Breakdown
 
-1. Audit and catalog all loading/error states ✅
-2. Standardize loading skeletons and spinners (in progress)
-3. Standardize error handling and fallbacks
-4. Improve Suspense and SWR fallbacks
-5. Audit user state loading everywhere
-6. Test all flows and edge cases
-7. Document and refactor
+1. Integrate a global top progress bar (NProgress or similar) for all route changes
+2. Add local loading state to navigation buttons and clickable cards
+3. Ensure all async action buttons show a spinner and are disabled while loading
+4. Test all flows on slow network for feedback visibility
+5. Document and refactor
 
 ## Success Criteria
 
-- Every major page/component shows a consistent, visually appealing loading state
-- Every major page/component shows a clear, actionable error state if data fails to load
-- No page/component ever returns `null` or nothing during loading or error states
-- User state loading is handled everywhere
-- All Suspense and SWR boundaries have meaningful fallbacks
-- The codebase uses a small set of standardized loading and error components
-- All changes are tested on slow networks and with simulated API errors
-
-# Current Status / Progress Tracking
-
-- Planner phase complete: audit and plan written
-- Executor phase started: standardizing loading and error components (step 2)
+- Every navigation action (button, card, link) provides immediate visual feedback (spinner, overlay, or progress bar)
+- All async action buttons show a spinner and are disabled while loading
+- Feedback is visible and consistent across all flows
+- All changes are tested on slow networks
 
 # Executor's Feedback or Assistance Requests
 
-- Will report after implementing standardized loading and error components and refactoring first major page/component.
+- Starting Executor phase for Button/Navigation Feedback UX improvement. Will begin with global navigation feedback (NProgress or similar), then add local loading states to navigation buttons/cards, and finally audit all async buttons for visible feedback.
 
 ## Next Steps
 

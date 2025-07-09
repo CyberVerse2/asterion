@@ -59,8 +59,16 @@ function FarcasterReadingSection() {
     });
   }, [sortedData]);
 
-  if (error) return null;
-  if (!sortedData || sortedData.length === 0) return null;
+  if (error)
+    return (
+      <ErrorState
+        message={error.message || 'Failed to load trending novels.'}
+        onRetry={() => window.location.reload()}
+        className="py-8"
+      />
+    );
+  if (!sortedData || sortedData.length === 0)
+    return <div className="text-muted-foreground text-center py-8">No trending novels found.</div>;
   // Render as a single horizontal row, not two-row columns
   return (
     <div className="mb-10">

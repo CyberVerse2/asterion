@@ -15,6 +15,8 @@ import {
 import { calculateTipDistribution } from '@/lib/tip-calculator';
 // @ts-ignore
 import { DollarSign, Heart, CheckCircle } from 'lucide-react';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 interface TipModalProps {
   isOpen: boolean;
@@ -191,7 +193,8 @@ export default function TipModal({
             )}
 
             {tipStatus === 'processing' && (
-              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded">
+              <div className="flex flex-col items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded">
+                <Spinner size={24} className="mb-1" />
                 <p className="text-sm font-medium">Tipping in progress...</p>
                 <p className="text-xs">Please wait while we process your tip on the blockchain.</p>
               </div>

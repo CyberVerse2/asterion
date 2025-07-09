@@ -11,6 +11,8 @@ import { useNovelReadingProgress } from '@/hooks/useReadingProgress';
 import { useSpendPermissionGuard } from '@/hooks/use-spend-permission-guard';
 import SpendPermissionRequired from '@/components/spend-permission-required';
 import { Input } from '@/components/ui/input';
+import Spinner from '@/components/ui/Spinner';
+import ErrorState from '@/components/ui/ErrorState';
 
 interface ChapterListModalProps {
   isOpen: boolean;
@@ -111,10 +113,15 @@ export default function ChapterListModal({
           <div className="max-h-[30vh] overflow-y-auto">
             {isLoading ? (
               <div className="p-6 text-center text-gray-400">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-4"></div>
-                Loading chapters...
+                <Spinner size={32} />
+                <div className="mt-2">Loading chapters...</div>
               </div>
-            ) : filteredChapters && filteredChapters.length > 0 ? (
+            ) : !filteredChapters || filteredChapters.length === 0 ? (
+              <div className="p-6 text-center text-gray-400">
+                <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-600" />
+                <p>No chapters available</p>
+              </div>
+            ) : (
               <div className="space-y-1 p-4">
                 {filteredChapters.map((chapter: Chapter) => {
                   const progress = getChapterProgress(chapter.id);
@@ -160,11 +167,6 @@ export default function ChapterListModal({
                     </button>
                   );
                 })}
-              </div>
-            ) : (
-              <div className="p-6 text-center text-gray-400">
-                <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-600" />
-                <p>No chapters available</p>
               </div>
             )}
           </div>
