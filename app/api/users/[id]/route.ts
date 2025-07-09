@@ -1,27 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const userId = params.id;
     const body = await req.json();
-    
+
     // Build update data
     const updateData: any = {};
-    
+
     if (typeof body.hasAddedMiniapp === 'boolean') {
       updateData.hasAddedMiniapp = body.hasAddedMiniapp;
     }
-    
+
     if (typeof body.spendLimit === 'number') {
       updateData.spendLimit = body.spendLimit;
     }
-    
+
     if (typeof body.chapterTipAmount === 'number') {
       updateData.chapterTipAmount = body.chapterTipAmount;
+    }
+
+    if (typeof body.notificationUrl === 'string') {
+      updateData.notificationUrl = body.notificationUrl;
+    }
+    if (typeof body.notificationToken === 'string') {
+      updateData.notificationToken = body.notificationToken;
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -40,4 +44,4 @@ export async function PATCH(
       { status: 500 }
     );
   }
-} 
+}

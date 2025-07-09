@@ -130,14 +130,16 @@ export default function PreSaveLanding() {
         <p className="text-base sm:text-lg text-muted-foreground mb-8 text-center max-w-xs sm:max-w-md">
           Read your favourite novels on Farcaster while tipping authors
         </p>
-        <div className="relative w-full max-w-xl h-40 sm:h-44 flex items-center justify-center mb-8 overflow-x-auto overflow-y-hidden">
+        <div className="relative w-full max-w-xl h-40 sm:h-44 flex items-center justify-center mb-8 overflow-x-auto overflow-y-hidden scrollbar-hide">
           <div className="absolute left-0 top-0 w-full h-full pointer-events-none bg-gradient-to-r from-background via-transparent to-background z-10" />
           <div
             className="flex gap-3 sm:gap-6 animate-scroll-x flex-nowrap"
             style={{
               animation: 'scroll-x 24s linear infinite',
               minWidth: '600px',
-              maxWidth: '100%'
+              maxWidth: '100%',
+              scrollbarWidth: 'none', // Firefox
+              msOverflowStyle: 'none' // IE/Edge
             }}
           >
             {novelsLoading ? (
@@ -174,6 +176,13 @@ export default function PreSaveLanding() {
             )}
           </div>
           <style jsx global>{`
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+            }
+            .scrollbar-hide {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
             @keyframes scroll-x {
               0% {
                 transform: translateX(0);
