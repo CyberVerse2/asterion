@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url, 'http://localhost');
+    const limitParam = url.searchParams.get('limit');
+    const take = limitParam ? parseInt(limitParam) : 100;
     const novels = await prisma.novel.findMany({
-      take: 100,
+      take,
       include: {
         tips: true // Include tips to calculate totalTips
       }

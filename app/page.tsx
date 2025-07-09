@@ -12,6 +12,7 @@ import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import { Star, BookOpen } from 'lucide-react';
 import NovelCard from '@/components/novel-card';
+import { useRouter } from 'next/navigation';
 
 // Lazy load components for better performance
 const NovelGrid = lazy(() => import('@/components/novel-grid'));
@@ -157,6 +158,13 @@ export default function HomePage() {
   const { novels, isLoading, error } = useNovels();
   const { user } = useUser();
   const [tab, setTab] = useState<'trending' | 'mostRead' | 'highestRated'>('trending');
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user && user.fid && user.username !== 'thecyberverse') {
+      router.replace('/presave');
+    }
+  }, [user, router]);
 
   useEffect(() => {
     if (!isFrameReady) {

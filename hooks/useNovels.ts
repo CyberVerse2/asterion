@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import useSWR from 'swr';
 
 // Fetcher function for SWR
@@ -8,8 +8,9 @@ const fetcher = (url: string) =>
     return res.json();
   });
 // Hook for fetching all novels
-export const useNovels = () => {
-  const { data, error, isLoading, mutate } = useSWR('/api/novels', fetcher, {
+export const useNovels = (limit?: number) => {
+  const url = limit ? `/api/novels?limit=${limit}` : '/api/novels';
+  const { data, error, isLoading, mutate } = useSWR(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false, // Disable auto-revalidation on reconnect for mobile
     dedupingInterval: 300000, // 5 minutes - longer cache for mobile

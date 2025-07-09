@@ -21,7 +21,7 @@ import Head from 'next/head';
 
 export default function PreSaveLanding() {
   const { user } = useUser();
-  const { novels, isLoading: novelsLoading, error: novelsError } = useNovels();
+  const { novels, isLoading: novelsLoading, error: novelsError } = useNovels(10);
   const [presaved, setPresaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -29,11 +29,12 @@ export default function PreSaveLanding() {
   const { toast } = useToast();
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
-  // Pick first 10 novels, sorted by rank if available
+  // Sort by rank if available
   const sortedNovels = ((novels as Novel[]) || [])
     .slice()
-    .sort((a: any, b: any) => (Number((a as any).rank) || 9999) - (Number((b as any).rank) || 9999))
-    .slice(0, 10);
+    .sort(
+      (a: any, b: any) => (Number((a as any).rank) || 9999) - (Number((b as any).rank) || 9999)
+    );
 
   async function handlePreSave() {
     setLoading(true);
