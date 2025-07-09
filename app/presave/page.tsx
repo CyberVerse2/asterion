@@ -21,6 +21,8 @@ import {
 import Head from 'next/head';
 import Spinner from '@/components/ui/Spinner';
 import ErrorState from '@/components/ui/ErrorState';
+import { NavigationLoadingContext } from '@/components/AppShell';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 export default function PreSaveLanding() {
   const { user } = useUser();
@@ -52,6 +54,10 @@ export default function PreSaveLanding() {
     }
   }, [shareModalOpen]);
 
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
+
   async function handlePreSave() {
     setLoading(true);
     setError('');
@@ -70,14 +76,22 @@ export default function PreSaveLanding() {
         setLoading(false);
         return;
       }
+      // Add frame after successful presave
+      const result = await addFrame();
+      if (result && user) {
+        await fetch(`/api/users/${user.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            notificationUrl: result.url,
+            notificationToken: result.token,
+            hasAddedMiniapp: true
+          })
+        });
+      }
       setPresaved(true);
       setShareModalOpen(true);
       toast({ title: 'Pre-saved!', description: 'You have joined the waitlist.' });
-      // Add frame after successful presave
-      const result = await addFrame();
-      if (result) {
-        console.log('Frame added:', result.url, result.token);
-      }
     } catch (err) {
       setError('Failed to pre-save. Please try again.');
     } finally {
@@ -116,7 +130,7 @@ export default function PreSaveLanding() {
         <p className="text-base sm:text-lg text-muted-foreground mb-8 text-center max-w-xs sm:max-w-md">
           Read your favourite novels on Farcaster while tipping authors
         </p>
-        <div className="relative w-full max-w-xl h-40 sm:h-44 flex items-center justify-center mb-8 overflow-x-auto">
+        <div className="relative w-full max-w-xl h-40 sm:h-44 flex items-center justify-center mb-8 overflow-x-auto overflow-y-hidden">
           <div className="absolute left-0 top-0 w-full h-full pointer-events-none bg-gradient-to-r from-background via-transparent to-background z-10" />
           <div
             className="flex gap-3 sm:gap-6 animate-scroll-x flex-nowrap"
@@ -170,7 +184,7 @@ export default function PreSaveLanding() {
             }
           `}</style>
         </div>
-        {!presaved ? (
+        {!user?.hasAddedMiniapp && !presaved ? (
           <>
             {!user && (
               <input
@@ -219,7 +233,8 @@ export default function PreSaveLanding() {
             </Button>
             {error && <div className="text-red-500 mt-2 text-sm">{error}</div>}
           </>
-        ) : (
+        ) : null}
+        {presaved && (
           <>
             <div className="text-green-400 text-lg font-semibold mt-4 animate-pulse text-center">
               Thank you for joining our waitlist.

@@ -8,23 +8,25 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  fid        Int?     @unique // Farcaster ID - now optional for wallet-only users
-  username   String?  @unique // Username - now optional for wallet-only users
-  walletAddress String? // Wallet address for wallet-only users (uniqueness handled in app code)
-  pfpUrl     String?
-  tips       Tip[]
-  bookmarks  String[] // Array of Novel IDs (as strings)
-  novels     String[] // Array of Novel IDs (as strings, for authored novels)
-  supporters Supporter[]
-  readingProgress ReadingProgress[] // User's reading progress across chapters
-  createdAt  DateTime  @map("createdAt") @default(now())
-  updatedAt  DateTime? @map("updatedAt")
-  spendLimit Float    @default(100)
-  chapterTipAmount Float @default(0.01) // Amount in USDC to tip per chapter
-  spendPermission Json?
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  fid               Int?     @unique // Farcaster ID - now optional for wallet-only users
+  username          String?  @unique // Username - now optional for wallet-only users
+  walletAddress     String? // Wallet address for wallet-only users (uniqueness handled in app code)
+  pfpUrl            String?
+  tips              Tip[]
+  bookmarks         String[] // Array of Novel IDs (as strings)
+  novels            String[] // Array of Novel IDs (as strings, for authored novels)
+  supporters        Supporter[]
+  readingProgress   ReadingProgress[] // User's reading progress across chapters
+  createdAt         DateTime  @map("createdAt") @default(now())
+  updatedAt         DateTime? @map("updatedAt")
+  spendLimit        Float    @default(100)
+  chapterTipAmount  Float @default(0.01) // Amount in USDC to tip per chapter
+  spendPermission   Json?
   spendPermissionSignature String?
-  hasAddedMiniapp Boolean @default(false) // Track whether user has added the miniapp
+  notificationUrl   String?
+  notificationToken String?
+  hasAddedMiniapp   Boolean  @default(false) // Track whether user has added the miniapp
 }
 
 model Tip {
