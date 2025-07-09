@@ -70,16 +70,25 @@ export async function GET() {
         author: true,
         imageUrl: true,
         rank: true,
-        totalChapters: true
+        rating: true
       }
     });
     console.log('[farcaster-reading] novels:', novels);
 
-    // 6. Attach count and userIds to each novel
+    // 6. Compute totalChapters for each novel
+    const chaptersCount = await prisma.chapter.groupBy({
+      by: ['novel'],
+      where: { novel: { in: novelIds } },
+      _count: { id: true }
+    });
+    const novelIdToChapters = Object.fromEntries(chaptersCount.map((c) => [c.novel, c._count.id]));
+
+    // 7. Attach count, userIds, and totalChapters to each novel
     const result = novels.map((novel) => ({
       ...novel,
       count: novelToUserIds[novel.id]?.length || 0,
-      userIds: novelToUserIds[novel.id] || []
+      userIds: novelToUserIds[novel.id] || [],
+      totalChapters: novelIdToChapters[novel.id] || 0
     }));
     console.log('[farcaster-reading] result:', result);
 

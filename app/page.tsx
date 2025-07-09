@@ -61,9 +61,9 @@ function FarcasterReadingSection() {
   // Render as a single horizontal row, not two-row columns
   return (
     <div className="mb-10">
-      <h2 className="text-2xl font-bold text-white mb-2">Farcaster users are reading</h2>
+      <h2 className="text-2xl font-bold text-white mb-2">Users are reading</h2>
       <p className="text-sm text-muted-foreground mb-5">
-        See what’s trending among your Farcaster friends.
+        See what’s trending among your friends.
       </p>
       <div className="overflow-x-auto pb-2 scrollbar-hide">
         <div className="flex gap-4" style={{ minWidth: '100%' }}>
