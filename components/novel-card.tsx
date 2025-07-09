@@ -1,6 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { memo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import Spinner from '@/components/ui/Spinner';
 // @ts-ignore
 import { Heart, Users, Star, BookOpen, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -45,6 +48,16 @@ const NovelCard = memo(function NovelCard({
   showDivider,
   farcasterMode
 }: NovelCardProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoading) return;
+    setIsLoading(true);
+    router.push(`/novels/${novel.id}`);
+  };
+
   if (libraryStyle) {
     // Library style card (horizontal, minimal, like screenshot)
     // Calculate progress as chapter X / Y
@@ -63,12 +76,20 @@ const NovelCard = memo(function NovelCard({
       progressText = `Chapter 1 / ${novel.chapters.length}`;
     }
     return (
-      <Link
-        href={`/novels/${novel.id}`}
-        className={`flex gap-3 p-2 hover:bg-white/5 transition items-center block ${
+      <button
+        onClick={handleClick}
+        disabled={isLoading}
+        className={`flex gap-3 p-2 hover:bg-white/5 transition items-center block w-full h-24 relative overflow-visible ${
           showDivider ? 'border-b border-border' : ''
-        }`}
+        } ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}
+        style={{ minHeight: 96 }}
       >
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center z-[99] bg-black/40 rounded-lg">
+            {/* Spinner overlay: z-[99] and overflow-visible to avoid clipping */}
+            <Spinner size={32} />
+          </div>
+        )}
         <div className="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden bg-card border border-border flex items-center justify-center">
           <Image
             src={novel.imageUrl || '/placeholder.svg?height=600&width=450'}
@@ -109,16 +130,30 @@ const NovelCard = memo(function NovelCard({
             </span>
           </div>
         </div>
-      </Link>
+      </button>
     );
   }
 
   const rating = (4.0 + Math.random() * 1.0).toFixed(1);
 
   return (
-    <Link href={`/novels/${novel.id}`}>
+    <button
+      onClick={handleClick}
+      disabled={isLoading}
+      className={`w-full h-full bg-transparent border-0 p-0 m-0 text-left cursor-pointer relative overflow-visible ${
+        isLoading ? 'opacity-60 pointer-events-none' : ''
+      }`}
+      aria-label={`Open novel: ${novel.title}`}
+      style={{ minHeight: 220 }}
+    >
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-[99] bg-black/40 rounded-lg">
+          {/* Spinner overlay: z-[99] and overflow-visible to avoid clipping */}
+          <Spinner size={40} />
+        </div>
+      )}
       <Card
-        className={`h-full bg-card hover:shadow-2xl transition-all duration-300 cursor-pointer border-border hover:border-primary/50 flex flex-col group ${
+        className={`h-full bg-card hover:shadow-2xl transition-all duration-300 cursor-pointer border-border hover:border-primary/50 flex flex-col group overflow-visible ${
           showDivider ? 'border-b border-border' : ''
         }`}
       >
@@ -274,7 +309,7 @@ const NovelCard = memo(function NovelCard({
           </div>
         </CardHeader>
       </Card>
-    </Link>
+    </button>
   );
 });
 
