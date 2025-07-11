@@ -76,6 +76,30 @@ The problem is likely that one or more of these conditions are not being met, ca
 **Motivation:**
 Users report that after reading progress is saved, the page sometimes jumps up or down unexpectedly. This is likely due to the scroll restoration logic running after every save or progress update, rather than only on initial chapter load. This disrupts the reading experience and can be frustrating for users.
 
+## NEW TASK: Make Homepage the Default Page
+
+**Motivation:**
+The user wants to make the homepage the default page instead of the current flow where Farcaster users are redirected to the presave page. This change will allow users to directly access the main app content without going through the presave flow.
+
+**Current Flow:**
+
+- Users visit `/` (homepage)
+- If user has Farcaster account, they get redirected to `/presave`
+- Presave page shows landing content and requires pre-saving before accessing main app
+
+**Desired Flow:**
+
+- Users visit `/` (homepage) and see the main app content directly
+- No automatic redirect to presave page
+- Users can access all app features immediately
+
+**Key Changes Needed:**
+
+1. Remove the automatic redirect from HomePage to `/presave` for Farcaster users
+2. Ensure the homepage shows the main app content for all users
+3. Keep the presave page available but not as the default landing page
+4. Maintain all existing functionality while changing the default landing experience
+
 # Key Challenges and Analysis
 
 - **Where to Trigger:** The logic should run as soon as the Farcaster user context is available (from MiniKit/Farcaster context), ideally in a provider or onboarding effect.
@@ -270,6 +294,14 @@ Users report that after reading progress is saved, the page sometimes jumps up o
     - Added automatic position restoration when returning to chapter
     - Integrated with reading progress hooks
     - **Success Criteria:** Embedded chapter reader tracks reading progress.
+
+21. **Make Homepage the Default Page**
+
+    - Remove automatic redirect from HomePage to `/presave` for Farcaster users
+    - Ensure homepage shows main app content for all users
+    - Keep presave page available but not as default landing page
+    - Maintain all existing functionality while changing default landing experience
+    - **Success Criteria:** Users can access main app content directly without being redirected to presave page.
 
 # NEW TASK: Redesign Ranking Page to Match Provided Screenshot
 
@@ -470,6 +502,16 @@ The user wants the Ranking page to visually match the provided mobile screenshot
   - **Success Criteria:** Reading progress saves consistently and reliably ✅
   - **Test Results:** Logs show successful initialization, user data loading, and tracking activation
   - **Final Fix:** Updated IntersectionObserver rootMargin from restrictive `-10% 0px -10% 0px` to `0px 0px 0px 0px` and added more granular thresholds for better intersection detection
+
+- [x] **Make Homepage the Default Page** ✅
+
+  - ✅ Removed automatic redirect from HomePage to `/presave` for Farcaster users
+  - ✅ Fixed app/page.tsx to properly export HomePage as default export
+  - ✅ Ensured homepage shows main app content for all users
+  - ✅ Kept presave page available but not as default landing page
+  - ✅ Maintained all existing functionality while changing default landing experience
+  - **Success Criteria:** Users can access main app content directly without being redirected to presave page ✅
+  - **Test Results:** Fixed "The default export is not a React Component" error by properly exporting HomePage component
 
 - [ ] **Add Reading Progress Indicators to Novel/Chapter Lists**
 

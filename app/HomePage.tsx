@@ -170,11 +170,12 @@ export default function HomePage() {
   const [tab, setTab] = useState<'trending' | 'mostRead' | 'highestRated'>('trending');
   const router = useRouter();
 
-  useEffect(() => {
-    if (user && user.fid) {
-      router.replace('/presave');
-    }
-  }, [user, router]);
+  // Removed automatic redirect to presave page - homepage is now the default page for all users
+  // useEffect(() => {
+  //   if (user && user.fid) {
+  //     router.replace('/presave');
+  //   }
+  // }, [user, router]);
 
   useEffect(() => {
     if (!isFrameReady) {
